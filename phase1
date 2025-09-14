@@ -1,0 +1,678 @@
+import React, { useState, useEffect, useCallback, useMemo, createContext, useContext, useRef } from 'react';
+import { create } from 'zustand';
+import { Camera, LogIn, UserPlus, LogOut, Loader, Sun, Moon, Plus, X, Trash2, Edit, Save, PlusCircle, MinusCircle, UtensilsCrossed, ChefHat } from 'lucide-react';
+
+// --- TYPESCRIPT DEFINITIONS (types/index.ts) ---
+interface User {
+  id: string;
+  email: string;
+  preferences: {
+    darkMode: boolean;
+    notifications: boolean;
+  };
+  householdSize: number;
+  dietaryRestrictions: string[];
+}
+
+interface Ingredient {
+  id: string;
+  name: string;
+  category: 'Vegetable' | 'Fruit' | 'Spice' | 'Dairy' | 'Grain' | 'Meat' | 'Other';
+  shelfLifeDays: number; // Average shelf life in days
+}
+
+interface PantryItem {
+  id: string;
+  ingredientId: string;
+  userId: string;
+  quantity: number;
+  unit: 'g' | 'kg' | 'pcs' | 'L' | 'mL';
+  purchaseDate: string; // ISO string
+  expiryDate: string; // ISO string
+}
+
+interface Recipe {
+    id: string;
+    name: string;
+    description: string;
+    cuisine: 'North Indian' | 'South Indian' | 'Other';
+    ingredients: { ingredientId: string; quantity: number; unit: 'g' | 'pcs' | 'mL' }[];
+    instructions: string[];
+}
+
+// --- ZUSTAND: AUTH STORE (store/authStore.ts) ---
+interface AuthState {
+  isAuthenticated: boolean;
+  user: User | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+interface AuthActions {
+  login: (email: string) => Promise<void>;
+  register: (email: string, householdSize: number) => Promise<void>;
+  logout: () => void;
+  checkAuth: () => void;
+  toggleDarkMode: () => void;
+}
+
+const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
+  isAuthenticated: false,
+  user: null,
+  isLoading: true,
+  error: null,
+  login: async (email) => {
+    set({ isLoading: true, error: null });
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const storedUsers = JSON.parse(localStorage.getItem('pantryveda_users') || '[]');
+      const existingUser = storedUsers.find((u: User) => u.email === email);
+      if (existingUser) {
+        localStorage.setItem('pantryveda_session', JSON.stringify(existingUser));
+        set({ isAuthenticated: true, user: existingUser, isLoading: false });
+      } else {
+        throw new Error("User not found. Please register.");
+      }
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+  register: async (email, householdSize) => {
+    set({ isLoading: true, error: null });
+    try {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      const storedUsers = JSON.parse(localStorage.getItem('pantryveda_users') || '[]');
+      if (storedUsers.some((u: User) => u.email === email)) {
+        throw new Error("An account with this email already exists.");
+      }
+      const newUser: User = {
+        id: `user_${Date.now()}`,
+        email,
+        householdSize,
+        preferences: { darkMode: false, notifications: true },
+        dietaryRestrictions: [],
+      };
+      const updatedUsers = [...storedUsers, newUser];
+      localStorage.setItem('pantryveda_users', JSON.stringify(updatedUsers));
+      localStorage.setItem('pantryveda_session', JSON.stringify(newUser));
+      set({ isAuthenticated: true, user: newUser, isLoading: false });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
+    }
+  },
+  logout: () => {
+    localStorage.removeItem('pantryveda_session');
+    set({ isAuthenticated: false, user: null });
+  },
+  checkAuth: () => {
+    try {
+        const sessionUser = JSON.parse(localStorage.getItem('pantryveda_session') || 'null');
+        if (sessionUser) {
+            set({ isAuthenticated: true, user: sessionUser, isLoading: false });
+        } else {
+            set({ isLoading: false });
+        }
+    } catch (error) {
+        console.error("Failed to parse user session:", error);
+        set({ isLoading: false });
+    }
+  },
+  toggleDarkMode: () => {
+    set(state => {
+        if (!state.user) return state;
+        const updatedUser = {
+            ...state.user,
+            preferences: {
+                ...state.user.preferences,
+                darkMode: !state.user.preferences.darkMode
+            }
+        };
+        localStorage.setItem('pantryveda_session', JSON.stringify(updatedUser));
+        const storedUsers = JSON.parse(localStorage.getItem('pantryveda_users') || '[]');
+        const userIndex = storedUsers.findIndex((u: User) => u.id === updatedUser.id);
+        if (userIndex !== -1) {
+            storedUsers[userIndex] = updatedUser;
+            localStorage.setItem('pantryveda_users', JSON.stringify(storedUsers));
+        }
+        return { ...state, user: updatedUser };
+    });
+  }
+}));
+
+// --- MASTER DATABASES (simulated) ---
+const MASTER_INGREDIENTS: Ingredient[] = [
+    { id: 'ing_1', name: 'Tomato', category: 'Vegetable', shelfLifeDays: 7 },
+    { id: 'ing_2', name: 'Onion', category: 'Vegetable', shelfLifeDays: 30 },
+    { id: 'ing_3', name: 'Potato', category: 'Vegetable', shelfLifeDays: 45 },
+    { id: 'ing_4', name: 'Garlic', category: 'Vegetable', shelfLifeDays: 180 },
+    { id: 'ing_5', name: 'Ginger', category: 'Vegetable', shelfLifeDays: 30 },
+    { id: 'ing_6', name: 'Turmeric Powder', category: 'Spice', shelfLifeDays: 730 },
+    { id: 'ing_7', name: 'Chili Powder', category: 'Spice', shelfLifeDays: 730 },
+    { id: 'ing_8', name: 'Coriander Powder', category: 'Spice', shelfLifeDays: 365 },
+    { id: 'ing_9', name: 'Basmati Rice', category: 'Grain', shelfLifeDays: 1095 },
+    { id: 'ing_10', name: 'Toor Dal', category: 'Grain', shelfLifeDays: 365 },
+    { id: 'ing_11', name: 'Milk', category: 'Dairy', shelfLifeDays: 5 },
+    { id: 'ing_12', name: 'Yogurt', category: 'Dairy', shelfLifeDays: 14 },
+    { id: 'ing_13', name: 'Paneer', category: 'Dairy', shelfLifeDays: 7 },
+    { id: 'ing_14', name: 'Chicken', category: 'Meat', shelfLifeDays: 2 },
+    { id: 'ing_15', name: 'Apple', category: 'Fruit', shelfLifeDays: 30 },
+];
+
+const MASTER_RECIPES: Recipe[] = [
+    {
+        id: 'rec_1', name: 'Paneer Butter Masala', cuisine: 'North Indian',
+        description: 'A rich and creamy dish of paneer in a tomato, butter and cashew sauce.',
+        ingredients: [
+            { ingredientId: 'ing_13', quantity: 200, unit: 'g' }, // Paneer
+            { ingredientId: 'ing_1', quantity: 4, unit: 'pcs' },   // Tomato
+            { ingredientId: 'ing_2', quantity: 2, unit: 'pcs' },   // Onion
+            { ingredientId: 'ing_4', quantity: 5, unit: 'g' },   // Garlic
+            { ingredientId: 'ing_5', quantity: 5, unit: 'g' },   // Ginger
+            { ingredientId: 'ing_7', quantity: 5, unit: 'g' },   // Chili Powder
+        ],
+        instructions: ['Sauté onions, ginger, garlic.', 'Add tomatoes and cook until soft.', 'Blend into a smooth paste.', 'Cook the paste with spices.', 'Add paneer and cream. Simmer and serve.']
+    },
+    {
+        id: 'rec_2', name: 'Dal Tadka', cuisine: 'North Indian',
+        description: 'A popular Indian lentil dish made with toor dal, spices and herbs.',
+        ingredients: [
+            { ingredientId: 'ing_10', quantity: 200, unit: 'g' }, // Toor Dal
+            { ingredientId: 'ing_2', quantity: 1, unit: 'pcs' },    // Onion
+            { ingredientId: 'ing_1', quantity: 1, unit: 'pcs' },    // Tomato
+            { ingredientId: 'ing_4', quantity: 5, unit: 'g' },    // Garlic
+            { ingredientId: 'ing_6', quantity: 5, unit: 'g' },    // Turmeric
+        ],
+        instructions: ['Pressure cook the dal.', 'Prepare tadka with onions, tomatoes, and spices.', 'Pour tadka over cooked dal.', 'Garnish and serve hot.']
+    },
+    {
+        id: 'rec_3', name: 'Aloo Gobi', cuisine: 'North Indian',
+        description: 'A simple, classic Indian dish made with potatoes and cauliflower.',
+        ingredients: [
+            { ingredientId: 'ing_3', quantity: 2, unit: 'pcs' }, // Potato
+            { ingredientId: 'ing_2', quantity: 1, unit: 'pcs' }, // Onion
+            { ingredientId: 'ing_8', quantity: 5, unit: 'g' }, // Coriander Powder
+            { ingredientId: 'ing_6', quantity: 5, unit: 'g' }, // Turmeric Powder
+        ],
+        instructions: ['Sauté onions and spices.', 'Add potatoes and cauliflower, cook until tender.', 'Garnish with fresh coriander.']
+    },
+];
+
+// --- ZUSTAND: PANTRY STORE (store/pantryStore.ts) ---
+interface PantryState {
+    pantryItems: PantryItem[];
+    ingredients: Ingredient[];
+    recipes: Recipe[];
+    isLoading: boolean;
+    error: string | null;
+}
+
+interface PantryActions {
+    fetchPantry: (userId: string) => void;
+    addItem: (item: Omit<PantryItem, 'id'>) => void;
+    updateItem: (itemId: string, updates: Partial<PantryItem>) => void;
+    deleteItem: (itemId: string) => void;
+}
+
+const usePantryStore = create<PantryState & PantryActions>((set) => ({
+    pantryItems: [],
+    ingredients: MASTER_INGREDIENTS,
+    recipes: MASTER_RECIPES,
+    isLoading: false,
+    error: null,
+    fetchPantry: (userId) => {
+        set({ isLoading: true });
+        const allItems = JSON.parse(localStorage.getItem('pantryveda_items') || '[]');
+        const userItems = allItems.filter((item: PantryItem) => item.userId === userId);
+        set({ pantryItems: userItems, isLoading: false });
+    },
+    addItem: (item) => {
+        set(state => {
+            const newItem: PantryItem = { ...item, id: `item_${Date.now()}` };
+            const allItems = JSON.parse(localStorage.getItem('pantryveda_items') || '[]');
+            const updatedItems = [...allItems, newItem];
+            localStorage.setItem('pantryveda_items', JSON.stringify(updatedItems));
+            return { ...state, pantryItems: [...state.pantryItems, newItem] };
+        });
+    },
+    updateItem: (itemId, updates) => {
+        set(state => {
+            const allItems = JSON.parse(localStorage.getItem('pantryveda_items') || '[]') as PantryItem[];
+            const itemIndex = allItems.findIndex(item => item.id === itemId);
+            if (itemIndex !== -1) {
+                allItems[itemIndex] = { ...allItems[itemIndex], ...updates };
+                localStorage.setItem('pantryveda_items', JSON.stringify(allItems));
+                return {
+                    ...state,
+                    pantryItems: state.pantryItems.map(pItem => 
+                        pItem.id === itemId ? { ...pItem, ...updates } : pItem
+                    )
+                };
+            }
+            return state;
+        });
+    },
+    deleteItem: (itemId) => {
+        set(state => {
+            const allItems = JSON.parse(localStorage.getItem('pantryveda_items') || '[]') as PantryItem[];
+            const updatedItems = allItems.filter(item => item.id !== itemId);
+            localStorage.setItem('pantryveda_items', JSON.stringify(updatedItems));
+            return { ...state, pantryItems: state.pantryItems.filter(pItem => pItem.id !== itemId) };
+        });
+    }
+}));
+
+
+// --- UI COMPONENTS ---
+
+const Spinner = () => <Loader className="animate-spin text-emerald-500" size={24} />;
+
+const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
+    const darkMode = useAuthStore(state => state.user?.preferences.darkMode);
+    useEffect(() => {
+        document.documentElement.classList.toggle('dark', !!darkMode);
+    }, [darkMode]);
+    return <>{children}</>;
+};
+
+const AuthScreen = () => {
+    const [isLoginView, setIsLoginView] = useState(true);
+    const { login, register, isLoading, error } = useAuthStore();
+    const [email, setEmail] = useState('');
+    const [householdSize, setHouseholdSize] = useState(2);
+    const [formError, setFormError] = useState('');
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormError('');
+        if (!email) {
+            setFormError('Please enter a valid email.');
+            return;
+        }
+        if (isLoginView) await login(email);
+        else {
+            if (householdSize < 1) {
+                setFormError('Household size must be at least 1.');
+                return;
+            }
+            await register(email, householdSize);
+        }
+    };
+    
+    useEffect(() => {
+        if (error) setFormError(error);
+    }, [error]);
+
+    return (
+        <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gray-50 dark:bg-slate-900 p-4 transition-colors">
+            <div className="w-full max-w-md">
+                <div className="text-center mb-8">
+                    <h1 className="text-4xl font-bold text-emerald-600 dark:text-emerald-400 font-serif">PantryVeda</h1>
+                    <p className="text-gray-600 dark:text-gray-300 mt-2">Your Smart Kitchen Assistant</p>
+                </div>
+                <div className="bg-white dark:bg-slate-800 p-8 rounded-2xl shadow-lg border border-gray-200 dark:border-slate-700">
+                    <h2 className="text-2xl font-semibold text-center text-gray-800 dark:text-gray-100 mb-6">{isLoginView ? 'Welcome Back' : 'Create Account'}</h2>
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-4">
+                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-gray-900 dark:text-gray-100"/>
+                        </div>
+                        {!isLoginView && (
+                            <div className="mb-6">
+                                <label htmlFor="householdSize" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Household Size</label>
+                                <input id="householdSize" type="number" value={householdSize} onChange={(e) => setHouseholdSize(parseInt(e.target.value))} min="1" className="w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none text-gray-900 dark:text-gray-100"/>
+                            </div>
+                        )}
+                        {formError && <p className="text-red-500 text-sm text-center mb-4">{formError}</p>}
+                        <button type="submit" disabled={isLoading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-lg flex items-center justify-center transition-all duration-300 disabled:bg-emerald-400">
+                            {isLoading ? <Spinner /> : (isLoginView ? 'Login' : 'Register')}
+                        </button>
+                    </form>
+                    <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
+                        {isLoginView ? "Don't have an account?" : "Already have an account?"}
+                        <button onClick={() => {setIsLoginView(!isLoginView); setFormError('');}} className="font-semibold text-emerald-600 dark:text-emerald-400 hover:underline ml-1">
+                            {isLoginView ? 'Sign up' : 'Sign in'}
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// --- PANTRY COMPONENTS ---
+const AddPantryItemModal = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => void; }) => {
+    const { ingredients, addItem } = usePantryStore();
+    const user = useAuthStore(state => state.user);
+    const [selectedIngredient, setSelectedIngredient] = useState<string>(ingredients[0]?.id || '');
+    const [quantity, setQuantity] = useState<number>(1);
+    const [unit, setUnit] = useState<'g' | 'kg' | 'pcs' | 'L' | 'mL'>('pcs');
+    
+    const handleSubmit = () => {
+        if (!selectedIngredient || !user) return;
+        const ingredient = ingredients.find(i => i.id === selectedIngredient);
+        if (!ingredient) return;
+
+        const purchaseDate = new Date();
+        const expiryDate = new Date(purchaseDate);
+        expiryDate.setDate(purchaseDate.getDate() + ingredient.shelfLifeDays);
+
+        addItem({
+            userId: user.id,
+            ingredientId: selectedIngredient,
+            quantity,
+            unit,
+            purchaseDate: purchaseDate.toISOString(),
+            expiryDate: expiryDate.toISOString(),
+        });
+        onClose();
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-20">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg w-full max-w-md m-4">
+                <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-semibold text-lg text-gray-800 dark:text-gray-100">Add New Item</h3>
+                    <button onClick={onClose}><X size={24} className="text-gray-500 dark:text-gray-400" /></button>
+                </div>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Ingredient</label>
+                        <select value={selectedIngredient} onChange={e => setSelectedIngredient(e.target.value)} className="w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-gray-100">
+                            {ingredients.map(ing => <option key={ing.id} value={ing.id}>{ing.name}</option>)}
+                        </select>
+                    </div>
+                    <div className="flex gap-4">
+                        <div className="flex-grow">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quantity</label>
+                            <input type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value))} min="0" className="w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-gray-100"/>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Unit</label>
+                            <select value={unit} onChange={e => setUnit(e.target.value as any)} className="w-full px-4 py-2 bg-gray-100 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-900 dark:text-gray-100">
+                                <option value="pcs">pcs</option>
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="mL">mL</option>
+                                <option value="L">L</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-6 flex justify-end">
+                    <button onClick={handleSubmit} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">Add to Pantry</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const PantryItemCard = ({ item }: { item: PantryItem }) => {
+    const { ingredients, deleteItem, updateItem } = usePantryStore();
+    const ingredient = ingredients.find(i => i.id === item.ingredientId);
+    
+    const daysToExpire = Math.round((new Date(item.expiryDate).getTime() - new Date().getTime()) / (1000 * 3600 * 24));
+    
+    const expiryColor = daysToExpire <= 3 ? 'text-red-500' : daysToExpire <= 7 ? 'text-yellow-500' : 'text-green-500';
+
+    const handleQuantityChange = (amount: number) => {
+        const newQuantity = Math.max(0, item.quantity + amount);
+        updateItem(item.id, { quantity: newQuantity });
+    };
+
+    if (!ingredient) return null;
+
+    return (
+        <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 flex flex-col justify-between">
+            <div>
+                <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">{ingredient.name}</h4>
+                <p className={`text-sm font-semibold ${expiryColor}`}>
+                    {daysToExpire > 0 ? `Expires in ${daysToExpire} days` : daysToExpire === 0 ? 'Expires today' : 'Expired'}
+                </p>
+            </div>
+            <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center gap-2">
+                    <button onClick={() => handleQuantityChange(-1)} className="p-1 rounded-full bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500"><MinusCircle size={20}/></button>
+                    <span className="font-mono text-lg">{item.quantity} {item.unit}</span>
+                    <button onClick={() => handleQuantityChange(1)} className="p-1 rounded-full bg-gray-200 dark:bg-slate-600 hover:bg-gray-300 dark:hover:bg-slate-500"><PlusCircle size={20}/></button>
+                </div>
+                <button onClick={() => deleteItem(item.id)} className="p-2 rounded-full hover:bg-red-100 dark:hover:bg-red-900/50">
+                    <Trash2 size={20} className="text-red-500" />
+                </button>
+            </div>
+        </div>
+    );
+};
+
+const PantryView = () => {
+    const { pantryItems, fetchPantry } = usePantryStore();
+    const user = useAuthStore(state => state.user);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    
+    useEffect(() => {
+        if(user?.id) {
+            fetchPantry(user.id);
+        }
+    }, [user?.id, fetchPantry]);
+    
+    return (
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-xl">My Pantry</h3>
+                <button onClick={() => setIsModalOpen(true)} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-3 rounded-lg">
+                    <Plus size={18} />
+                    <span>Add Item</span>
+                </button>
+            </div>
+            {pantryItems.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {pantryItems.map(item => <PantryItemCard key={item.id} item={item} />)}
+                </div>
+            ) : (
+                <div className="text-center text-gray-500 dark:text-gray-400 py-8 border-2 border-dashed border-gray-300 dark:border-slate-600 rounded-lg">
+                    <ChefHat size={48} className="mx-auto text-gray-400" />
+                    <p className="mt-4">Your pantry is empty. Add your first item to get started!</p>
+                </div>
+            )}
+            <AddPantryItemModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+        </div>
+    );
+};
+
+// --- RECIPE COMPONENTS ---
+const RecipeCard = ({ recipe, missingCount, canMake }: { recipe: Recipe; missingCount: number; canMake: boolean }) => {
+    const { ingredients } = usePantryStore();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    return (
+        <>
+            <div 
+                onClick={() => setIsModalOpen(true)}
+                className={`bg-white dark:bg-slate-800 p-4 rounded-lg shadow-md border border-gray-200 dark:border-slate-700 cursor-pointer transition-all hover:shadow-xl hover:border-emerald-500 dark:hover:border-emerald-500 ${!canMake && 'opacity-60'}`}
+            >
+                <h4 className="font-bold text-lg text-gray-900 dark:text-gray-100">{recipe.name}</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{recipe.cuisine}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400 h-10 overflow-hidden">{recipe.description}</p>
+                <div className="mt-4 pt-2 border-t border-gray-200 dark:border-slate-600">
+                    {canMake ? (
+                        <p className="text-green-600 dark:text-green-400 font-semibold">You have all ingredients!</p>
+                    ) : (
+                        <p className="text-yellow-600 dark:text-yellow-400 font-semibold">Missing {missingCount} ingredient{missingCount > 1 ? 's' : ''}</p>
+                    )}
+                </div>
+            </div>
+            <RecipeDetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} recipe={recipe} />
+        </>
+    );
+};
+
+const RecipeDetailModal = ({ isOpen, onClose, recipe }: { isOpen: boolean; onClose: () => void; recipe: Recipe }) => {
+    const { ingredients, pantryItems } = usePantryStore();
+
+    if (!isOpen) return null;
+    
+    return (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-20 p-4">
+            <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 className="font-bold text-2xl text-gray-800 dark:text-gray-100">{recipe.name}</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">{recipe.cuisine}</p>
+                    </div>
+                    <button onClick={onClose}><X size={24} className="text-gray-500 dark:text-gray-400" /></button>
+                </div>
+
+                <p className="mb-4 text-gray-700 dark:text-gray-300">{recipe.description}</p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 className="font-semibold text-lg mb-2">Ingredients</h4>
+                        <ul className="space-y-1">
+                            {recipe.ingredients.map(req => {
+                                const pantryItem = pantryItems.find(p => p.ingredientId === req.ingredientId);
+                                const hasItem = pantryItem && pantryItem.quantity > 0;
+                                return (
+                                    <li key={req.ingredientId} className={`flex items-center gap-2 ${hasItem ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+                                        {hasItem ? '✓' : '✗'} 
+                                        <span>{ingredients.find(i=>i.id === req.ingredientId)?.name}</span>
+                                        <span className="text-gray-500 dark:text-gray-400 text-sm">({req.quantity}{req.unit})</span>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 className="font-semibold text-lg mb-2">Instructions</h4>
+                         <ol className="list-decimal list-inside space-y-2 text-gray-700 dark:text-gray-300">
+                             {recipe.instructions.map((step, index) => <li key={index}>{step}</li>)}
+                         </ol>
+                    </div>
+                </div>
+
+                 <div className="mt-6 flex justify-end">
+                    <button onClick={onClose} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded-lg">Close</button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+const RecipeSuggestionsView = () => {
+    const { pantryItems, recipes } = usePantryStore();
+
+    const suggestedRecipes = useMemo(() => {
+        if (pantryItems.length === 0) return [];
+        
+        const availableIngredientIds = new Set(pantryItems.map(item => item.ingredientId));
+
+        return recipes.map(recipe => {
+            let missingCount = 0;
+            for (const required of recipe.ingredients) {
+                if (!availableIngredientIds.has(required.ingredientId)) {
+                    missingCount++;
+                }
+            }
+            return { recipe, missingCount, canMake: missingCount === 0 };
+        }).sort((a, b) => a.missingCount - b.missingCount);
+
+    }, [pantryItems, recipes]);
+
+    return (
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-semibold text-xl">Recipe Suggestions</h3>
+            </div>
+            {pantryItems.length === 0 ? (
+                 <div className="text-center text-gray-500 dark:text-gray-400 py-8">
+                     <UtensilsCrossed size={48} className="mx-auto text-gray-400" />
+                     <p className="mt-4">Add items to your pantry to get recipe suggestions.</p>
+                 </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {suggestedRecipes.map(({recipe, missingCount, canMake}) => (
+                        <RecipeCard key={recipe.id} recipe={recipe} missingCount={missingCount} canMake={canMake} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+
+// Dashboard Screen
+const DashboardScreen = () => {
+    const { user, logout, toggleDarkMode } = useAuthStore();
+    const isDarkMode = user?.preferences.darkMode;
+
+    return (
+        <div className="min-h-screen bg-gray-100 dark:bg-slate-900 text-gray-800 dark:text-gray-100 transition-colors">
+            <header className="bg-white dark:bg-slate-800 shadow-md p-4 flex justify-between items-center sticky top-0 z-10">
+                <h1 className="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-serif">PantryVeda</h1>
+                <div className="flex items-center space-x-4">
+                    <button onClick={toggleDarkMode} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700">
+                        {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+                    </button>
+                    <span className="text-sm hidden sm:block">{user?.email}</span>
+                    <button onClick={logout} className="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-slate-700">
+                        <LogOut size={20} className="text-red-500" />
+                    </button>
+                </div>
+            </header>
+
+            <main className="p-4 md:p-8">
+                <div className="max-w-7xl mx-auto space-y-8">
+                    <div>
+                      <h2 className="text-3xl font-semibold mb-2">Dashboard</h2>
+                      <p className="text-gray-600 dark:text-gray-400">Welcome back! Here's a glimpse of your smart kitchen.</p>
+                    </div>
+
+                    <PantryView />
+                    <RecipeSuggestionsView />
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 opacity-60">
+                            <h3 className="font-semibold text-lg mb-2">Meal Planner</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Plan your week to reduce waste. Coming soon!</p>
+                        </div>
+                         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-slate-700 opacity-60">
+                            <h3 className="font-semibold text-lg mb-2">Shopping List</h3>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Your intelligent shopping list awaits. Coming soon!</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <div className="fixed bottom-6 right-6">
+                <button className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-4 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110">
+                    <Camera size={24} />
+                    <span className="ml-2 hidden sm:inline">Scan Ingredients</span>
+                </button>
+            </div>
+        </div>
+    );
+};
+
+// --- MAIN APP COMPONENT (App.tsx) ---
+export default function App() {
+  const { isAuthenticated, isLoading, checkAuth } = useAuthStore();
+  
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-gray-50 dark:bg-slate-900">
+        <Spinner />
+      </div>
+    );
+  }
+
+  return (
+    <ThemeProvider>
+        {isAuthenticated ? <DashboardScreen /> : <AuthScreen />}
+    </ThemeProvider>
+  );
+}
+
