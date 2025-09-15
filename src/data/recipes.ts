@@ -1,0 +1,65 @@
+import { Recipe } from '@/types';
+
+export const indianRecipesDatabase: Recipe[] = [
+  {
+    id: 'rec1',
+    name: 'Palak Paneer',
+    description: 'Spinach curry with cottage cheese cubes',
+    cuisine: 'North Indian',
+    difficulty: 'beginner',
+    cookingTime: 45,
+    servings: 4,
+    dietary: ['veg', 'gluten-free'],
+    ingredients: [
+      { name: 'Spinach', quantity: 500, unit: 'g' },
+      { name: 'Paneer', quantity: 250, unit: 'g' },
+      { name: 'Onion', quantity: 2, unit: 'pcs' },
+      { name: 'Tomato', quantity: 2, unit: 'pcs' },
+      { name: 'Ghee', quantity: 2, unit: 'ml' }, // Represents tbsp
+      { name: 'Turmeric Powder', quantity: 5, unit: 'g' },
+    ],
+    instructions: ['Boil spinach...', 'Sauté onions...', 'Add paneer and cook.'],
+    spiceLevel: 'mild',
+    image: '/images/palak-paneer.jpg',
+  },
+  {
+    id: 'rec2',
+    name: 'Butter Chicken',
+    description: 'Creamy and rich North Indian curry with tender chicken',
+    cuisine: 'North Indian',
+    difficulty: 'intermediate',
+    cookingTime: 65,
+    servings: 4,
+    dietary: ['non-veg'],
+    ingredients: [
+      { name: 'Chicken', quantity: 500, unit: 'g' },
+      { name: 'Tomato', quantity: 4, unit: 'pcs' },
+      { name: 'Yogurt', quantity: 100, unit: 'g' },
+      { name: 'Garam Masala', quantity: 10, unit: 'g' },
+      { name: 'Milk', quantity: 50, unit: 'ml' },
+    ],
+    instructions: ['Marinate chicken...', 'Make the gravy...', 'Combine and simmer.'],
+    spiceLevel: 'medium',
+    image: '/images/butter-chicken.jpg',
+  },
+  {
+    id: 'rec3',
+    name: 'Masala Dosa',
+    description: 'A popular South Indian fermented crepe made from rice batter and black lentils.',
+    cuisine: 'South Indian',
+    difficulty: 'intermediate',
+    cookingTime: 30,
+    servings: 2,
+    dietary: ['veg', 'vegan', 'gluten-free'],
+    ingredients: [
+      { name: 'Basmati Rice', quantity: 200, unit: 'g' },
+      { name: 'Toor Dal', quantity: 50, unit: 'g' },
+      { name: 'Potato', quantity: 3, unit: 'pcs' },
+      { name: 'Onion', quantity: 1, unit: 'pcs' },
+      { name: 'Mustard Seeds', quantity: 5, unit: 'g' },
+    ],
+    instructions: ['Soak rice and dal...', 'Grind to a batter and ferment...', 'Prepare potato filling...','Make dosas.'],
+    spiceLevel: 'medium',
+    image: '/images/masala-dosa.jpg',
+  }
+];
