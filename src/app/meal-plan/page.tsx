@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from 'react';
-import { DndContext, DragEndEvent } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
 import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { DraggableRecipeCard } from '@/components/meal-plan/DraggableRecipeCard';
 import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
@@ -10,9 +10,14 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 export default function MealPlannerPage() {
   const { recipes, assignRecipeToMeal } = usePantryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [activeRecipe, setActiveRecipe] = useState<string | null>(null);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { over, active } = event;
+    setActiveRecipe(null); 
     if (over && over.data.current && active.data.current) {
       const recipeId = active.data.current.recipeId as string;
       const { date, meal } = over.data.current as { date: string; meal: keyof DayPlan };
@@ -29,7 +34,15 @@ export default function MealPlannerPage() {
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
   
   return (
-    <DndContext onDragEnd={handleDragEnd}>
+    <DndContext 
+    sensors={sensors}
+      onDragStart={(event) => {
+        if (event.active.data.current?.recipeId) {
+          setActiveRecipe(event.active.data.current.recipeId);
+        }
+      }}
+      onDragEnd={handleDragEnd}
+      onDragCancel={() => setActiveRecipe(null)}>
       <div className="flex h-full gap-6">
         {/* Recipe Sidebar */}
         <aside className="w-64 bg-white p-4 rounded-xl shadow-md flex-shrink-0">
@@ -68,6 +81,13 @@ export default function MealPlannerPage() {
           </div>
         </main>
       </div>
+      <DragOverlay>
+        {activeRecipe ? (
+          <div className="p-2 bg-white border rounded-lg shadow-lg">
+            {recipes.find(r => r.id === activeRecipe)?.name}
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 }
