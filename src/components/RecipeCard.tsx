@@ -1,4 +1,3 @@
-// ... imports
 import { MatchedRecipe } from '@/lib/recipeMatcher';
 import { Flame, Clock, Users, ShoppingCart } from 'lucide-react'; // Add ShoppingCart icon
 import React from 'react';
@@ -17,15 +16,18 @@ export const RecipeCard: React.FC<{ recipe: MatchedRecipe }> = ({ recipe }) => {
       alert("You already have all ingredients for this recipe!");
     }
   };
-  
-  // ... getMatchColor function is the same
+
+  const getMatchColor = () => {
+    if (recipe.matchPercentage === 100) return 'bg-green-100 text-green-800';
+    if (recipe.matchPercentage >= 80) return 'bg-yellow-100 text-yellow-800';
+    return 'bg-red-100 text-red-800';
+  };
 
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-lg border border-gray-200 flex flex-col">
-       {/* ... Image and Title section is the same */}
       <div className="relative">
         <img src={recipe.image} alt={recipe.name} className="w-full h-48 object-cover" />
-        <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded-full`}>
+        <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded-full ${getMatchColor()}`}>
           {recipe.matchPercentage}% Match
         </span>
       </div>
@@ -38,9 +40,18 @@ export const RecipeCard: React.FC<{ recipe: MatchedRecipe }> = ({ recipe }) => {
           <div className="flex items-center gap-1 capitalize"><Flame size={14} /> {recipe.spiceLevel}</div>
         </div>
 
-        {/* ... Missing ingredients display is the same */}
-        
-        {/* --- NEW BUTTON --- */}
+        <div>
+          {recipe.matchPercentage === 100 ? (
+            <div className="bg-curry-green/10 text-curry-green text-sm p-2 rounded-md font-semibold text-center">
+              You have all ingredients!
+            </div>
+          ) : (
+            <div className="bg-chili-red/10 text-chili-red text-sm p-2 rounded-md">
+              <p className="font-semibold">Missing ({recipe.missingIngredients.length}):</p>
+              <p className="text-xs">{recipe.missingIngredients.join(', ')}</p>
+            </div>
+          )}
+        </div>
         <button
           onClick={handleAddMissing}
           className="mt-4 w-full bg-accent-primary/10 text-accent-primary font-semibold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-accent-primary/20 transition-colors"

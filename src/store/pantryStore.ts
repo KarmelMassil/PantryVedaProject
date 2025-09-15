@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { Ingredient, UserPreferences, Recipe } from '@/types';
 import { indianRecipesDatabase } from '@/data/recipes';
+import { Recipe, Ingredient, UserPreferences } from '@/types';
 
 // Add this new type for our shopping list items
 export interface ShoppingListItem {
@@ -13,11 +13,22 @@ export interface ShoppingListItem {
   checked: boolean;
 }
 
+export interface DayPlan {
+  breakfast: string | null; // We will store recipe IDs
+  lunch: string | null;
+  dinner: string | null;
+}
+
+// Define the main meal plan structure
+export type MealPlan = Record<string, DayPlan>; // Key is ISO date string 'YYYY-MM-DD'
+
+
 interface PantryState {
   inventory: Ingredient[];
   preferences: UserPreferences;
   recipes: Recipe[];
   shoppingList: ShoppingListItem[]; // New state
+  mealPlan: MealPlan; // New state
   addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
   removeIngredient: (id: string) => void;
   updateIngredient: (id: string, updates: Partial<Ingredient>) => void;
@@ -27,6 +38,8 @@ interface PantryState {
   updateShoppingListItem: (id: string, updates: Partial<ShoppingListItem>) => void;
   removeShoppingListItem: (id: string) => void;
   clearShoppingList: () => void;
+  assignRecipeToMeal: (date: string, meal: keyof DayPlan, recipeId: string) => void;
+  removeRecipeFromMeal: (date: string, meal: keyof DayPlan) => void;
 }
 
 export const usePantryStore = create<PantryState>()(
@@ -42,6 +55,7 @@ export const usePantryStore = create<PantryState>()(
       },
       recipes: indianRecipesDatabase,
       shoppingList: [], // Initialize empty shopping list
+      mealPlan: {}, // Initialize empty meal plan
       
       addIngredient: (ingredient) =>
         set((state) => ({
@@ -100,6 +114,27 @@ export const usePantryStore = create<PantryState>()(
         })),
         
       clearShoppingList: () => set({ shoppingList: [] }),
+
+     // --- New Actions for Meal Plan ---
+      assignRecipeToMeal: (date, meal, recipeId) =>
+        set((state) => ({
+          mealPlan: {
+            ...state.mealPlan,
+            [date]: {
+              ...(state.mealPlan[date] || { breakfast: null, lunch: null, dinner: null }),
+              [meal]: recipeId,
+            },
+          },
+        })),
+
+      removeRecipeFromMeal: (date, meal) =>
+        set((state) => {
+          const newMealPlan = { ...state.mealPlan };
+          if (newMealPlan[date]) {
+            newMealPlan[date][meal] = null;
+          }
+          return { mealPlan: newMealPlan };
+        }),
     }),
     {
       name: 'pantryveda-storage',
