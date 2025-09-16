@@ -1,12 +1,10 @@
 import { Ingredient, Recipe } from "@/types";
-import { ShoppingListItem } from "@/store/pantryStore";
+import { MealPlan, ShoppingListItem } from "@/store/pantryStore";
+import { eachDayOfInterval, isWithinInterval } from "date-fns";
+import { indianIngredientsDatabase } from "@/data/ingredients";
 
 type ShoppingSuggestion = Omit<ShoppingListItem, 'id' | 'checked'>;
 
-/**
- * Generates a list of missing ingredients for a single recipe.
- * It calculates the difference between required quantity and pantry quantity.
- */
 export const generateFromRecipe = (recipe: Recipe, inventory: Ingredient[]): ShoppingSuggestion[] => {
   const inventoryMap = new Map<string, number>(
     inventory.map(item => [item.name.toLowerCase(), item.quantity])
@@ -29,19 +27,67 @@ export const generateFromRecipe = (recipe: Recipe, inventory: Ingredient[]): Sho
   return missingItems;
 };
 
-/**
- * ML Simulation: Identifies items that are running low based on predefined thresholds.
- * In a real app, these thresholds would be learned from user consumption patterns.
- */
+export const generateFromMealPlan = (
+  mealPlan: MealPlan, 
+  recipes: Recipe[], 
+  inventory: Ingredient[],
+  startDate: Date,
+  endDate: Date
+): ShoppingSuggestion[] => {
+  const requiredIngredients = new Map<string, { quantity: number; unit: Ingredient['unit']; category: Ingredient['category'] }>();
+  
+  const weekDates = eachDayOfInterval({ start: startDate, end: endDate });
+
+  weekDates.forEach(date => {
+    const dateKey = date.toISOString().split('T')[0];
+    const dayPlan = mealPlan[dateKey];
+    if (!dayPlan) return;
+
+    const recipeIds = Object.values(dayPlan).filter(id => id !== null) as string[];
+    
+    recipeIds.forEach(id => {
+      const recipe = recipes.find(r => r.id === id);
+      if (!recipe) return;
+
+      recipe.ingredients.forEach(req => {
+        const key = req.name.toLowerCase();
+        const existing = requiredIngredients.get(key);
+        if (existing) {
+          existing.quantity += req.quantity;
+        } else {
+          requiredIngredients.set(key, {
+            quantity: req.quantity,
+            unit: req.unit,
+            category: findCategory(req.name) || 'Other',
+          });
+        }
+      });
+    });
+  });
+
+  const inventoryMap = new Map<string, number>(inventory.map(item => [item.name.toLowerCase(), item.quantity]));
+  const missingItems: ShoppingSuggestion[] = [];
+
+  requiredIngredients.forEach((req, name) => {
+    const availableQty = inventoryMap.get(name) || 0;
+    if (availableQty < req.quantity) {
+      const originalName = indianIngredientsDatabase.find(i => i.name.toLowerCase() === name)?.name || name;
+      missingItems.push({
+        name: originalName,
+        category: req.category,
+        quantity: req.quantity - availableQty,
+        unit: req.unit,
+      });
+    }
+  });
+
+  return missingItems;
+};
+
+
 export const generateLowStockSuggestions = (inventory: Ingredient[]): ShoppingSuggestion[] => {
-  // SIMULATION: Define staples and their minimum stock levels.
   const stapleThresholds: Record<string, number> = {
-    'Onion': 0.5, // kg
-    'Tomato': 0.5, // kg
-    'Ginger': 50,  // g
-    'Garlic': 50,  // g
-    'Basmati Rice': 1, // kg
-    'Milk': 1, // l
+    'Onion': 0.5, 'Tomato': 0.5, 'Ginger': 50, 'Garlic': 50, 'Basmati Rice': 1, 'Milk': 1,
   };
   
   const suggestions: ShoppingSuggestion[] = [];
@@ -52,7 +98,7 @@ export const generateLowStockSuggestions = (inventory: Ingredient[]): ShoppingSu
       suggestions.push({
         name: item.name,
         category: item.category,
-        quantity: (threshold * 2) - item.quantity, // Suggest buying enough to restock
+        quantity: (threshold * 2) - item.quantity,
         unit: item.unit,
       });
     }
@@ -61,9 +107,5 @@ export const generateLowStockSuggestions = (inventory: Ingredient[]): ShoppingSu
   return suggestions;
 };
 
-
-// Helper to find an ingredient's category from its name (useful for manual adds)
-import { indianIngredientsDatabase } from "@/data/ingredients";
 const ingredientCategoryMap = new Map(indianIngredientsDatabase.map(i => [i.name, i.category]));
-
 export const findCategory = (name: string) => ingredientCategoryMap.get(name);
