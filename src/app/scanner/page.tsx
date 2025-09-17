@@ -7,6 +7,7 @@ import { Ingredient } from '@/types';
 import { format, formatISO } from 'date-fns';
 import { calculateDefaultExpiry } from '@/lib/dateUtils';
 import { PackagePlus, Trash2 } from 'lucide-react';
+import { indianIngredientsDatabase } from '@/data/ingredients';
 
 type ScannedItem = Omit<Ingredient, 'id'>;
 
@@ -44,6 +45,23 @@ export default function ScannerPage() {
     alert(`${scannedItems.length} item(s) saved to your pantry!`);
   };
 
+  const handleSimulatedRecognition = () => {
+    const randomIngredient = indianIngredientsDatabase[Math.floor(Math.random() * indianIngredientsDatabase.length)];
+    const purchaseDate = new Date();
+    
+    const newScannedItem: ScannedItem = {
+      name: randomIngredient.name,
+      category: randomIngredient.category,
+      unit: randomIngredient.unit,
+      quantity: 1, // Default quantity
+      value: Math.floor(Math.random() * 100) + 20, // Random value
+      purchaseDate: formatISO(purchaseDate),
+      expiryDate: calculateDefaultExpiry(purchaseDate, randomIngredient.category),
+    };
+
+    setScannedItems(prev => [...prev, newScannedItem]);
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-text-primary">Smart Scanner</h1>
@@ -54,7 +72,7 @@ export default function ScannerPage() {
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-bold mb-4">Camera Scanner</h2>
-            <CameraScanner />
+            <CameraScanner onRecognize={handleSimulatedRecognition}/>
           </div>
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-bold mb-4">Ingredient Database</h2>
