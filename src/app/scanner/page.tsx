@@ -62,6 +62,83 @@ export default function ScannerPage() {
     setScannedItems(prev => [...prev, newScannedItem]);
   };
 
+  /*
+  const handleRecognition = (detectedLabels: string[]) => {
+    const newItems: ScannedItem[] = [];
+    const purchaseDate = new Date();
+
+    detectedLabels.forEach(label => {
+      // Find the full ingredient details from our database
+      const ingredientInfo = indianIngredientsDatabase.find(
+        item => item.name.toLowerCase() === label.toLowerCase()
+      );
+
+      if (ingredientInfo) {
+        newItems.push({
+          name: ingredientInfo.name,
+          category: ingredientInfo.category,
+          unit: ingredientInfo.unit,
+          quantity: 1, // Default quantity
+          value: Math.floor(Math.random() * 100) + 20, // Random value for now
+          purchaseDate: formatISO(purchaseDate),
+          expiryDate: calculateDefaultExpiry(purchaseDate, ingredientInfo.category),
+        });
+      }
+    });
+
+    if (newItems.length > 0) {
+      setScannedItems(prev => [...prev, ...newItems]);
+    } else {
+      console.log("No known ingredients were detected.");
+    }
+  };
+  */
+
+  const handleRecognition = (detectedLabels: string[]) => {
+    // --- START OF DEBUGGING CODE ---
+    // Log the labels exactly as the model predicted them.
+    console.log("Labels received from model:", detectedLabels);
+    
+    // Log all the known ingredient names from our database for comparison.
+    const knownIngredientNames = indianIngredientsDatabase.map(i => i.name.toLowerCase());
+    console.log("Known ingredients in database:", knownIngredientNames);
+    // --- END OF DEBUGGING CODE ---
+
+    const newItems: ScannedItem[] = [];
+    const purchaseDate = new Date();
+
+    detectedLabels.forEach(label => {
+      // Proactive Fix: Use .trim() to remove whitespace from the model's prediction.
+      const cleanedLabel = label.trim().toLowerCase();
+      
+      const ingredientInfo = indianIngredientsDatabase.find(
+        item => item.name.toLowerCase() === cleanedLabel
+      );
+
+      if (ingredientInfo) {
+        // This part is working, but the 'if' condition is never met.
+        newItems.push({
+          name: ingredientInfo.name,
+          category: ingredientInfo.category,
+          unit: ingredientInfo.unit,
+          quantity: 1,
+          value: Math.floor(Math.random() * 100) + 20,
+          purchaseDate: formatISO(purchaseDate),
+          expiryDate: calculateDefaultExpiry(purchaseDate, ingredientInfo.category),
+        });
+      } else {
+        // This log will now tell you exactly which label is failing.
+        console.warn(`'${label}' not found in the ingredient database.`);
+      }
+    });
+
+    if (newItems.length > 0) {
+      setScannedItems(prev => [...prev, ...newItems]);
+    } else {
+      console.log("No known ingredients were detected."); // This is the message you are currently seeing.
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-text-primary">Smart Scanner</h1>
@@ -72,7 +149,7 @@ export default function ScannerPage() {
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-bold mb-4">Camera Scanner</h2>
-            <CameraScanner onRecognize={handleSimulatedRecognition}/>
+            <CameraScanner onRecognize={handleRecognition}/>
           </div>
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-bold mb-4">Ingredient Database</h2>
