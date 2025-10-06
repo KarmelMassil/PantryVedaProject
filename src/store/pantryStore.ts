@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { indianRecipesDatabase } from '@/data/recipes';
-import { Recipe, Ingredient, UserPreferences } from '@/types';
+import { Recipe, Ingredient, UserPreferences, ConsumptionEvent, WasteEvent } from '@/types';
 
 // Add this new type for our shopping list items
 export interface ShoppingListItem {
@@ -27,24 +27,28 @@ interface PantryState {
   inventory: Ingredient[];
   preferences: UserPreferences;
   recipes: Recipe[];
-  shoppingList: ShoppingListItem[]; // New state
-  mealPlan: MealPlan; // New state
+  shoppingList: ShoppingListItem[];
+  mealPlan: MealPlan; 
+  consumptionLog: ConsumptionEvent[];
+  wasteLog: WasteEvent[];
   addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
   removeIngredient: (id: string) => void;
   updateIngredient: (id: string, updates: Partial<Ingredient>) => void;
   updatePreferences: (updates: Partial<UserPreferences>) => void;
-  // --- New Actions for Shopping List ---
   addItemsToShoppingList: (items: Omit<ShoppingListItem, 'id' | 'checked'>[]) => void;
   updateShoppingListItem: (id: string, updates: Partial<ShoppingListItem>) => void;
   removeShoppingListItem: (id: string) => void;
   clearShoppingList: () => void;
   assignRecipeToMeal: (date: string, meal: keyof DayPlan, recipeId: string) => void;
   removeRecipeFromMeal: (date: string, meal: keyof DayPlan) => void;
+  logConsumption: (events: ConsumptionEvent[]) => void;
+  logWaste: (event: WasteEvent) => void;
+  deductFromInventory: (name: string, quantity: number) => void;
 }
 
 export const usePantryStore = create<PantryState>()(
   persist(
-    (set, get) => ({ // Add 'get' to access current state
+    (set, get) => ({
       inventory: [],
       preferences: {
         familySize: 2,
@@ -54,8 +58,10 @@ export const usePantryStore = create<PantryState>()(
         cookingSkill: 'intermediate',
       },
       recipes: indianRecipesDatabase,
-      shoppingList: [], // Initialize empty shopping list
-      mealPlan: {}, // Initialize empty meal plan
+      shoppingList: [],
+      mealPlan: {},
+      consumptionLog: [],
+      wasteLog: [],
       
       addIngredient: (ingredient) =>
         set((state) => ({
@@ -79,7 +85,6 @@ export const usePantryStore = create<PantryState>()(
           preferences: { ...state.preferences, ...updates },
         })),
       
-      // --- Implementation of New Actions ---
       addItemsToShoppingList: (itemsToAdd) => {
         const { shoppingList } = get();
         const updatedList = [...shoppingList];
@@ -115,7 +120,6 @@ export const usePantryStore = create<PantryState>()(
         
       clearShoppingList: () => set({ shoppingList: [] }),
 
-     // --- New Actions for Meal Plan ---
       assignRecipeToMeal: (date, meal, recipeId) =>
         set((state) => ({
           mealPlan: {
@@ -135,6 +139,27 @@ export const usePantryStore = create<PantryState>()(
           }
           return { mealPlan: newMealPlan };
         }),
+        logConsumption: (events) =>
+        set((state) => ({
+          consumptionLog: [...state.consumptionLog, ...events],
+        })),
+
+      logWaste: (event) =>
+        set((state) => ({
+          wasteLog: [...state.wasteLog, event],
+        })),
+
+      deductFromInventory: (name, quantity) => {
+        const { inventory } = get();
+        const updatedInventory = inventory.map(item => {
+          if (item.name.toLowerCase() === name.toLowerCase()) {
+            return { ...item, quantity: Math.max(0, item.quantity - quantity) };
+          }
+          return item;
+        }).filter(item => item.quantity > 0); // Remove if quantity is zero
+        
+        set({ inventory: updatedInventory });
+      },
     }),
     {
       name: 'pantryveda-storage',

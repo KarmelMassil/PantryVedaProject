@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { usePantryStore } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
 import { differenceInDays, format } from 'date-fns';
-import { Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee } from 'lucide-react';
+import { Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2 } from 'lucide-react';
+import { WasteEvent } from '@/types';
 
 export default function InventoryPage() {
-  const { inventory, removeIngredient } = usePantryStore();
+  const { inventory, logWaste, removeIngredient } = usePantryStore();
   
   const totalItems = inventory.length;
   const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
@@ -23,6 +24,24 @@ export default function InventoryPage() {
     return { text: `Expires on ${format(new Date(expiryDate), 'MMM dd')}`, color: 'text-curry-green' };
   };
 
+  const handleMarkAsWasted = (item: typeof inventory[0]) => {
+    // 1. Create the waste event
+    const wasteEvent: WasteEvent = {
+      ingredientName: item.name,
+      quantityWasted: item.quantity,
+      unit: item.unit,
+      timestamp: new Date().toISOString(),
+      reason: 'expired',
+    };
+    // 2. Log the event
+    logWaste(wasteEvent);
+    // 3. Remove the item from inventory
+    removeIngredient(item.id);
+    
+    alert(`${item.name} marked as wasted and removed from pantry.`);
+  };
+
+
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-text-primary">My Pantry</h1>
@@ -37,6 +56,8 @@ export default function InventoryPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {inventory.map(item => {
           const status = getExpiryStatus(item.expiryDate);
+          const daysUntilExpiry = differenceInDays(new Date(item.expiryDate), new Date());
+          
           return (
             <Card key={item.id} className="flex flex-col justify-between">
               <div>
@@ -48,6 +69,15 @@ export default function InventoryPage() {
               <div className={`mt-4 text-sm font-semibold ${status.color}`}>
                 {status.text}
               </div>
+              {daysUntilExpiry < 0 && (
+                  <button 
+                    onClick={() => handleMarkAsWasted(item)}
+                    className="mt-2 w-full text-sm bg-chili-red/10 text-chili-red font-semibold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-chili-red/20 transition-colors"
+                  >
+                    <Trash2 size={14} />
+                    Mark as Wasted
+                  </button>
+                )}
             </Card>
           );
         })}

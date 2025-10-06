@@ -4,38 +4,39 @@ import { usePantryStore, ShoppingListItem } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
 import { findCategory, generateLowStockSuggestions } from '@/lib/shoppingListGenerator';
 import { Trash2, Plus, Share2, Download, Lightbulb } from 'lucide-react';
+import { generateHeuristicSuggestions } from '@/lib/suggestionEngine';
+import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
+import { Ingredient } from '@/types';
 
 export default function ShoppingListPage() {
   const { 
     shoppingList, 
     inventory,
+    consumptionLog,
     updateShoppingListItem, 
     removeShoppingListItem, 
     addItemsToShoppingList 
   } = usePantryStore();
 
-  const [customItem, setCustomItem] = useState({ name: '', quantity: '1' });
+  type DbIngredient = Omit<Ingredient, 'id' | 'quantity' | 'purchaseDate' | 'expiryDate' | 'value'>;
+  const [selectedItem, setSelectedItem] = useState<DbIngredient | null>(null);
+  const [itemQuantity, setItemQuantity] = useState('1');
 
-  const handleAddCustomItem = () => {
-    if (!customItem.name) return;
-    const item: Omit<ShoppingListItem, 'id' | 'checked'> = {
-      name: customItem.name,
-      quantity: parseFloat(customItem.quantity),
-      unit: 'pcs', // Default unit for custom items
-      category: findCategory(customItem.name) || 'Other',
+  const handleAddSelectedItem = () => {
+    if (!selectedItem) return;
+
+    const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked'> = {
+      name: selectedItem.name,
+      category: selectedItem.category,
+      quantity: parseFloat(itemQuantity) || 1,
+      unit: selectedItem.unit,
     };
-    addItemsToShoppingList([item]);
-    setCustomItem({ name: '', quantity: '1' }); // Reset form
-  };
-
-  const handleAddLowStock = () => {
-    const lowStockItems = generateLowStockSuggestions(inventory);
-    if (lowStockItems.length > 0) {
-      addItemsToShoppingList(lowStockItems);
-      alert(`Added ${lowStockItems.length} low-stock item(s) to your list!`);
-    } else {
-      alert("No staple items are running low right now.");
-    }
+    
+    addItemsToShoppingList([itemToAdd]);
+    
+    // Reset the form
+    setSelectedItem(null);
+    setItemQuantity('1');
   };
 
   const categorizedList = useMemo(() => {
@@ -49,6 +50,18 @@ export default function ShoppingListPage() {
     }, {} as Record<string, ShoppingListItem[]>);
   }, [shoppingList]);
 
+  const handleGetSmartSuggestions = () => {
+    // Use the new heuristic engine instead of the old low-stock function
+    const suggestions = generateHeuristicSuggestions(inventory, consumptionLog);
+    
+    if (suggestions.length > 0) {
+      addItemsToShoppingList(suggestions);
+      alert(`Added ${suggestions.length} smart suggestion(s) to your list!`);
+    } else {
+      alert("No smart suggestions right now. Try cooking a few more meals!");
+    }
+  };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Main Content */}
@@ -61,24 +74,29 @@ export default function ShoppingListPage() {
           </div>
         </div>
 
-        {/* Manual Add Form */}
-        <Card className="flex items-center gap-2">
-          <input 
-            type="text" 
-            placeholder="Add Custom Item (e.g., Paper Towels)"
-            value={customItem.name}
-            onChange={(e) => setCustomItem({...customItem, name: e.target.value})}
-            className="flex-grow p-2 border border-gray-300 rounded-md"
-          />
-          <input 
-            type="number" 
-            value={customItem.quantity}
-            onChange={(e) => setCustomItem({...customItem, quantity: e.target.value})}
-            className="w-20 p-2 border border-gray-300 rounded-md"
-          />
-          <button onClick={handleAddCustomItem} className="bg-accent-primary text-white p-2 rounded-lg hover:bg-orange-700">
-            <Plus size={24} />
-          </button>
+        {/* AutoComplete Form */}
+        <Card>
+          <h3 className="font-bold mb-2">Add Ingredient from Database</h3>
+          <div className="space-y-2">
+            <IngredientAutocomplete onSelect={(ingredient) => setSelectedItem(ingredient)} />
+            
+            {selectedItem && (
+              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+                <span className="font-semibold flex-grow">{selectedItem.name}</span>
+                <input 
+                  type="number" 
+                  value={itemQuantity}
+                  onChange={(e) => setItemQuantity(e.target.value)}
+                  className="w-20 p-2 border border-gray-300 rounded-md"
+                  placeholder="Qty"
+                />
+                <span className="text-sm text-gray-500">{selectedItem.unit}</span>
+                <button onClick={handleAddSelectedItem} className="bg-accent-primary text-white p-2 rounded-lg hover:bg-orange-700">
+                  <Plus size={24} />
+                </button>
+              </div>
+            )}
+          </div>
         </Card>
 
         {/* List */}
@@ -124,9 +142,9 @@ export default function ShoppingListPage() {
         </Card>
          <Card className="bg-yellow-50 border-yellow-200">
             <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Lightbulb size={20} className="text-yellow-500"/> Smart Tips</h3>
-             <button onClick={handleAddLowStock} className="w-full text-left p-3 bg-white rounded-lg hover:bg-gray-50 border mb-2">
-                <p className="font-semibold">Add Low-Stock Staples</p>
-                <p className="text-xs text-text-secondary">Restock essentials like onions, rice, etc.</p>
+             <button onClick={handleGetSmartSuggestions} className="w-full text-left p-3 bg-white rounded-lg hover:bg-gray-50 border mb-2">
+                <p className="font-semibold">Get Smart Suggestions</p>
+                <p className="text-xs text-text-secondary">Based on your consumption habits.</p>
             </button>
             <ul className="text-sm text-text-secondary space-y-1 list-disc list-inside">
                 <li>Check expiry dates, especially for dairy.</li>

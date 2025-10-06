@@ -35,3 +35,20 @@ export interface UserPreferences {
   dietaryRestrictions: Recipe['dietary'];
   cookingSkill: Recipe['difficulty'];
 }
+
+export interface ConsumptionEvent {
+  ingredientName: string;
+  quantityConsumed: number;
+  unit: Ingredient['unit'];
+  timestamp: string;
+  context: 'recipe' | 'manual';
+  recipeId?: string;
+}
+
+export interface WasteEvent {
+  ingredientName: string;
+  quantityWasted: number;
+  unit: Ingredient['unit'];
+  timestamp: string;
+  reason: 'expired' | 'other';
+}
