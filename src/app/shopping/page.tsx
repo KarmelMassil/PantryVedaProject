@@ -2,9 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { findCategory, generateLowStockSuggestions } from '@/lib/shoppingListGenerator';
 import { Trash2, Plus, Share2, Download, Lightbulb } from 'lucide-react';
-import { generateHeuristicSuggestions } from '@/lib/suggestionEngine';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { Ingredient } from '@/types';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
@@ -15,6 +13,8 @@ export default function ShoppingListPage() {
     inventory,
     consumptionLog,
     wasteLog,
+    mealPlan,
+    recipes,
     updateShoppingListItem, 
     removeShoppingListItem, 
     addItemsToShoppingList 
@@ -35,8 +35,6 @@ export default function ShoppingListPage() {
     };
     
     addItemsToShoppingList([itemToAdd]);
-    
-    // Reset the form
     setSelectedItem(null);
     setItemQuantity('1');
   };
@@ -44,16 +42,14 @@ export default function ShoppingListPage() {
   const categorizedList = useMemo(() => {
     return shoppingList.reduce((acc, item) => {
       const category = item.category || 'Other';
-      if (!acc[category]) {
-        acc[category] = [];
-      }
+      if (!acc[category]) acc[category] = [];
       acc[category].push(item);
       return acc;
     }, {} as Record<string, ShoppingListItem[]>);
   }, [shoppingList]);
 
   const handleGetSmartSuggestions = async () => {
-    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog);
+    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes);
     
     if (finalSuggestions.length > 0) {
       addItemsToShoppingList(finalSuggestions);
@@ -80,7 +76,6 @@ export default function ShoppingListPage() {
           <h3 className="font-bold mb-2">Add Ingredient from Database</h3>
           <div className="space-y-2">
             <IngredientAutocomplete onSelect={(ingredient) => setSelectedItem(ingredient)} />
-            
             {selectedItem && (
               <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                 <span className="font-semibold flex-grow">{selectedItem.name}</span>
@@ -108,20 +103,29 @@ export default function ShoppingListPage() {
               <Card className="p-0">
                 <ul className="divide-y divide-gray-200">
                   {items.map(item => (
-                    <li key={item.id} className={`flex items-center gap-4 p-4 ${item.checked ? 'bg-gray-100' : ''}`}>
-                      <input 
-                        type="checkbox" 
-                        checked={item.checked}
-                        onChange={(e) => updateShoppingListItem(item.id, { checked: e.target.checked })}
-                        className="h-5 w-5 rounded border-gray-300 text-accent-secondary focus:ring-accent-secondary"
-                      />
-                      <div className={`flex-grow ${item.checked ? 'line-through text-gray-500' : ''}`}>
-                        <p className="font-semibold">{item.name}</p>
-                        <p className="text-sm">{item.quantity} {item.unit}</p>
+                    <li key={item.id} className={`flex flex-col gap-1 p-4 ${item.checked ? 'bg-gray-100' : ''}`}>
+                      <div className="flex items-center gap-4">
+                        <input 
+                          type="checkbox" 
+                          checked={item.checked}
+                          onChange={(e) => updateShoppingListItem(item.id, { checked: e.target.checked })}
+                          className="h-5 w-5 rounded border-gray-300 text-accent-secondary focus:ring-accent-secondary"
+                        />
+                        <div className={`flex-grow ${item.checked ? 'line-through text-gray-500' : ''}`}>
+                          <p className="font-semibold">{item.name}</p>
+                          <p className="text-sm">{item.quantity} {item.unit}</p>
+                        </div>
+                        <button onClick={() => removeShoppingListItem(item.id)} className="text-gray-400 hover:text-chili-red">
+                          <Trash2 size={18}/>
+                        </button>
                       </div>
-                      <button onClick={() => removeShoppingListItem(item.id)} className="text-gray-400 hover:text-chili-red">
-                        <Trash2 size={18}/>
-                      </button>
+                      {/* Display reason and priority */}
+                      {(item.reason || item.priority) && (
+                        <div className="flex justify-between text-xs text-gray-500 mt-1 ml-7">
+                          <span>{item.reason || ''}</span>
+                          <span className="font-semibold">{item.priority || ''}</span>
+                        </div>
+                      )}
                     </li>
                   ))}
                 </ul>

@@ -31,7 +31,7 @@ export default function InventoryPage() {
       quantityWasted: item.quantity,
       unit: item.unit,
       timestamp: new Date().toISOString(),
-      reason: 'expired',
+      reason: 'expired'
     };
     // 2. Log the event
     logWaste(wasteEvent);

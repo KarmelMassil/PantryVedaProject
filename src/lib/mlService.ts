@@ -93,6 +93,8 @@ async function _trainModelInternal(consumptionLog: ConsumptionEvent[], wasteLog:
 
     await model.save(MODEL_STORAGE_KEY);
     localStorage.setItem(MODEL_COLUMNS_KEY, JSON.stringify(uniqueIngredients)); // Save the ingredient list
+    localStorage.setItem('lastTrainedTimestamp', new Date().toISOString());
+
     console.log("Model saved to IndexedDB.");
     
     return model;
@@ -116,7 +118,7 @@ async function _predictWithModel(
     }
 
     // Prepare prediction data using ONLY the ingredients the model was trained on
-    const { features, ingredientsToPredict } = prepareDataForPrediction(consumptionLog, trainingColumns);
+    const { features, ingredientsToPredict } = prepareDataForPrediction(consumptionLog, wasteLog, trainingColumns);
      
     if (features.size === 0) return [];
 
@@ -176,11 +178,18 @@ function prepareData(consumptionLog: ConsumptionEvent[], wasteLog: WasteEvent[])
 
         const totalConsumption = consumptionEvents.reduce((sum, e) => sum + e.quantityConsumed, 0);
         const avgWeeklyConsumption = totalConsumption / 4;
+
+        const wasteEvents = wasteLog.filter(e => e.ingredientName === name && isWithinInterval(new Date(e.timestamp), dateRange));
+        const totalWasted = wasteEvents.reduce((sum, e) => sum + e.quantityWasted, 0);
+
+        // Calculate wastage rate to avoid division by zero
+        const totalAvailable = totalConsumption + totalWasted;
+        const wastageRate = totalAvailable > 0 ? totalWasted / totalAvailable : 0;
         
         const oneHotIngredient = Array(uniqueIngredients.length).fill(0);
         oneHotIngredient[ingredientMap.get(name)!] = 1;
 
-        const numericalFeatures = [avgWeeklyConsumption];
+        const numericalFeatures = [avgWeeklyConsumption, wastageRate];
         features.push([...oneHotIngredient, ...numericalFeatures]);
         labels.push(avgWeeklyConsumption);
     });
@@ -195,22 +204,34 @@ function prepareData(consumptionLog: ConsumptionEvent[], wasteLog: WasteEvent[])
 /**
  * Converts raw logs into numerical tensors for PREDICTION.
  */
-function prepareDataForPrediction(consumptionLog: ConsumptionEvent[], trainingColumns: string[]) {
+function prepareDataForPrediction(consumptionLog: ConsumptionEvent[], wasteLog: WasteEvent[], trainingColumns: string[]) {
   const ingredientMap = new Map(trainingColumns.map((name, i) => [name, i]));
+    const fourWeeksAgo = subWeeks(new Date(), 4);
+    const now = new Date();
+    const dateRange = { start: fourWeeksAgo, end: now };
 
     const features = trainingColumns.map(name => {
-        const fourWeeksAgo = subWeeks(new Date(), 4);
         const consumptionEvents = consumptionLog.filter(e => 
-            e.ingredientName === name && isWithinInterval(new Date(e.timestamp), { start: fourWeeksAgo, end: new Date() })
+            e.ingredientName === name && isWithinInterval(new Date(e.timestamp), dateRange)
         );
 
         const totalConsumption = consumptionEvents.reduce((sum, e) => sum + e.quantityConsumed, 0);
         const avgWeeklyConsumption = totalConsumption / 4;
+
+        const wasteEvents = wasteLog.filter(e => e.ingredientName === name && isWithinInterval(new Date(e.timestamp), dateRange));
+        const totalWasted = wasteEvents.reduce((sum, e) => sum + e.quantityWasted, 0);
+
+        // Calculate wastage rate to avoid division by zero
+        const totalAvailable = totalConsumption + totalWasted;
+        const wastageRate = totalAvailable > 0 ? totalWasted / totalAvailable : 0;
+
         
         const oneHotIngredient = Array(trainingColumns.length).fill(0);
         oneHotIngredient[ingredientMap.get(name)!] = 1;
 
-        return [...oneHotIngredient, avgWeeklyConsumption];
+        const numericalFeatures = [avgWeeklyConsumption, wastageRate];
+
+        return [...oneHotIngredient, ...numericalFeatures];
     });
 
     return {

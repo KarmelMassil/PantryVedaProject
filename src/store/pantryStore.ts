@@ -11,6 +11,8 @@ export interface ShoppingListItem {
   quantity: number;
   unit: Ingredient['unit'];
   checked: boolean;
+  reason?: string;
+  priority?: 'high' | 'medium' | 'low';
 }
 
 export interface DayPlan {
