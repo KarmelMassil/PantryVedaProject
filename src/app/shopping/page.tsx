@@ -7,12 +7,14 @@ import { Trash2, Plus, Share2, Download, Lightbulb } from 'lucide-react';
 import { generateHeuristicSuggestions } from '@/lib/suggestionEngine';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { Ingredient } from '@/types';
+import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 
 export default function ShoppingListPage() {
   const { 
     shoppingList, 
     inventory,
     consumptionLog,
+    wasteLog,
     updateShoppingListItem, 
     removeShoppingListItem, 
     addItemsToShoppingList 
@@ -50,15 +52,14 @@ export default function ShoppingListPage() {
     }, {} as Record<string, ShoppingListItem[]>);
   }, [shoppingList]);
 
-  const handleGetSmartSuggestions = () => {
-    // Use the new heuristic engine instead of the old low-stock function
-    const suggestions = generateHeuristicSuggestions(inventory, consumptionLog);
+  const handleGetSmartSuggestions = async () => {
+    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog);
     
-    if (suggestions.length > 0) {
-      addItemsToShoppingList(suggestions);
-      alert(`Added ${suggestions.length} smart suggestion(s) to your list!`);
+    if (finalSuggestions.length > 0) {
+      addItemsToShoppingList(finalSuggestions);
+      alert(`Added ${finalSuggestions.length} smart suggestion(s) to your list!`);
     } else {
-      alert("No smart suggestions right now. Try cooking a few more meals!");
+      alert("No smart suggestions right now. Cook more meals to generate data!");
     }
   };
 
