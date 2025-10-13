@@ -1,22 +1,38 @@
 "use client";
 import React, { useState } from 'react';
-import { usePantryStore } from '@/store/pantryStore';
+import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
+import { AddIngredientModal } from '@/components/AddIngredientModal';
 import { differenceInDays, format } from 'date-fns';
-import { Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2 } from 'lucide-react';
+import { Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2, PlusCircle } from 'lucide-react';
 import { WasteEvent } from '@/types';
 
 export default function InventoryPage() {
-  const { inventory, logWaste, removeIngredient } = usePantryStore();
-  
+  const { inventory, logWaste, removeIngredient, addMasterIngredient, masterIngredientList } = usePantryStore();
   const totalItems = inventory.length;
   const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
+    // --- DUPLICATE CHECK ---
+    const isDuplicate = masterIngredientList.some(
+        item => item.name.trim().toLowerCase() === ingredient.name.trim().toLowerCase()
+    );
+    if (isDuplicate) {
+        alert(`'${ingredient.name}' already exists in your ingredient database!`);
+        return; // Stop the function
+    }
+
+    // Call the Zustand action to permanently save the ingredient
+    addMasterIngredient(ingredient);
+    alert(`'${ingredient.name}' has been added to your master ingredient database!`);
+  };
+
   const expiringSoonCount = inventory.filter(item => {
     const days = differenceInDays(new Date(item.expiryDate), new Date());
     return days <= 3 && days >= 0;
   }).length;
   const freshItems = inventory.filter(item => differenceInDays(new Date(item.expiryDate), new Date()) > 3).length;
-
   const getExpiryStatus = (expiryDate: string) => {
     const days = differenceInDays(new Date(expiryDate), new Date());
     if (days < 0) return { text: `Expired ${Math.abs(days)} days ago`, color: 'text-chili-red' };
@@ -43,8 +59,24 @@ export default function InventoryPage() {
 
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-text-primary">My Pantry</h1>
+    <>
+      <AddIngredientModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveNewIngredient}
+      />
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-text-primary">My Pantry</h1>
+          {/* --- This is the button to open the modal --- */}
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <PlusCircle size={20} />
+            Add New Database Ingredient
+          </button>
+        </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="flex items-center gap-4"><Package className="text-blue-500" size={32}/><div><p className="text-text-secondary">Total Items</p><p className="text-2xl font-bold">{totalItems}</p></div></Card>
@@ -83,5 +115,6 @@ export default function InventoryPage() {
         })}
       </div>
     </div>
+    </>
   );
 }

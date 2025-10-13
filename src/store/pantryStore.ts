@@ -2,8 +2,15 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { indianRecipesDatabase } from '@/data/recipes';
 import { Recipe, Ingredient, UserPreferences, ConsumptionEvent, WasteEvent } from '@/types';
+import { indianIngredientsDatabase as initialMasterList } from '@/data/ingredients';
 
-// Add this new type for our shopping list items
+export interface MasterIngredient {
+  name: string;
+  category: 'Vegetables' | 'Fruits' | 'Spices' | 'Grains' | 'Dairy' | 'Meats' | 'Herbs' | 'Other';
+  defaultExpiryDays: number;
+  unit: 'kg' | 'g' | 'l' | 'ml' | 'pcs' | 'bunches';
+}
+
 export interface ShoppingListItem {
   id: string;
   name: string;
@@ -26,6 +33,7 @@ export type MealPlan = Record<string, DayPlan>; // Key is ISO date string 'YYYY-
 
 
 interface PantryState {
+  masterIngredientList: MasterIngredient[];
   inventory: Ingredient[];
   preferences: UserPreferences;
   recipes: Recipe[];
@@ -33,6 +41,7 @@ interface PantryState {
   mealPlan: MealPlan; 
   consumptionLog: ConsumptionEvent[];
   wasteLog: WasteEvent[];
+  addMasterIngredient: (ingredient: MasterIngredient) => void;
   addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
   removeIngredient: (id: string) => void;
   updateIngredient: (id: string, updates: Partial<Ingredient>) => void;
@@ -51,6 +60,7 @@ interface PantryState {
 export const usePantryStore = create<PantryState>()(
   persist(
     (set, get) => ({
+      masterIngredientList: initialMasterList.map(item => ({...item, defaultExpiryDays: 14 })), // Initialize the list
       inventory: [],
       preferences: {
         familySize: 2,
@@ -64,6 +74,11 @@ export const usePantryStore = create<PantryState>()(
       mealPlan: {},
       consumptionLog: [],
       wasteLog: [],
+
+      addMasterIngredient: (ingredient) =>
+        set((state) => ({
+          masterIngredientList: [...state.masterIngredientList, ingredient],
+        })),
       
       addIngredient: (ingredient) =>
         set((state) => ({

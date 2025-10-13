@@ -1,25 +1,26 @@
 "use client";
-import { indianIngredientsDatabase } from '@/data/ingredients';
+import { MasterIngredient } from '@/store/pantryStore';
 import { Ingredient } from '@/types';
 import React, { useState, useMemo } from 'react';
 
 interface AutocompleteProps {
-  onSelect: (ingredient: Omit<Ingredient, 'id' | 'quantity' | 'purchaseDate' | 'expiryDate' | 'value'>) => void;
+  masterList: MasterIngredient[];
+  onSelect: (ingredient: MasterIngredient) => void;
 }
 
-export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ onSelect }) => {
+export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList, onSelect }) => {
   const [query, setQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const filteredIngredients = useMemo(() => {
     if (!query) return [];
-    return indianIngredientsDatabase.filter(item => 
+    return masterList.filter(item => 
       item.name.toLowerCase().includes(query.toLowerCase())
     ).slice(0, 5); // Limit to 5 suggestions
   }, [query]);
 
-  const handleSelect = (ingredient: Omit<Ingredient, 'id' | 'quantity' | 'purchaseDate' | 'expiryDate' | 'value'>) => {
-    setQuery(ingredient.name);
+  const handleSelect = (ingredient: MasterIngredient) => {
+    setQuery('');
     setShowSuggestions(false);
     onSelect(ingredient);
   };

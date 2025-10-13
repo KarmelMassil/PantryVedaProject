@@ -12,7 +12,7 @@ import { indianIngredientsDatabase } from '@/data/ingredients';
 type ScannedItem = Omit<Ingredient, 'id'>;
 
 export default function ScannerPage() {
-  const { addIngredient } = usePantryStore();
+  const { addIngredient, masterIngredientList } = usePantryStore();
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<ScannedItem>>({});
 
@@ -154,7 +154,10 @@ export default function ScannerPage() {
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-bold mb-4">Ingredient Database</h2>
              <div className="space-y-3">
-                <IngredientAutocomplete onSelect={handleSelectIngredient} />
+                <IngredientAutocomplete 
+                  masterList={masterIngredientList}
+                  onSelect={handleSelectIngredient} 
+                />
                 {currentItem.name && (
                     <div className="grid grid-cols-2 gap-4 border p-4 rounded-lg">
                         <h3 className="col-span-2 text-lg font-semibold">{currentItem.name}</h3>
