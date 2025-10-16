@@ -1,7 +1,7 @@
 import { addDays, formatISO } from 'date-fns';
 
 // Simplified shelf life map. A real app would have this be much more extensive.
-const typicalShelfLife: Record<string, number> = {
+export const typicalShelfLife: Record<string, number> = {
   'Vegetables': 7,
   'Herbs': 5,
   'Dairy': 10,

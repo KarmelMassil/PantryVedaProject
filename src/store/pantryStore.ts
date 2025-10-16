@@ -4,6 +4,7 @@ import { indianRecipesDatabase } from '@/data/recipes';
 import { Recipe, Ingredient, UserPreferences, ConsumptionEvent, WasteEvent } from '@/types';
 import { indianIngredientsDatabase as initialMasterList } from '@/data/ingredients';
 import { formatISO, addDays } from 'date-fns';
+import { typicalShelfLife } from '@/lib/dateUtils';
 
 export interface MasterIngredient {
   name: string;
@@ -59,12 +60,13 @@ interface PantryState {
   logConsumption: (events: ConsumptionEvent[]) => void;
   logWaste: (event: WasteEvent) => void;
   deductFromInventory: (name: string, quantity: number) => void;
+  restockCheckedItems: () => void;
 }
 
 export const usePantryStore = create<PantryState>()(
   persist(
     (set, get) => ({
-      masterIngredientList: initialMasterList.map(item => ({...item, defaultExpiryDays: 14 })), // Initialize the list
+      masterIngredientList: initialMasterList.map(item => ({...item, defaultExpiryDays: typicalShelfLife[item.category] || 14 })), // Initialize the list
       inventory: [],
       preferences: {
         familySize: 2,
@@ -188,6 +190,40 @@ export const usePantryStore = create<PantryState>()(
         
         set({ inventory: updatedInventory });
       },
+
+      restockCheckedItems: () =>
+        set((state) => {
+            const itemsToRestock = state.shoppingList.filter(item => item.checked);
+            if (itemsToRestock.length === 0) return state; // Do nothing if no items are checked
+            // Create new inventory items from the shopping list items
+            const newInventoryItems: Omit<Ingredient, 'id'>[] = itemsToRestock.map(item => ({
+                name: item.name,
+                category: item.category,
+                quantity: item.quantity,
+                unit: item.unit,
+                purchaseDate: new Date().toISOString(),
+                expiryDate: item.expiryDate,
+                value: item.price,
+            }));
+            // Add the new items to the inventory
+            const updatedInventory = [...state.inventory];
+            newInventoryItems.forEach(newItem => {
+                const existingIndex = updatedInventory.findIndex(inv => inv.name === newItem.name);
+                if (existingIndex > -1) {
+                    // If item exists, add to quantity
+                    updatedInventory[existingIndex].quantity += newItem.quantity;
+                } else {
+                    // Otherwise, add as a new item
+                    updatedInventory.push({ ...newItem, id: crypto.randomUUID() });
+                }
+            });
+            // Remove the checked items from the shopping list
+            const updatedShoppingList = state.shoppingList.filter(item => !item.checked);
+            return {
+                inventory: updatedInventory,
+                shoppingList: updatedShoppingList,
+            };
+          }),
     }),
     {
       name: 'pantryveda-storage',

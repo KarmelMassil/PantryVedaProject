@@ -4,7 +4,6 @@ import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pant
 import { Card } from '@/components/ui/Card';
 import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
-import { Ingredient } from '@/types';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
 
@@ -19,7 +18,8 @@ export default function ShoppingListPage() {
     masterIngredientList,
     updateShoppingListItem, 
     removeShoppingListItem, 
-    addItemsToShoppingList 
+    addItemsToShoppingList,
+    restockCheckedItems 
   } = usePantryStore();
 
   const [selectedItem, setSelectedItem] = useState<MasterIngredient | null>(null);
@@ -27,7 +27,6 @@ export default function ShoppingListPage() {
 
   const handleAddSelectedItem = () => {
     if (!selectedItem) return;
-
     const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
       name: selectedItem.name,
       category: selectedItem.category,
@@ -35,7 +34,6 @@ export default function ShoppingListPage() {
       unit: selectedItem.unit,
       defaultExpiryDays: selectedItem.defaultExpiryDays || 14,
     };
-    
     addItemsToShoppingList([itemToAdd]);
     setSelectedItem(null);
     setItemQuantity('1');
@@ -52,7 +50,6 @@ export default function ShoppingListPage() {
 
   const handleGetSmartSuggestions = async () => {
     const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList);
-    
     if (finalSuggestions.length > 0) {
       addItemsToShoppingList(finalSuggestions);
       alert(`Added ${finalSuggestions.length} smart suggestion(s) to your list!`);
@@ -61,6 +58,12 @@ export default function ShoppingListPage() {
     }
   };
 
+  const handleRestock = () => {
+    if (window.confirm("Are you sure you want to add all checked items to your pantry and remove them from this list?")) {
+        restockCheckedItems();
+    }
+ };
+
   return (
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Main Content */}
@@ -68,8 +71,13 @@ export default function ShoppingListPage() {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-text-primary">Smart Shopping List</h1>
           <div>
-             <button className="bg-white border p-2 rounded-lg mr-2 hover:bg-gray-100"><Share2 size={20}/></button>
-             <button className="bg-white border p-2 rounded-lg hover:bg-gray-100"><Download size={20}/></button>
+             <button
+                onClick={handleRestock}
+                className="flex items-center gap-2 bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+              >
+                <PackagePlus size={20} />
+                Restock Checked Items
+              </button>
           </div>
         </div>
 
