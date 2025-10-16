@@ -7,7 +7,6 @@ import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
 import { format, addDays, startOfWeek, subDays, endOfWeek } from 'date-fns';
 import { ArrowLeft, ArrowRight, ShoppingCart } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { generateFromMealPlan } from '@/lib/shoppingListGenerator';
 
 export default function MealPlannerPage() {
   const { recipes, mealPlan, inventory, assignRecipeToMeal, addItemsToShoppingList } = usePantryStore();
@@ -36,16 +35,6 @@ export default function MealPlannerPage() {
   const goToPreviousWeek = () => setCurrentDate(subDays(currentDate, 7));
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
   
-  const handleGenerateList = () => {
-    const missingItems = generateFromMealPlan(mealPlan, recipes, inventory, weekStart, weekEnd);
-    if (missingItems.length > 0) {
-      addItemsToShoppingList(missingItems);
-      alert(`${missingItems.length} missing item(s) for this week have been added to your shopping list.`);
-      router.push('/shopping');
-    } else {
-      alert("You have all the ingredients for this week's meal plan!");
-    }
-  };
 
   return (
     <DndContext 
@@ -74,12 +63,6 @@ export default function MealPlannerPage() {
               <button onClick={goToPreviousWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowLeft size={20}/></button>
               <h2 className="text-xl font-semibold">{format(weekStart, 'MMMM yyyy')}</h2>
               <button onClick={goToNextWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowRight size={20}/></button>
-              <button 
-                onClick={handleGenerateList}
-                className="flex items-center gap-2 bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <ShoppingCart size={18} /> Generate Shopping List
-              </button>
             </div>
           </div>
 

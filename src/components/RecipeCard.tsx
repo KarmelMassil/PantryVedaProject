@@ -5,10 +5,10 @@ import { usePantryStore } from '@/store/pantryStore'; // Import store
 import { generateFromRecipe } from '@/lib/shoppingListGenerator'; // Import generator
 
 export const RecipeCard: React.FC<{ recipe: MatchedRecipe }> = ({ recipe }) => {
-  const { inventory, addItemsToShoppingList } = usePantryStore(); // Get state and action
+  const { inventory, addItemsToShoppingList, masterIngredientList } = usePantryStore(); // Get state and action
 
   const handleAddMissing = () => {
-    const missing = generateFromRecipe(recipe, inventory);
+    const missing = generateFromRecipe(recipe, inventory, masterIngredientList);
     if (missing.length > 0) {
       addItemsToShoppingList(missing);
       alert(`Added ${missing.length} missing item(s) to your shopping list!`);

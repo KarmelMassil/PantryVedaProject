@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import { indianRecipesDatabase } from '@/data/recipes';
 import { Recipe, Ingredient, UserPreferences, ConsumptionEvent, WasteEvent } from '@/types';
 import { indianIngredientsDatabase as initialMasterList } from '@/data/ingredients';
+import { formatISO, addDays } from 'date-fns';
 
 export interface MasterIngredient {
   name: string;
@@ -14,10 +15,13 @@ export interface MasterIngredient {
 export interface ShoppingListItem {
   id: string;
   name: string;
-  category: Ingredient['category'];
+  category: MasterIngredient['category'];
   quantity: number;
-  unit: Ingredient['unit'];
+  unit: MasterIngredient['unit'];
   checked: boolean;
+  price: number;
+  expiryDate: string;
+  defaultExpiryDays: number;
   reason?: string;
   priority?: 'high' | 'medium' | 'low';
 }
@@ -46,7 +50,7 @@ interface PantryState {
   removeIngredient: (id: string) => void;
   updateIngredient: (id: string, updates: Partial<Ingredient>) => void;
   updatePreferences: (updates: Partial<UserPreferences>) => void;
-  addItemsToShoppingList: (items: Omit<ShoppingListItem, 'id' | 'checked'>[]) => void;
+  addItemsToShoppingList: (items: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>[]) => void;
   updateShoppingListItem: (id: string, updates: Partial<ShoppingListItem>) => void;
   removeShoppingListItem: (id: string) => void;
   clearShoppingList: () => void;
@@ -114,9 +118,16 @@ export const usePantryStore = create<PantryState>()(
           if (existingItemIndex > -1) {
             // If item exists, just add to its quantity
             updatedList[existingItemIndex].quantity += newItem.quantity;
-          } else {
-            // Otherwise, add the new item to the list
-            updatedList.push({ ...newItem, id: crypto.randomUUID(), checked: false });
+          } else if (existingItemIndex === -1) {
+            // If item doesn't exist, add it with additional fields
+            const purchaseDate = new Date();
+            updatedList.push({
+                ...newItem,
+                id: crypto.randomUUID(),
+                checked: false,
+                price: 0,
+                expiryDate: formatISO(addDays(purchaseDate, newItem.defaultExpiryDays || 14)),
+            });
           }
         });
         

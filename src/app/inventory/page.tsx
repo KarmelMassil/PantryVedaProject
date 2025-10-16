@@ -12,20 +12,33 @@ export default function InventoryPage() {
   const totalItems = inventory.length;
   const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
 
+  const toTitleCase = (str: string): string => {
+    if (!str) return '';
+    return str
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
-    // --- DUPLICATE CHECK ---
+    const formattedName = toTitleCase(ingredient.name.trim());
+    if (!formattedName) {
+      alert("Ingredient name cannot be empty.");
+      return;
+    }
     const isDuplicate = masterIngredientList.some(
-        item => item.name.trim().toLowerCase() === ingredient.name.trim().toLowerCase()
+        item => item.name.toLowerCase() === formattedName.toLowerCase()
     );
     if (isDuplicate) {
-        alert(`'${ingredient.name}' already exists in your ingredient database!`);
+        alert(`'${formattedName}' already exists in your ingredient database!`);
         return; // Stop the function
     }
 
     // Call the Zustand action to permanently save the ingredient
-    addMasterIngredient(ingredient);
-    alert(`'${ingredient.name}' has been added to your master ingredient database!`);
+    addMasterIngredient({ ...ingredient, name: formattedName });
+    alert(`'${formattedName}' has been added to your master ingredient database!`);
   };
 
   const expiringSoonCount = inventory.filter(item => {

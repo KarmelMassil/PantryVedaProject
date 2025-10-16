@@ -1,11 +1,12 @@
 "use client";
 import React, { useMemo, useState } from 'react';
-import { usePantryStore, ShoppingListItem } from '@/store/pantryStore';
+import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { Ingredient } from '@/types';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
+import { format, formatISO } from 'date-fns';
 
 export default function ShoppingListPage() {
   const { 
@@ -15,23 +16,24 @@ export default function ShoppingListPage() {
     wasteLog,
     mealPlan,
     recipes,
+    masterIngredientList,
     updateShoppingListItem, 
     removeShoppingListItem, 
     addItemsToShoppingList 
   } = usePantryStore();
 
-  type DbIngredient = Omit<Ingredient, 'id' | 'quantity' | 'purchaseDate' | 'expiryDate' | 'value'>;
-  const [selectedItem, setSelectedItem] = useState<DbIngredient | null>(null);
+  const [selectedItem, setSelectedItem] = useState<MasterIngredient | null>(null);
   const [itemQuantity, setItemQuantity] = useState('1');
 
   const handleAddSelectedItem = () => {
     if (!selectedItem) return;
 
-    const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked'> = {
+    const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
       name: selectedItem.name,
       category: selectedItem.category,
       quantity: parseFloat(itemQuantity) || 1,
       unit: selectedItem.unit,
+      defaultExpiryDays: selectedItem.defaultExpiryDays || 14,
     };
     
     addItemsToShoppingList([itemToAdd]);
@@ -49,7 +51,7 @@ export default function ShoppingListPage() {
   }, [shoppingList]);
 
   const handleGetSmartSuggestions = async () => {
-    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes);
+    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList);
     
     if (finalSuggestions.length > 0) {
       addItemsToShoppingList(finalSuggestions);
@@ -75,7 +77,10 @@ export default function ShoppingListPage() {
         <Card>
           <h3 className="font-bold mb-2">Add Ingredient from Database</h3>
           <div className="space-y-2">
-            <IngredientAutocomplete onSelect={(ingredient) => setSelectedItem(ingredient)} />
+            <IngredientAutocomplete 
+              masterList={masterIngredientList}
+              onSelect={(ingredient) => setSelectedItem(ingredient)} 
+            />
             {selectedItem && (
               <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
                 <span className="font-semibold flex-grow">{selectedItem.name}</span>
@@ -103,29 +108,44 @@ export default function ShoppingListPage() {
               <Card className="p-0">
                 <ul className="divide-y divide-gray-200">
                   {items.map(item => (
-                    <li key={item.id} className={`flex flex-col gap-1 p-4 ${item.checked ? 'bg-gray-100' : ''}`}>
-                      <div className="flex items-center gap-4">
-                        <input 
-                          type="checkbox" 
-                          checked={item.checked}
-                          onChange={(e) => updateShoppingListItem(item.id, { checked: e.target.checked })}
-                          className="h-5 w-5 rounded border-gray-300 text-accent-secondary focus:ring-accent-secondary"
+                    <li key={item.id} className={`flex items-center gap-4 p-3 ${item.checked ? 'bg-gray-100/50' : ''}`}>
+                      <input 
+                        type="checkbox" 
+                        checked={item.checked}
+                        onChange={(e) => updateShoppingListItem(item.id, { checked: e.target.checked })}
+                        className="h-5 w-5 rounded border-gray-300 text-accent-secondary focus:ring-accent-secondary flex-shrink-0"
+                      />
+                      <div className={`flex-grow ${item.checked ? 'text-gray-400' : ''}`}>
+                        <p className={`font-semibold ${item.checked ? 'line-through' : ''}`}>{item.name}</p>
+                        <span className="text-xs text-text-secondary">{item.category}</span>
+                      </div>
+                      
+                      {/* --- INLINE EDITING FIELDS --- */}
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => updateShoppingListItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
+                          className="w-16 p-1 border rounded-md text-sm text-right"
                         />
-                        <div className={`flex-grow ${item.checked ? 'line-through text-gray-500' : ''}`}>
-                          <p className="font-semibold">{item.name}</p>
-                          <p className="text-sm">{item.quantity} {item.unit}</p>
-                        </div>
+                        <span className="text-sm text-gray-500 w-12">{item.unit}</span>
+                        <input
+                          type="number"
+                          value={item.price}
+                          onChange={(e) => updateShoppingListItem(item.id, { price: parseFloat(e.target.value) || 0 })}
+                          className="w-20 p-1 border rounded-md text-sm text-right"
+                          placeholder="₹ price"
+                        />
+                        <input
+                          type="date"
+                          value={format(new Date(item.expiryDate), 'yyyy-MM-dd')}
+                          onChange={(e) => updateShoppingListItem(item.id, { expiryDate: formatISO(e.target.valueAsDate!) })}
+                          className="w-32 p-1 border rounded-md text-sm"
+                        />
                         <button onClick={() => removeShoppingListItem(item.id)} className="text-gray-400 hover:text-chili-red">
                           <Trash2 size={18}/>
                         </button>
                       </div>
-                      {/* Display reason and priority */}
-                      {(item.reason || item.priority) && (
-                        <div className="flex justify-between text-xs text-gray-500 mt-1 ml-7">
-                          <span>{item.reason || ''}</span>
-                          <span className="font-semibold">{item.priority || ''}</span>
-                        </div>
-                      )}
                     </li>
                   ))}
                 </ul>

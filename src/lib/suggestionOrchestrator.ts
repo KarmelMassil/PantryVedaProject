@@ -1,4 +1,4 @@
-import { MealPlan } from "@/store/pantryStore";
+import { MasterIngredient, MealPlan, ShoppingListItem } from "@/store/pantryStore";
 import { ConsumptionEvent, Ingredient, WasteEvent, Recipe } from "@/types";
 import { generateHeuristicSuggestions } from "./suggestionEngine";
 import { trainAndSuggest, generateMlSuggestions, hasTrainedModel } from "./mlService";
@@ -6,6 +6,8 @@ import { addDays, format } from "date-fns";
 
 // The minimum number of consumption events required to trigger the first training
 const MIN_DATA_POINTS_FOR_TRAINING = 10;
+// A reusable type for our suggestions
+type Suggestion = Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>;
 
 // -- Helper function --
 function calculateMealPlanDemand(mealPlan: MealPlan, recipes: Recipe[]): Map<string, { quantity: number, unit: string }> {
@@ -42,7 +44,8 @@ export async function getSmartSuggestions(
     consumptionLog: ConsumptionEvent[],
     wasteLog: WasteEvent[],
     mealPlan: MealPlan,
-    recipes: Recipe[]
+    recipes: Recipe[],
+    masterIngredientList: MasterIngredient[]
 ) {
     const isModelAlreadyTrained = await hasTrainedModel();
     const hasEnoughData = consumptionLog.length >= MIN_DATA_POINTS_FOR_TRAINING;
@@ -65,20 +68,20 @@ export async function getSmartSuggestions(
 
     if (isModelAlreadyTrained && !shouldRetrain) {
         console.log("Using pre-trained ML model for predictions.");
-        historicalSuggestions = await generateMlSuggestions(consumptionLog, wasteLog, inventory);
+        historicalSuggestions = await generateMlSuggestions(consumptionLog, wasteLog, inventory, masterIngredientList);
     } 
     else if (hasEnoughData) {
         console.log("Sufficient data found. Training a new ML model for the first time...");
-        historicalSuggestions = await trainAndSuggest(consumptionLog, wasteLog, inventory);
+        historicalSuggestions = await trainAndSuggest(consumptionLog, wasteLog, inventory, masterIngredientList);
     }
     else {
         console.log("Not enough data for ML. Using heuristic model.");
-        historicalSuggestions = generateHeuristicSuggestions(inventory, consumptionLog);
+        historicalSuggestions = generateHeuristicSuggestions(inventory, consumptionLog, masterIngredientList);
     }
 
     // --- Merge with Meal Plan Demand ---
     const mealPlanDemand = calculateMealPlanDemand(mealPlan, recipes);
-    const finalSuggestions = new Map<string, any>();
+    const finalSuggestions = new Map<string, Suggestion & { reason: string, priority: 'high' | 'medium' | 'low' }>();
 
     //  Add historical suggestions first
     historicalSuggestions.forEach(s => {
@@ -86,27 +89,28 @@ export async function getSmartSuggestions(
             ...s,
             reason: s.priority || "Based on consumption history",
             priority: s.priority || 'Low',
-            category: s.category || inventory.find(i => i.name === s.name)?.category || "Other"
         });
     });
 
     //  Add or update with meal plan demand
     mealPlanDemand.forEach((demand, name) => {
-        const existingSuggestion = finalSuggestions.get(name) || { quantity: 0, priority: 0 };
+        const existingSuggestion = finalSuggestions.get(name)
         const inventoryItem = inventory.find(i => i.name === name);
         const currentStock = inventoryItem ? inventoryItem.quantity : 0;
         const neededForRecipes = Math.max(0, demand.quantity - currentStock);
 
-        if (neededForRecipes > existingSuggestion.quantity) {
+        if (neededForRecipes > (existingSuggestion?.quantity ?? 0)) {
+            const dbItem = masterIngredientList.find(i => i.name.toLowerCase() === name.toLowerCase());
             finalSuggestions.set(name, {
                 name: name,
                 quantity: Math.ceil(neededForRecipes),
-                unit: inventoryItem?.unit || demand.unit,
-                reason: existingSuggestion.reason
-                    ? existingSuggestion.reason + " & Required for upcoming meals"
-                    : "Required for upcoming meals",
+                unit: dbItem?.unit || 'pcs',
+                reason: existingSuggestion
+                    ? "Needed for upcoming meals"
+                    : "Required for your planned meals",
                 priority: 'high',
-                category: inventoryItem?.category || "Other"
+                category: dbItem?.category || "Other",
+                defaultExpiryDays: dbItem?.defaultExpiryDays || 14,
             });
         }
     });

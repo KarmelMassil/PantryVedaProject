@@ -1,14 +1,15 @@
 import { usePantryStore, ShoppingListItem } from "@/store/pantryStore";
 import { ConsumptionEvent, Ingredient } from "@/types";
 import { differenceInDays, subDays } from "date-fns";
-import { indianIngredientsDatabase } from "@/data/ingredients";
+import { MasterIngredient } from "@/store/pantryStore";
 
 // A simple heuristic model to start
 export const generateHeuristicSuggestions = (
     inventory: Ingredient[],
-    consumptionLog: ConsumptionEvent[]
+    consumptionLog: ConsumptionEvent[],
+    masterIngredientList: MasterIngredient[]
 ) => {
-    const suggestions: Omit<ShoppingListItem, 'id' | 'checked'>[] = [];
+    const suggestions: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>[] = [];
     const sevenDaysAgo = subDays(new Date(), 7);
 
     // Get a list of unique ingredients consumed
@@ -32,13 +33,14 @@ export const generateHeuristicSuggestions = (
             // 3. Suggest buying a bit more than a week's supply
             const purchaseQuantity = Math.ceil(totalWeeklyConsumed * 1.25); // Buy 125% of weekly use
 
-            const dbItem = indianIngredientsDatabase.find(i => i.name === name);
+            const dbItem = masterIngredientList.find(i => i.name.toLowerCase() === name.toLowerCase());
             
             suggestions.push({
                 name: name,
                 category: dbItem?.category || 'Other',
                 quantity: purchaseQuantity,
                 unit: dbItem?.unit || 'pcs',
+                defaultExpiryDays: dbItem?.defaultExpiryDays || 14,
             });
         }
     });

@@ -1,7 +1,7 @@
 import * as tf from '@tensorflow/tfjs';
 import { ConsumptionEvent, WasteEvent, Ingredient } from '@/types';
 import { subWeeks, isWithinInterval } from 'date-fns';
-import { indianIngredientsDatabase } from '@/data/ingredients';
+import { MasterIngredient } from '@/store/pantryStore';
 import { ShoppingListItem } from '../store/pantryStore';
 
 const MODEL_STORAGE_KEY = 'indexeddb://pantryveda-model';
@@ -30,14 +30,15 @@ export async function hasTrainedModel(): Promise<boolean> {
 export async function trainAndSuggest(
     consumptionLog: ConsumptionEvent[], 
     wasteLog: WasteEvent[], 
-    inventory: Ingredient[]
-): Promise<Omit<ShoppingListItem, 'id' | 'checked'>[]> {
+    inventory: Ingredient[],
+    masterIngredientList: MasterIngredient[]
+): Promise<Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>[]> {
     const model = await _trainModelInternal(consumptionLog, wasteLog);
     if (!model) {
         return []; // Training failed or not enough data
     }
     // After training, immediately generate suggestions with the new model
-    return await _predictWithModel(model, consumptionLog, wasteLog, inventory);
+    return await _predictWithModel(model, consumptionLog, wasteLog, inventory, masterIngredientList);
 }
 
 /**
@@ -47,11 +48,12 @@ export async function trainAndSuggest(
 export async function generateMlSuggestions(
     consumptionLog: ConsumptionEvent[], 
     wasteLog: WasteEvent[], 
-    inventory: Ingredient[]
-): Promise<Omit<ShoppingListItem, 'id' | 'checked'>[]> {
+    inventory: Ingredient[],
+    masterIngredientList: MasterIngredient[]
+): Promise<Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>[]> {
     try {
         const model = await tf.loadLayersModel(MODEL_STORAGE_KEY);
-        return await _predictWithModel(model, consumptionLog, wasteLog, inventory);
+        return await _predictWithModel(model, consumptionLog, wasteLog, inventory, masterIngredientList);
     } catch (error) {
         console.error("Failed to load or use ML model:", error);
         return []; // Return empty array on failure so it can fall back
@@ -108,8 +110,9 @@ async function _predictWithModel(
     model: tf.LayersModel,
     consumptionLog: ConsumptionEvent[],
     wasteLog: WasteEvent[],
-    inventory: Ingredient[]
-): Promise<Omit<ShoppingListItem, 'id' | 'checked'>[]> {
+    inventory: Ingredient[],
+    masterIngredientList: MasterIngredient[]
+): Promise<Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>[]> {
    // Load the list of ingredients the model knows about
     const trainingColumns = JSON.parse(localStorage.getItem(MODEL_COLUMNS_KEY) || '[]');
     if (trainingColumns.length === 0) {
@@ -126,7 +129,7 @@ async function _predictWithModel(
     const predictionData = await predictionsTensor.data();
     tf.dispose(predictionsTensor);
 
-    const suggestions: Omit<ShoppingListItem, 'id' | 'checked'>[] = [];
+    const suggestions: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>[] = [];
     
     for (let i = 0; i < ingredientsToPredict.length; i++) {
         const ingredientName = ingredientsToPredict[i];
@@ -138,14 +141,15 @@ async function _predictWithModel(
         // Only suggest if predicted need is higher than current stock
         if (predictedWeeklyConsumption > currentStock) {
             const purchaseQuantity = Math.ceil(predictedWeeklyConsumption); // Round up to nearest whole number
-            const dbItem = indianIngredientsDatabase.find(item => item.name === ingredientName);
+            const dbItem = masterIngredientList.find(item => item.name === ingredientName);
 
             if (purchaseQuantity > 0 && dbItem) {
                 suggestions.push({
                     name: ingredientName,
-                    category: dbItem.category,
+                    category: dbItem?.category || 'Other',
                     quantity: purchaseQuantity,
-                    unit: dbItem.unit,
+                    unit: dbItem?.unit || 'pcs',
+                    defaultExpiryDays: dbItem?.defaultExpiryDays || 14,
                 });
             }
         }
