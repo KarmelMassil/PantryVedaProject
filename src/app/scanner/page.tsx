@@ -2,40 +2,36 @@
 import React, { useState } from 'react';
 import { CameraScanner } from '@/components/scanner/CameraScanner';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
-import { usePantryStore } from '@/store/pantryStore';
+import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Ingredient } from '@/types';
-import { format, formatISO } from 'date-fns';
-import { calculateDefaultExpiry } from '@/lib/dateUtils';
+import { format, formatISO, addDays } from 'date-fns';
 import { PackagePlus, Trash2 } from 'lucide-react';
-import { indianIngredientsDatabase } from '@/data/ingredients';
+import { mapLabelToDbName } from '@/lib/labelMapper';
 
 type ScannedItem = Omit<Ingredient, 'id'>;
 
 export default function ScannerPage() {
   const { addIngredient, masterIngredientList } = usePantryStore();
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
-  const [currentItem, setCurrentItem] = useState<Partial<ScannedItem>>({});
 
-  const handleSelectIngredient = (ingredient: Omit<ScannedItem, 'quantity' | 'purchaseDate' | 'expiryDate' | 'value'>) => {
+  const handleSelectItem = (ingredient: MasterIngredient) => {
     const purchaseDate = new Date();
-    setCurrentItem({
+    const newItem = {
       name: ingredient.name,
       category: ingredient.category,
       unit: ingredient.unit,
       purchaseDate: formatISO(purchaseDate),
-      expiryDate: calculateDefaultExpiry(purchaseDate, ingredient.category),
+      expiryDate: formatISO(addDays(purchaseDate, ingredient.defaultExpiryDays)),
       quantity: 1,
       value: 0
-    });
+    };
+    setScannedItems(prev => [...prev, newItem as ScannedItem]);
   };
 
-  const handleAddItem = () => {
-    if (currentItem.name && currentItem.quantity && currentItem.quantity > 0) {
-      setScannedItems(prev => [...prev, currentItem as ScannedItem]);
-      setCurrentItem({}); // Reset form
-    } else {
-      alert("Please select an ingredient and enter a valid quantity.");
-    }
+  const handleUpdateItem = (index: number, field: keyof ScannedItem, value: any) => {
+    setScannedItems(prev => prev.map((item, i) => 
+      i === index ? { ...item, [field]: value } : item
+    ));
   };
   
   const handleSaveToPantry = () => {
@@ -45,178 +41,126 @@ export default function ScannerPage() {
     alert(`${scannedItems.length} item(s) saved to your pantry!`);
   };
 
-  const handleSimulatedRecognition = () => {
-    const randomIngredient = indianIngredientsDatabase[Math.floor(Math.random() * indianIngredientsDatabase.length)];
-    const purchaseDate = new Date();
-    
-    const newScannedItem: ScannedItem = {
-      name: randomIngredient.name,
-      category: randomIngredient.category,
-      unit: randomIngredient.unit,
-      quantity: 1, // Default quantity
-      value: Math.floor(Math.random() * 100) + 20, // Random value
-      purchaseDate: formatISO(purchaseDate),
-      expiryDate: calculateDefaultExpiry(purchaseDate, randomIngredient.category),
-    };
-
-    setScannedItems(prev => [...prev, newScannedItem]);
-  };
-
-  /*
   const handleRecognition = (detectedLabels: string[]) => {
-    const newItems: ScannedItem[] = [];
-    const purchaseDate = new Date();
-
-    detectedLabels.forEach(label => {
-      // Find the full ingredient details from our database
-      const ingredientInfo = indianIngredientsDatabase.find(
-        item => item.name.toLowerCase() === label.toLowerCase()
-      );
-
-      if (ingredientInfo) {
-        newItems.push({
-          name: ingredientInfo.name,
-          category: ingredientInfo.category,
-          unit: ingredientInfo.unit,
-          quantity: 1, // Default quantity
-          value: Math.floor(Math.random() * 100) + 20, // Random value for now
-          purchaseDate: formatISO(purchaseDate),
-          expiryDate: calculateDefaultExpiry(purchaseDate, ingredientInfo.category),
-        });
-      }
-    });
-
-    if (newItems.length > 0) {
-      setScannedItems(prev => [...prev, ...newItems]);
-    } else {
-      console.log("No known ingredients were detected.");
+    if (detectedLabels.length === 0) {
+      console.log("No labels were detected by the model.");
+      return;
     }
-  };
-  */
+    for (const label of detectedLabels) {
+      const dbName = mapLabelToDbName(label);
 
-  const handleRecognition = (detectedLabels: string[]) => {
-    // --- START OF DEBUGGING CODE ---
-    // Log the labels exactly as the model predicted them.
-    console.log("Labels received from model:", detectedLabels);
-    
-    // Log all the known ingredient names from our database for comparison.
-    const knownIngredientNames = indianIngredientsDatabase.map(i => i.name.toLowerCase());
-    console.log("Known ingredients in database:", knownIngredientNames);
-    // --- END OF DEBUGGING CODE ---
+      if (dbName) {
+        const ingredientInfo = masterIngredientList.find(
+          item => item.name === dbName
+        );
 
-    const newItems: ScannedItem[] = [];
-    const purchaseDate = new Date();
-
-    detectedLabels.forEach(label => {
-      // Proactive Fix: Use .trim() to remove whitespace from the model's prediction.
-      const cleanedLabel = label.trim().toLowerCase();
-      
-      const ingredientInfo = indianIngredientsDatabase.find(
-        item => item.name.toLowerCase() === cleanedLabel
-      );
-
-      if (ingredientInfo) {
-        // This part is working, but the 'if' condition is never met.
-        newItems.push({
-          name: ingredientInfo.name,
-          category: ingredientInfo.category,
-          unit: ingredientInfo.unit,
-          quantity: 1,
-          value: Math.floor(Math.random() * 100) + 20,
-          purchaseDate: formatISO(purchaseDate),
-          expiryDate: calculateDefaultExpiry(purchaseDate, ingredientInfo.category),
-        });
-      } else {
-        // This log will now tell you exactly which label is failing.
-        console.warn(`'${label}' not found in the ingredient database.`);
+        if (ingredientInfo) {
+          console.log(`Recognized: '${label}' -> Mapped to: '${dbName}'`);
+          handleSelectItem(ingredientInfo);
+          return; 
+        }
       }
-    });
-
-    if (newItems.length > 0) {
-      setScannedItems(prev => [...prev, ...newItems]);
-    } else {
-      console.log("No known ingredients were detected."); // This is the message you are currently seeing.
     }
+    console.warn("Detected labels could not be mapped to any known ingredient:", detectedLabels);
+    alert("Could not recognize a known ingredient. Please try adding it manually.");
   };
 
-  return (
+ return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-text-primary">Smart Scanner</h1>
-      <p className="text-text-secondary">Add ingredients using AI recognition or manual entry.</p>
+      <p className="text-text-secondary">Scan items with your camera or search manually, then edit details and add to your list.</p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Left Side: Camera and Manual Entry */}
+        {/* Left Side: Input Methods */}
         <div className="space-y-6">
+          {/* Camera Scanner */}
           <div className="bg-white rounded-xl shadow-md p-6">
             <h2 className="text-xl font-bold mb-4">Camera Scanner</h2>
             <CameraScanner onRecognize={handleRecognition}/>
           </div>
+          
+          {/* Manual Search */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Ingredient Database</h2>
-             <div className="space-y-3">
-                <IngredientAutocomplete 
-                  masterList={masterIngredientList}
-                  onSelect={handleSelectIngredient} 
-                />
-                {currentItem.name && (
-                    <div className="grid grid-cols-2 gap-4 border p-4 rounded-lg">
-                        <h3 className="col-span-2 text-lg font-semibold">{currentItem.name}</h3>
-                        <div>
-                            <label className="text-sm font-medium">Quantity</label>
-                            <input type="number" value={currentItem.quantity || ''} onChange={e => setCurrentItem(p => ({...p, quantity: parseFloat(e.target.value)}))} className="w-full p-2 border border-gray-300 rounded-md" />
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium">Unit</label>
-                            <input type="text" value={currentItem.unit || ''} readOnly className="w-full p-2 border bg-gray-100 border-gray-300 rounded-md" />
-                        </div>
-                        <div>
-                            <label className="text-sm font-medium">Cost (₹)</label>
-                            <input type="number" value={currentItem.value || ''} onChange={e => setCurrentItem(p => ({...p, value: parseFloat(e.target.value)}))} className="w-full p-2 border border-gray-300 rounded-md" />
-                        </div>
-                         <div>
-                            <label className="text-sm font-medium">Expiry Date</label>
-                            <input type="date" value={currentItem.expiryDate ? format(new Date(currentItem.expiryDate), 'yyyy-MM-dd') : ''} onChange={e => setCurrentItem(p => ({...p, expiryDate: formatISO(e.target.valueAsDate!)}))} className="w-full p-2 border border-gray-300 rounded-md" />
-                        </div>
-                        <div className="col-span-2">
-                            <button onClick={handleAddItem} className="w-full bg-accent-secondary text-white font-semibold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-green-700 transition-colors">
-                                <PackagePlus size={20} /> Add Item
-                            </button>
-                        </div>
-                    </div>
-                )}
-            </div>
+            <h2 className="text-xl font-bold mb-4">Manual Search</h2>
+            <p className="text-sm text-text-secondary mb-3">Search and select an ingredient to add it to your list.</p>
+            <IngredientAutocomplete 
+              masterList={masterIngredientList}
+              onSelect={handleSelectItem} 
+            />
           </div>
         </div>
 
-        {/* Right Side: Scanned Items List */}
+        {/* Right Side: Items List with Inline Editing */}
         <div className="bg-white rounded-xl shadow-md p-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Scanned Items ({scannedItems.length})</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold">Items to Add ({scannedItems.length})</h2>
             <button
               onClick={handleSaveToPantry}
               disabled={scannedItems.length === 0}
-              className="bg-dal-orange text-white font-bold px-4 py-2 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-orange-600 transition-colors"
+              className="bg-dal-orange text-white font-bold px-6 py-2.5 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-orange-600 transition-colors shadow-sm"
             >
               Save All to Pantry
             </button>
           </div>
+
           <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
             {scannedItems.length > 0 ? scannedItems.map((item, index) => (
-              <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-lg border">
-                <div>
-                    <p className="font-bold text-text-primary">{item.name}</p>
-                    <p className="text-sm text-text-secondary">{item.quantity} {item.unit} • Expires on {format(new Date(item.expiryDate), 'dd MMM yyyy')}</p>
+              <div key={index} className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 p-4 transition-all hover:shadow-sm">
+                <div className="grid grid-cols-12 gap-4 items-center">
+                  <div className="col-span-3">
+                    <p className="font-bold text-base text-text-primary mb-0.5">{item.name}</p>
+                    <p className="text-xs text-text-secondary uppercase tracking-wide">{item.category}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-medium text-gray-600 block mb-1">Quantity</label>
+                    <input 
+                      type="number" 
+                      value={item.quantity || ''} 
+                      onChange={e => handleUpdateItem(index, 'quantity', parseFloat(e.target.value))}
+                      className="w-full p-2 border border-gray-300 rounded-md text-center font-semibold focus:ring-2 focus:ring-accent-secondary focus:border-transparent" 
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <label className="text-xs font-medium text-gray-600 block mb-1">Unit</label>
+                    <div className="py-2 px-2 text-center text-sm font-medium text-gray-700">
+                      {item.unit}
+                    </div>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="text-xs font-medium text-gray-600 block mb-1">Price (₹)</label>
+                    <input 
+                      type="number" 
+                      value={item.value || ''} 
+                      onChange={e => handleUpdateItem(index, 'value', parseFloat(e.target.value))}
+                      className="w-full p-2 border border-gray-300 rounded-md text-center font-semibold focus:ring-2 focus:ring-accent-secondary focus:border-transparent" 
+                    />
+                  </div>
+                  <div className="col-span-3">
+                    <label className="text-xs font-medium text-gray-600 block mb-1">Expiry Date</label>
+                    <input 
+                      type="date" 
+                      value={item.expiryDate ? format(new Date(item.expiryDate), 'yyyy-MM-dd') : ''} 
+                      onChange={e => handleUpdateItem(index, 'expiryDate', formatISO(e.target.valueAsDate!))}
+                      className="w-full p-2 border border-gray-300 rounded-md text-sm font-medium focus:ring-2 focus:ring-accent-secondary focus:border-transparent" 
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <label className="text-xs font-medium text-transparent block mb-1">Del</label>
+                    <button 
+                      onClick={() => setScannedItems(prev => prev.filter((_, i) => i !== index))}
+                      className="w-full text-chili-red hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center justify-center"
+                      title="Remove item"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
                 </div>
-                 <button 
-                    onClick={() => setScannedItems(prev => prev.filter((_, i) => i !== index))}
-                    className="text-chili-red hover:bg-red-100 p-2 rounded-full"
-                  >
-                    <Trash2 size={18} />
-                </button>
               </div>
             )) : (
-              <div className="text-center py-10">
-                <p className="text-text-secondary">No items scanned yet.</p>
+              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300">
+                <PackagePlus size={48} className="mx-auto text-gray-400 mb-3" />
+                <p className="text-gray-600 font-medium">No items yet</p>
+                <p className="text-sm text-gray-500 mt-1">Scan or search for items to get started</p>
               </div>
             )}
           </div>
