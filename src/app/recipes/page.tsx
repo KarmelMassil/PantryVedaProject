@@ -1,24 +1,48 @@
 "use client";
 import React, { useMemo, useState } from 'react';
 import { usePantryStore } from '@/store/pantryStore';
-import { getRecipeMatches } from '@/lib/recipeMatcher';
+import { getRecipeMatches, MatchedRecipe } from '@/lib/recipeMatcher';
 import { RecipeCard } from '@/components/RecipeCard';
+import { Card } from '@/components/ui/Card';
 import { Frown, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function RecipesPage() {
   const { inventory, recipes, preferences } = usePantryStore();
-  const [filter, setFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterCuisine, setFilterCuisine] = useState('all');
+  const [sortBy, setSortBy] = useState('match-desc');
 
-  const matchedRecipes = useMemo(() => {
-    let matches = getRecipeMatches(inventory, recipes, preferences);
-    if (filter === 'canMake') {
-      matches = matches.filter(r => r.matchPercentage === 100);
-    } else if (filter === 'almostThere') {
-      matches = matches.filter(r => r.matchPercentage > 75 && r.matchPercentage < 100);
+  const processedRecipes = useMemo(() => {
+    let items: MatchedRecipe[] = getRecipeMatches(inventory, recipes, preferences);
+    // 1. Filter by search (name or ingredient)
+    if (searchQuery) {
+      items = items.filter(r => 
+        r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.ingredients.some(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
     }
-    return matches;
-  }, [inventory, recipes, preferences, filter]);
+    // 2. Filter by cuisine
+    if (filterCuisine !== 'all') {
+      items = items.filter(r => r.cuisine === filterCuisine);
+    }
+    // 3. Sort results
+    items.sort((a, b) => {
+      switch (sortBy) {
+        case 'time-asc':
+          return a.cookingTime - b.cookingTime;
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'match-desc':
+        default:
+          return b.finalScore - a.finalScore;
+      }
+    });
+
+    return items;
+  }, [inventory, recipes, preferences, searchQuery, filterCuisine, sortBy]);
+
+  const allCuisines = ['all', ...new Set(recipes.map(r => r.cuisine))]
 
   return (
     <div>
@@ -29,15 +53,32 @@ export default function RecipesPage() {
         Add Custom Dish
       </Link>
       
-      <div className="flex gap-2 mb-6">
-        <button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-full font-semibold ${filter === 'all' ? 'bg-accent-primary text-white' : 'bg-white'}`}>All Recipes</button>
-        <button onClick={() => setFilter('canMake')} className={`px-4 py-2 rounded-full font-semibold ${filter === 'canMake' ? 'bg-accent-primary text-white' : 'bg-white'}`}>Can Make Now</button>
-        <button onClick={() => setFilter('almostThere')} className={`px-4 py-2 rounded-full font-semibold ${filter === 'almostThere' ? 'bg-accent-primary text-white' : 'bg-white'}`}>Almost There</button>
-      </div>
-      
-      {matchedRecipes.length > 0 ? (
+      <Card className="p-4 space-y-4 mb-6">
+          <input 
+              type="text"
+              placeholder="Search recipes by name or ingredient..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-2 border rounded-md"
+          />
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+                <label className="text-sm font-medium">Cuisine:</label>
+                <select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value)} className="p-2 border rounded-md text-sm">
+                    {allCuisines.map(c => <option key={c} value={c}>{c === 'all' ? 'All Cuisines' : c}</option>)}
+                </select>
+            </div>
+            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="p-2 border rounded-md text-sm">
+                <option value="match-desc">Sort by Best Match</option>
+                <option value="time-asc">Sort by Cooking Time</option>
+                <option value="name-asc">Sort by Name (A-Z)</option>
+            </select>
+          </div>
+      </Card>
+
+      {processedRecipes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {matchedRecipes.map((recipe) => (
+          {processedRecipes.map((recipe) => (
             <RecipeCard key={recipe.id} recipe={recipe} />
           ))}
         </div>

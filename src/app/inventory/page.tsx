@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
@@ -7,12 +7,7 @@ import { differenceInDays, format } from 'date-fns';
 import { Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2, PlusCircle } from 'lucide-react';
 import { WasteEvent } from '@/types';
 
-export default function InventoryPage() {
-  const { inventory, logWaste, removeIngredient, addMasterIngredient, masterIngredientList } = usePantryStore();
-  const totalItems = inventory.length;
-  const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
-
-  const toTitleCase = (str: string): string => {
+const toTitleCase = (str: string): string => {
     if (!str) return '';
     return str
       .toLowerCase()
@@ -21,7 +16,14 @@ export default function InventoryPage() {
       .join(' ');
   };
 
+export default function InventoryPage() {
+  const { inventory, logWaste, removeIngredient, addMasterIngredient, masterIngredientList } = usePantryStore();
+  const totalItems = inventory.length;
+  const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterBy, setFilterBy] = useState('all');
+  const [sortBy, setSortBy] = useState('expiry-asc');
   const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
     const formattedName = toTitleCase(ingredient.name.trim());
     if (!formattedName) {
@@ -70,6 +72,35 @@ export default function InventoryPage() {
     alert(`${item.name} marked as wasted and removed from pantry.`);
   };
 
+  const processedInventory = useMemo(() => {
+    let items = [...inventory];
+
+    // 1. Filter by search query
+    if (searchQuery) {
+      items = items.filter(item => item.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }
+    // 2. Filter by status
+    if (filterBy !== 'all') {
+      items = items.filter(item => {
+        const days = differenceInDays(new Date(item.expiryDate), new Date());
+        if (filterBy === 'expired') return days < 0;
+        if (filterBy === 'expiring-soon') return days >= 0 && days <= 3;
+        if (filterBy === 'fresh') return days > 3;
+        return true;
+      });
+    }
+    // 3. Sort the results
+    items.sort((a, b) => {
+      if (sortBy === 'name-asc') {
+        return a.name.localeCompare(b.name);
+      }
+      // Default: sort by expiry date, ascending
+      return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime();
+    });
+
+    return items;
+  }, [inventory, searchQuery, filterBy, sortBy]);
+
 
   return (
     <>
@@ -97,9 +128,31 @@ export default function InventoryPage() {
         <Card className="flex items-center gap-4"><AlertTriangle className="text-orange-500" size={32}/><div><p className="text-text-secondary">Expiring Soon</p><p className="text-2xl font-bold">{expiringSoonCount}</p></div></Card>
         <Card className="flex items-center gap-4"><IndianRupee className="text-purple-500" size={32}/><div><p className="text-text-secondary">Total Value</p><p className="text-2xl font-bold">₹{totalValue.toFixed(2)}</p></div></Card>
       </div>
+
+      <Card className="p-4 space-y-4">
+            <input 
+                type="text"
+                placeholder="Search ingredients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full p-2 border rounded-md"
+            />
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex items-center gap-2">
+                    <button onClick={() => setFilterBy('all')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'all' ? 'bg-accent-primary text-white' : 'bg-gray-200'}`}>All</button>
+                    <button onClick={() => setFilterBy('fresh')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'fresh' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>Fresh</button>
+                    <button onClick={() => setFilterBy('expiring-soon')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expiring-soon' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}>Expiring Soon</button>
+                    <button onClick={() => setFilterBy('expired')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expired' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Expired</button>
+                </div>
+                <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="p-2 border rounded-md text-sm">
+                    <option value="expiry-asc">Sort by Expiry Date</option>
+                    <option value="name-asc">Sort by Name (A-Z)</option>
+                </select>
+            </div>
+        </Card>
       
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        {inventory.map(item => {
+        {processedInventory.map(item => {
           const status = getExpiryStatus(item.expiryDate);
           const daysUntilExpiry = differenceInDays(new Date(item.expiryDate), new Date());
           
