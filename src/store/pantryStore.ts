@@ -61,6 +61,7 @@ interface PantryState {
   logWaste: (event: WasteEvent) => void;
   deductFromInventory: (name: string, quantity: number) => void;
   restockCheckedItems: () => void;
+  addRecipe: (recipe: Recipe) => void;
 }
 
 export const usePantryStore = create<PantryState>()(
@@ -224,6 +225,11 @@ export const usePantryStore = create<PantryState>()(
                 shoppingList: updatedShoppingList,
             };
           }),
+
+      addRecipe: (recipe) =>
+        set((state) => ({
+          recipes: [...state.recipes, recipe],
+        })),
     }),
     {
       name: 'pantryveda-storage',

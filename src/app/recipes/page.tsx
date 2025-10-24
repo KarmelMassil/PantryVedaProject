@@ -3,7 +3,8 @@ import React, { useMemo, useState } from 'react';
 import { usePantryStore } from '@/store/pantryStore';
 import { getRecipeMatches } from '@/lib/recipeMatcher';
 import { RecipeCard } from '@/components/RecipeCard';
-import { Frown } from 'lucide-react';
+import { Frown, PlusCircle } from 'lucide-react';
+import Link from 'next/link';
 
 export default function RecipesPage() {
   const { inventory, recipes, preferences } = usePantryStore();
@@ -23,6 +24,10 @@ export default function RecipesPage() {
     <div>
       <h1 className="text-3xl font-bold text-text-primary mb-4">Recipe Recommendations</h1>
       <p className="text-text-secondary mb-6">Discover authentic Indian recipes you can make with what you have.</p>
+      <Link href="/recipes/add" className="flex items-center gap-2 bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg">
+        <PlusCircle size={20} />
+        Add Custom Dish
+      </Link>
       
       <div className="flex gap-2 mb-6">
         <button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-full font-semibold ${filter === 'all' ? 'bg-accent-primary text-white' : 'bg-white'}`}>All Recipes</button>
