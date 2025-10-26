@@ -5,14 +5,40 @@ import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocompl
 import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Ingredient } from '@/types';
 import { format, formatISO, addDays } from 'date-fns';
-import { PackagePlus, Trash2 } from 'lucide-react';
+import { PackagePlus, Trash2, PlusCircle } from 'lucide-react';
 import { mapLabelToDbName } from '@/lib/labelMapper';
+import { AddIngredientModal } from '@/components/AddIngredientModal';
 
 type ScannedItem = Omit<Ingredient, 'id'>;
 
+// Helper function to format ingredient names to Title Case
+const toTitleCase = (str: string): string => {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+};
+
 export default function ScannerPage() {
-  const { addIngredient, masterIngredientList } = usePantryStore();
+  const { addIngredient, masterIngredientList, addMasterIngredient } = usePantryStore();
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
+  const [currentItem, setCurrentItem] = useState<Partial<Omit<Ingredient, 'id'>> | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
+    const formattedName = toTitleCase(ingredient.name.trim());
+    if (!formattedName) {
+      alert("Ingredient name cannot be empty.");
+      return;
+    }
+    const isDuplicate = masterIngredientList.some(
+      item => item.name.toLowerCase() === formattedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      alert(`'${formattedName}' already exists in your ingredient database!`);
+      return;
+    }
+    addMasterIngredient({ ...ingredient, name: formattedName });
+    alert(`'${formattedName}' has been added to your master ingredient database!`);
+  }
 
   const handleSelectItem = (ingredient: MasterIngredient) => {
     const purchaseDate = new Date();
@@ -65,7 +91,13 @@ export default function ScannerPage() {
     alert("Could not recognize a known ingredient. Please try adding it manually.");
   };
 
- return (
+return (
+  <>
+    <AddIngredientModal 
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveNewIngredient}
+        />
     <div className="space-y-6">
       <h1 className="text-3xl font-bold text-text-primary">Smart Scanner</h1>
       <p className="text-text-secondary">Scan items with your camera or search manually, then edit details and add to your list.</p>
@@ -81,8 +113,17 @@ export default function ScannerPage() {
           
           {/* Manual Search */}
           <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Manual Search</h2>
-            <p className="text-sm text-text-secondary mb-3">Search and select an ingredient to add it to your list.</p>
+            <div className="flex justify-between items-center">
+                  <h2 className="text-xl font-bold">Manual Search</h2>
+                  <button 
+                    onClick={() => setIsModalOpen(true)}
+                    className="text-sm flex items-center gap-1 text-accent-secondary font-semibold hover:underline"
+                  >
+                    <PlusCircle size={16} />
+                    New to Database?
+                  </button>
+              </div>
+            <p className="text-sm text-text-secondary mb-4">Search and select an ingredient to add it to your list.</p>
             <IngredientAutocomplete 
               masterList={masterIngredientList}
               onSelect={handleSelectItem} 
@@ -167,5 +208,6 @@ export default function ScannerPage() {
         </div>
       </div>
     </div>
-  );
+  </>
+);
 }

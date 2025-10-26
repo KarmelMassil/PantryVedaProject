@@ -1,8 +1,8 @@
 "use client";
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo } from 'react'
+import Link from 'next/link';
 import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { AddIngredientModal } from '@/components/AddIngredientModal';
 import { differenceInDays, format } from 'date-fns';
 import { Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2, PlusCircle } from 'lucide-react';
 import { WasteEvent } from '@/types';
@@ -20,29 +20,9 @@ export default function InventoryPage() {
   const { inventory, logWaste, removeIngredient, addMasterIngredient, masterIngredientList } = usePantryStore();
   const totalItems = inventory.length;
   const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [sortBy, setSortBy] = useState('expiry-asc');
-  const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
-    const formattedName = toTitleCase(ingredient.name.trim());
-    if (!formattedName) {
-      alert("Ingredient name cannot be empty.");
-      return;
-    }
-    const isDuplicate = masterIngredientList.some(
-        item => item.name.toLowerCase() === formattedName.toLowerCase()
-    );
-    if (isDuplicate) {
-        alert(`'${formattedName}' already exists in your ingredient database!`);
-        return; // Stop the function
-    }
-
-    // Call the Zustand action to permanently save the ingredient
-    addMasterIngredient({ ...ingredient, name: formattedName });
-    alert(`'${formattedName}' has been added to your master ingredient database!`);
-  };
-
   const expiringSoonCount = inventory.filter(item => {
     const days = differenceInDays(new Date(item.expiryDate), new Date());
     return days <= 3 && days >= 0;
@@ -104,22 +84,16 @@ export default function InventoryPage() {
 
   return (
     <>
-      <AddIngredientModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveNewIngredient}
-      />
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-text-primary">My Pantry</h1>
-          {/* --- This is the button to open the modal --- */}
-          <button 
-            onClick={() => setIsModalOpen(true)}
+          <Link 
+            href="/scanner"
             className="flex items-center gap-2 bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
           >
             <PlusCircle size={20} />
-            Add New Database Ingredient
-          </button>
+            Add New Ingredient
+          </Link>
         </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
