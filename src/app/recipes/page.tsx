@@ -10,17 +10,24 @@ import { RecipeModal } from '@/components/RecipeModal';
 import { AddToMealPlanModal } from '@/components/AddToMealPlanModal';
 import { Recipe } from '@/types';
 
+const difficulties: Recipe['difficulty'][] = ['beginner', 'intermediate', 'expert'];
+const dietaryOptions: Recipe['dietary'][0][] = ['veg', 'non-veg', 'vegan', 'gluten-free'];
+const spiceLevels: Recipe['spiceLevel'][] = ['mild', 'medium', 'hot'];
+
 export default function RecipesPage() {
   const { 
       inventory, recipes, preferences, 
       logConsumption, deductFromInventory, assignRecipeToMeal
   } = usePantryStore();
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
-  const [isCookMode, setIsCookMode] = useState(false); // To know if RecipeModal is for cooking
-  const [addToPlanRecipe, setAddToPlanRecipe] = useState<Recipe | null>(null); // Recipe for the AddToPlan modal
+  const [isCookMode, setIsCookMode] = useState(false);
+  const [addToPlanRecipe, setAddToPlanRecipe] = useState<Recipe | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCuisine, setFilterCuisine] = useState('all');
   const [sortBy, setSortBy] = useState('match-desc');
+  const [filterDifficulty, setFilterDifficulty] = useState('all');
+  const [filterDietary, setFilterDietary] = useState('all');
+  const [filterSpice, setFilterSpice] = useState('all');
 
   const processedRecipes = useMemo(() => {
     let items: MatchedRecipe[] = getRecipeMatches(inventory, recipes, preferences);
@@ -35,7 +42,19 @@ export default function RecipesPage() {
     if (filterCuisine !== 'all') {
       items = items.filter(r => r.cuisine === filterCuisine);
     }
-    // 3. Sort results
+    // 3. Filter by difficulty
+    if (filterDifficulty !== 'all') {
+      items = items.filter(r => r.difficulty === filterDifficulty);
+    }
+    // 4. Filter by dietary needs
+    if (filterDietary !== 'all') {
+      items = items.filter(r => r.dietary.includes(filterDietary as any));
+    }
+    // 5. Filter by spice level
+    if (filterSpice !== 'all') {
+      items = items.filter(r => r.spiceLevel === filterSpice);
+    }
+    // 6. Sort results
     items.sort((a, b) => {
       switch (sortBy) {
         case 'time-asc':
@@ -49,7 +68,7 @@ export default function RecipesPage() {
     });
 
     return items;
-  }, [inventory, recipes, preferences, searchQuery, filterCuisine, sortBy]);
+  }, [inventory, recipes, preferences, searchQuery, filterCuisine, sortBy, filterDifficulty, filterDietary, filterSpice]);
 
   const allCuisines = ['all', ...new Set(recipes.map(r => r.cuisine))]
 
@@ -118,7 +137,7 @@ export default function RecipesPage() {
       )}
 
       <div>
-        <div className="flex justify-between items-center mb-6"> {/* Added mb-6 */}
+        <div className="flex justify-between items-center mb-6">
           <div>
               <h1 className="text-3xl font-bold text-text-primary">Recipe Discovery</h1>
               <p className="text-text-secondary">Find recipes based on your pantry.</p>
@@ -136,19 +155,44 @@ export default function RecipesPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full p-2 border rounded-md"
           />
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-                <label className="text-sm font-medium">Cuisine:</label>
-                <select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value)} className="p-2 border rounded-md text-sm">
-                    {allCuisines.map(c => <option key={c} value={c}>{c === 'all' ? 'All Cuisines' : c}</option>)}
-                </select>
+          {/* Filter Row 1 */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div>
+                    <label className="block text-sm font-medium mb-1">Cuisine:</label>
+                    <select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                        {allCuisines.map(c => <option key={c} value={c}>{c === 'all' ? 'All' : c}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium mb-1">Difficulty:</label>
+                    <select value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                        <option value="all">All</option>
+                        {difficulties.map(d => <option key={d} value={d} className="capitalize">{d}</option>)}
+                    </select>
+                </div>
+                 <div>
+                    <label className="block text-sm font-medium mb-1">Dietary:</label>
+                    <select value={filterDietary} onChange={e => setFilterDietary(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                        <option value="all">All</option>
+                        {dietaryOptions.map(d => <option key={d} value={d} className="capitalize">{d}</option>)}
+                    </select>
+                </div>
+                 <div>
+                    <label className="block text-sm font-medium mb-1">Spice Level:</label>
+                    <select value={filterSpice} onChange={e => setFilterSpice(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                        <option value="all">All</option>
+                        {spiceLevels.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}
+                    </select>
+                </div>
             </div>
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="p-2 border rounded-md text-sm">
-                <option value="match-desc">Sort by Best Match</option>
-                <option value="time-asc">Sort by Cooking Time</option>
-                <option value="name-asc">Sort by Name (A-Z)</option>
-            </select>
-          </div>
+             {/* Filter Row 2 */}
+             <div className="flex justify-end">
+                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="p-2 border rounded-md text-sm">
+                    <option value="match-desc">Sort by Best Match</option>
+                    <option value="time-asc">Sort by Cooking Time</option>
+                    <option value="name-asc">Sort by Name (A-Z)</option>
+                </select>
+             </div>
       </Card>
       {processedRecipes.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
