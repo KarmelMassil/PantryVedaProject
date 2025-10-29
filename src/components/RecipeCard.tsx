@@ -1,21 +1,19 @@
 import { MatchedRecipe } from '@/lib/recipeMatcher';
-import { Flame, Clock, Users, ShoppingCart } from 'lucide-react'; // Add ShoppingCart icon
-import React from 'react';
-import { usePantryStore } from '@/store/pantryStore'; // Import store
-import { generateFromRecipe } from '@/lib/shoppingListGenerator'; // Import generator
+import { Flame, Clock, Users, Utensils, CalendarPlus, Eye } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { usePantryStore } from '@/store/pantryStore';
+import { generateFromRecipe } from '@/lib/shoppingListGenerator';
 
-export const RecipeCard: React.FC<{ recipe: MatchedRecipe }> = ({ recipe }) => {
-  const { inventory, addItemsToShoppingList, masterIngredientList } = usePantryStore(); // Get state and action
+interface RecipeCardProps {
+  recipe: MatchedRecipe;
+  onView: (recipe: MatchedRecipe) => void;
+  onCook: (recipe: MatchedRecipe) => void;
+  onAddToPlan: (recipe: MatchedRecipe) => void;
+}
 
-  const handleAddMissing = () => {
-    const missing = generateFromRecipe(recipe, inventory, masterIngredientList);
-    if (missing.length > 0) {
-      addItemsToShoppingList(missing);
-      alert(`Added ${missing.length} missing item(s) to your shopping list!`);
-    } else {
-      alert("You already have all ingredients for this recipe!");
-    }
-  };
+export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onCook, onAddToPlan }) => {
+  const [servings, setServings] = useState(recipe.servings);
+  const { inventory, addItemsToShoppingList, masterIngredientList } = usePantryStore();
 
   const getMatchColor = () => {
     if (recipe.matchPercentage === 100) return 'bg-green-100 text-green-800';
@@ -23,17 +21,25 @@ export const RecipeCard: React.FC<{ recipe: MatchedRecipe }> = ({ recipe }) => {
     return 'bg-red-100 text-red-800';
   };
 
+  const handleViewClick = () => {
+    onView(recipe); // Call the onView prop when card is clicked
+  };
+
   return (
     <div className="bg-white rounded-lg overflow-hidden shadow-lg border border-gray-200 flex flex-col">
-      <div className="relative">
-        <img src={recipe.image} alt={recipe.name} className="w-full h-48 object-cover" />
-        <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded-full ${getMatchColor()}`}>
-          {recipe.matchPercentage}% Match
-        </span>
+      <div className="cursor-pointer" onClick={handleViewClick}>
+        <div className="relative">
+          <img src={recipe.image} alt={recipe.name} className="w-full h-48 object-cover" />
+          <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded-full ${getMatchColor()}`}>
+            {recipe.matchPercentage}% Match
+          </span>
+        </div>
+        <div className="p-4 flex flex-col flex-grow">
+          <h3 className="text-xl font-bold text-text-primary mb-1">{recipe.name}</h3>
+          <p className="text-sm text-text-secondary mb-3 flex-grow">{recipe.description}</p>
+        </div>
       </div>
-      <div className="p-4 flex flex-col flex-grow">
-        <h3 className="text-xl font-bold text-text-primary mb-1">{recipe.name}</h3>
-        <p className="text-sm text-text-secondary mb-3 flex-grow">{recipe.description}</p>
+      <div className="p-4 pt-2 mt-auto">
         <div className="flex justify-between items-center text-xs text-text-secondary mb-4">
           <div className="flex items-center gap-1"><Clock size={14} /> {recipe.cookingTime}m</div>
           <div className="flex items-center gap-1"><Users size={14} /> {recipe.servings} servings</div>
@@ -52,12 +58,20 @@ export const RecipeCard: React.FC<{ recipe: MatchedRecipe }> = ({ recipe }) => {
             </div>
           )}
         </div>
-        <button
-          onClick={handleAddMissing}
-          className="mt-4 w-full bg-accent-primary/10 text-accent-primary font-semibold py-2 rounded-lg flex items-center justify-center gap-2 hover:bg-accent-primary/20 transition-colors"
-        >
-          <ShoppingCart size={16} /> Add Missing to List
-        </button>
+        <div className="flex gap-2 mt-4">
+            <button 
+                onClick={() => onCook(recipe)}
+                className="flex-1 flex items-center justify-center gap-1 bg-accent-secondary/10 text-accent-secondary font-semibold py-2 rounded-lg hover:bg-accent-secondary/20 transition-colors text-sm"
+            >
+                <Utensils size={16} /> Cook Now
+            </button>
+            <button 
+                onClick={() => onAddToPlan(recipe)}
+                className="flex-1 flex items-center justify-center gap-1 bg-blue-500/10 text-blue-600 font-semibold py-2 rounded-lg hover:bg-blue-500/20 transition-colors text-sm"
+            >
+                <CalendarPlus size={16} /> Add to Plan
+            </button>
+          </div>
       </div>
     </div>
   );
