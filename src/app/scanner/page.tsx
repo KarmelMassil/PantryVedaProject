@@ -11,7 +11,6 @@ import { AddIngredientModal } from '@/components/AddIngredientModal';
 
 type ScannedItem = Omit<Ingredient, 'id'>;
 
-// Helper function to format ingredient names to Title Case
 const toTitleCase = (str: string): string => {
   if (!str) return '';
   return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -38,6 +37,7 @@ export default function ScannerPage() {
     }
     addMasterIngredient({ ...ingredient, name: formattedName });
     alert(`'${formattedName}' has been added to your master ingredient database!`);
+    handleSelectItem({ ...ingredient, name: formattedName });
   }
 
   const handleSelectItem = (ingredient: MasterIngredient) => {

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import Webcam from 'webcam-easy';
 import { yoloService } from '@/lib/yoloService';
 import { Camera, Upload, Video, Circle, StopCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { set } from 'date-fns';
 
 interface CameraScannerProps {
   onRecognize: (labels: string[]) => void;
@@ -17,11 +18,10 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
 
-  // Effect for cleanup: ensure camera stops when component unmounts
   useEffect(() => {
     return () => {
-      // FIX #1: Corrected optional chaining syntax
       if (webcamRef.current?.webcamStarted) {
         webcamRef.current.stop();
       }
@@ -49,23 +49,26 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
 
   const handleCapture = async () => {
     if (videoRef.current) {
-      webcamRef.current?.snap(); // Draw frame to canvas
+      webcamRef.current?.snap();
       await runDetection(videoRef.current);
     }
   };
   
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      const img = new Image();
-      img.src = URL.createObjectURL(event.target.files[0]);
-      img.onload = async () => {
-        await runDetection(img);
-        URL.revokeObjectURL(img.src); // Clean up
-      };
-    }
-  };
+  if (event.target.files && event.target.files[0]) {
+    const file = event.target.files[0];
+    const imageURL = URL.createObjectURL(file);
+    setUploadedPreview(imageURL); 
+    const img = new Image();
+    img.src = imageURL;
+    img.onload = async () => {
+      await runDetection(img);
+    };
+  }
+};
 
   const handleStartCamera = () => {
+    setUploadedPreview(null);
     if (videoRef.current && canvasRef.current) {
       setErrorMsg('');
       const webcam = new Webcam(videoRef.current, 'user', canvasRef.current);
@@ -132,17 +135,27 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
       )}
 
       <div className="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden mb-4 border-2 border-dashed border-gray-300">
-        <video 
-          ref={videoRef} 
-          autoPlay 
-          playsInline 
-          className={`w-full h-full object-cover ${!isCameraActive && 'hidden'}`}
-        ></video>
-        {!isCameraActive && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-            <Video size={48} />
-            <p className="mt-2">Camera preview will appear here</p>
-          </div>
+        {uploadedPreview ? (
+          <img
+            src={uploadedPreview}
+            alt="Uploaded preview"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className={`w-full h-full object-cover ${!isCameraActive && 'hidden'}`}
+            ></video>
+            {!isCameraActive && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
+                <Video size={48} />
+                <p className="mt-2">Camera preview will appear here</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
