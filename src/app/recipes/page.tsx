@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { RecipeModal } from '@/components/RecipeModal';
 import { AddToMealPlanModal } from '@/components/AddToMealPlanModal';
 import { Recipe } from '@/types';
+import { CookingModeModal } from '@/components/CookingModeModal';
 
 const difficulties: Recipe['difficulty'][] = ['beginner', 'intermediate', 'expert'];
 const dietaryOptions: Recipe['dietary'][0][] = ['veg', 'non-veg', 'vegan', 'gluten-free'];
@@ -20,7 +21,7 @@ export default function RecipesPage() {
       logConsumption, deductFromInventory, assignRecipeToMeal
   } = usePantryStore();
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
-  const [isCookMode, setIsCookMode] = useState(false);
+  const [cookingRecipe, setCookingRecipe] = useState<Recipe | null>(null);
   const [addToPlanRecipe, setAddToPlanRecipe] = useState<Recipe | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterCuisine, setFilterCuisine] = useState('all');
@@ -74,12 +75,10 @@ export default function RecipesPage() {
 
   const handleOpenViewModal = (recipe: Recipe) => {
     setViewingRecipe(recipe);
-    setIsCookMode(false);
   };
   
   const handleOpenCookModal = (recipe: Recipe) => {
-    setViewingRecipe(recipe);
-    setIsCookMode(true);
+    setCookingRecipe(recipe);
   };
   
   const handleOpenAddToPlanModal = (recipe: Recipe) => {
@@ -88,14 +87,11 @@ export default function RecipesPage() {
 
   const handleCloseModal = () => {
     setViewingRecipe(null);
-    setIsCookMode(false);
     setAddToPlanRecipe(null);
+    setCookingRecipe(null);
   };
 
-  const handleCookAndClose = () => {
-    if (!viewingRecipe) return handleCloseModal();
-    const recipe = viewingRecipe;
-
+  const handleFinishCooking = (recipe: Recipe) => {
     const consumptionEvents = recipe.ingredients.map(ing => ({
       ingredientName: ing.name,
       quantityConsumed: ing.quantity,
@@ -122,17 +118,20 @@ export default function RecipesPage() {
     <>
       {/* Render Modals */}
       {viewingRecipe && (
-        <RecipeModal 
-          recipe={viewingRecipe}
-          onClose={handleCloseModal}
-          onCook={isCookMode ? handleCookAndClose : undefined}
-        />
+        <RecipeModal recipe={viewingRecipe} onClose={handleCloseModal} />
       )}
       {addToPlanRecipe && (
         <AddToMealPlanModal
           recipe={addToPlanRecipe}
           onClose={handleCloseModal}
           onSave={handleSaveToMealPlan}
+        />
+      )}
+      {cookingRecipe && (
+        <CookingModeModal
+          recipe={cookingRecipe}
+          onClose={handleCloseModal}
+          onFinishCooking={handleFinishCooking}
         />
       )}
 

@@ -4,12 +4,13 @@ import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSe
 import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { DraggableRecipeCard } from '@/components/meal-plan/DraggableRecipeCard';
 import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
-import { format, addDays, startOfWeek, subDays, endOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, subDays, endOfWeek, set } from 'date-fns';
 import { ArrowLeft, ArrowRight, ShoppingCart, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RecipeModal } from '@/components/RecipeModal';
 import { Recipe } from '@/types';
 import { getProjectedInventory, getBestSuggestion } from '@/lib/mealPlanLogic';
+import { CookingModeModal } from '@/components/CookingModeModal';
 
 type CookingContext = { date: string, meal: keyof DayPlan } | null;
 
@@ -21,6 +22,7 @@ export default function MealPlannerPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [cookingContext, setCookingContext] = useState<CookingContext>(null);
+  const [cookingRecipe, setCookingRecipe] = useState<Recipe | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
@@ -41,20 +43,22 @@ export default function MealPlannerPage() {
   const goToPreviousWeek = () => setCurrentDate(subDays(currentDate, 7));
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
   const handleOpenViewModal = (recipe: Recipe, context?: CookingContext) => {
-    setViewingRecipe(recipe);
-    if (context) setCookingContext(context);
+    if (context) {
+      setCookingRecipe(recipe);
+      setCookingContext(context);
+    } else {
+      setViewingRecipe(recipe);
+    }
   };
   
   const handleCloseModal = () => {
     setViewingRecipe(null);
     setCookingContext(null);
+    setCookingRecipe(null);
   };
 
-  const handleCookAndClose = () => {
-    if (!cookingContext || !viewingRecipe) return handleCloseModal();
-    
-    const { date, meal } = cookingContext;
-    const recipe = viewingRecipe;
+  const handleFinishCooking = (recipe: Recipe) => {
+    if (!cookingContext) return;
 
     // 1. Log consumption
     const consumptionEvents = recipe.ingredients.map(ing => ({
@@ -110,17 +114,20 @@ export default function MealPlannerPage() {
   return (
     <>
       {viewingRecipe && (
-        <RecipeModal 
-          recipe={viewingRecipe}
+        <RecipeModal recipe={viewingRecipe} onClose={handleCloseModal} />
+      )}
+      {cookingRecipe && (
+        <CookingModeModal
+          recipe={cookingRecipe}
           onClose={handleCloseModal}
-          onCook={cookingContext ? handleCookAndClose : undefined}
+          onFinishCooking={handleFinishCooking}
         />
       )}
       <DndContext onDragEnd={handleDragEnd}>
         <div className="flex h-full gap-6">
           <aside className="w-64 bg-white p-4 rounded-xl shadow-md flex-shrink-0">
             <h2 className="text-xl font-bold mb-4">Recipes</h2>
-            {/* --- ADD THIS SEARCH BAR --- */}
+            {/* --- SEARCH BAR --- */}
             <div className="relative mb-4">
                 <input 
                     type="text"
