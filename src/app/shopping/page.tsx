@@ -2,10 +2,20 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2 } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
+import { AddIngredientModal } from '@/components/AddIngredientModal';
+
+// Helper function to format ingredient names to Title Case
+const toTitleCase = (str: string): string => {
+  if (!str) return '';
+  return str.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+};
+
+// Define the type for our suggestions
+type Suggestion = Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> & { reason: string, priority: 'high' | 'medium' | 'low' };
 
 export default function ShoppingListPage() {
   const { 
@@ -19,11 +29,28 @@ export default function ShoppingListPage() {
     updateShoppingListItem, 
     removeShoppingListItem, 
     addItemsToShoppingList,
-    restockCheckedItems 
+    restockCheckedItems,
+    addMasterIngredient 
   } = usePantryStore();
 
   const [selectedItem, setSelectedItem] = useState<MasterIngredient | null>(null);
   const [itemQuantity, setItemQuantity] = useState('1');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [proposedSuggestions, setProposedSuggestions] = useState<Suggestion[]>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+
+  const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
+    const formattedName = toTitleCase(ingredient.name.trim());
+    if (!formattedName) return alert("Ingredient name cannot be empty.");
+    
+    const isDuplicate = masterIngredientList.some(item => item.name.toLowerCase() === formattedName.toLowerCase());
+    if (isDuplicate) return alert(`'${formattedName}' already exists in your database!`);
+
+    addMasterIngredient({ ...ingredient, name: formattedName });
+    alert(`'${formattedName}' has been added to your master database.`);
+    // Optionally, select it in the form
+    setSelectedItem({ ...ingredient, name: formattedName });
+  };
 
   const handleAddSelectedItem = () => {
     if (!selectedItem) return;
@@ -49,14 +76,30 @@ export default function ShoppingListPage() {
   }, [shoppingList]);
 
   const handleGetSmartSuggestions = async () => {
+    setIsSuggesting(true);
+    setProposedSuggestions([]); // Clear old suggestions
     const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList);
-    if (finalSuggestions.length > 0) {
-      addItemsToShoppingList(finalSuggestions);
-      alert(`Added ${finalSuggestions.length} smart suggestion(s) to your list!`);
-    } else {
-      alert("No smart suggestions right now. Cook more meals to generate data!");
-    }
+    setProposedSuggestions(finalSuggestions);
+    setIsSuggesting(false);
   };
+
+  const handleAcceptSuggestion = (suggestion: Suggestion) => {
+    // addItemsToShoppingList already handles merging quantities, so this works for both new and existing items
+    addItemsToShoppingList([suggestion]);
+    // Remove the accepted suggestion from the proposed list
+    setProposedSuggestions(prev => prev.filter(s => s.name !== suggestion.name));
+  };
+
+  const handleDismissSuggestion = (suggestionName: string) => {
+    setProposedSuggestions(prev => prev.filter(s => s.name !== suggestionName));
+  };
+  
+  const handleAcceptAll = () => {
+    addItemsToShoppingList(proposedSuggestions);
+    setProposedSuggestions([]);
+  };
+
+  const findItemInList = (name: string) => shoppingList.find(item => item.name === name);
 
   const handleRestock = () => {
     if (window.confirm("Are you sure you want to add all checked items to your pantry and remove them from this list?")) {
@@ -65,6 +108,12 @@ export default function ShoppingListPage() {
  };
 
   return (
+    <>
+      <AddIngredientModal 
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveNewIngredient}
+      />
     <div className="flex flex-col lg:flex-row gap-6">
       {/* Main Content */}
       <div className="flex-grow space-y-6">
@@ -83,7 +132,16 @@ export default function ShoppingListPage() {
 
         {/* AutoComplete Form */}
         <Card>
-          <h3 className="font-bold mb-2">Add Ingredient from Database</h3>
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="font-bold mb-2">Add Ingredient from Database</h3>
+            <button 
+                  onClick={() => setIsModalOpen(true)}
+                  className="text-sm flex items-center gap-1 text-accent-secondary font-semibold hover:underline"
+                >
+                  <PlusCircle size={16} />
+                  New to Database?
+            </button>
+          </div>
           <div className="space-y-2">
             <IngredientAutocomplete 
               masterList={masterIngredientList}
@@ -174,17 +232,50 @@ export default function ShoppingListPage() {
             </div>
         </Card>
          <Card className="bg-yellow-50 border-yellow-200">
-            <h3 className="font-bold text-lg mb-2 flex items-center gap-2"><Lightbulb size={20} className="text-yellow-500"/> Smart Tips</h3>
-             <button onClick={handleGetSmartSuggestions} className="w-full text-left p-3 bg-white rounded-lg hover:bg-gray-50 border mb-2">
-                <p className="font-semibold">Get Smart Suggestions</p>
-                <p className="text-xs text-text-secondary">Based on your consumption habits.</p>
-            </button>
-            <ul className="text-sm text-text-secondary space-y-1 list-disc list-inside">
-                <li>Check expiry dates, especially for dairy.</li>
-                <li>Bring your own bags for eco-friendly shopping.</li>
-            </ul>
-        </Card>
+              <div className="flex justify-between items-center mb-2">
+                <h3 className="font-bold text-lg flex items-center gap-2"><Lightbulb size={20} className="text-yellow-500"/> Smart Suggestions</h3>
+                <button onClick={handleGetSmartSuggestions} disabled={isSuggesting} className="p-1 text-gray-500 hover:text-black disabled:opacity-50">
+                  {isSuggesting ? <Loader2 className="animate-spin" size={18}/> : <RefreshCw size={18}/>}
+                </button>
+              </div>
+              
+              {/* This is where the proposals will be rendered */}
+              <div className="space-y-3">
+                {isSuggesting && <p className="text-sm text-center text-gray-600">Analyzing your habits...</p>}
+                
+                {proposedSuggestions.length > 0 && (
+                  <>
+                    <button onClick={handleAcceptAll} className="w-full bg-accent-secondary text-white font-semibold py-1.5 rounded-md text-sm">Accept All</button>
+                    {proposedSuggestions.map((suggestion, index) => {
+                      const existingItem = findItemInList(suggestion.name);
+                      return (
+                        <div key={index} className="bg-white p-3 rounded-lg border border-yellow-300 shadow-sm">
+                          <p className="font-semibold">{suggestion.name}</p>
+                          <p className="text-xs text-gray-500 mb-2 italic">{suggestion.reason}</p>
+                          
+                          {existingItem ? (
+                            <p className="text-sm">Update quantity from {existingItem.quantity} to {suggestion.quantity} {suggestion.unit}</p>
+                          ) : (
+                            <p className="text-sm">Add {suggestion.quantity} {suggestion.unit} to your list</p>
+                          )}
+                          
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 bg-green-600 text-white text-xs font-bold py-1 rounded">Accept</button>
+                            <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-1 rounded">Dismiss</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
+                
+                {!isSuggesting && proposedSuggestions.length === 0 && (
+                  <p className="text-sm text-center text-gray-600">Click the refresh button to get smart suggestions based on your pantry and meal plan.</p>
+                )}
+              </div>
+          </Card>
       </div>
     </div>
+    </>
   );
 }
