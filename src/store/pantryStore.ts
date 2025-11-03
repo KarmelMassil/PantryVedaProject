@@ -6,6 +6,14 @@ import { indianIngredientsDatabase as initialMasterList } from '@/data/ingredien
 import { formatISO, addDays } from 'date-fns';
 import { typicalShelfLife } from '@/lib/dateUtils';
 
+export type ToastType = 'success' | 'error' | 'info';
+
+export interface Toast {
+  id: string;
+  message: string;
+  type: ToastType;
+}
+
 export interface MasterIngredient {
   name: string;
   category: 'Vegetables' | 'Fruits' | 'Spices' | 'Grains' | 'Dairy' | 'Meats' | 'Herbs' | 'Other';
@@ -46,6 +54,7 @@ interface PantryState {
   mealPlan: MealPlan; 
   consumptionLog: ConsumptionEvent[];
   wasteLog: WasteEvent[];
+  toasts: Toast[];
   addMasterIngredient: (ingredient: MasterIngredient) => void;
   addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
   removeIngredient: (id: string) => void;
@@ -62,6 +71,8 @@ interface PantryState {
   deductFromInventory: (name: string, quantity: number) => void;
   restockCheckedItems: () => void;
   addRecipe: (recipe: Recipe) => void;
+  addToast: (message: string, type?: ToastType) => void;
+  removeToast: (id: string) => void;
 }
 
 export const usePantryStore = create<PantryState>()(
@@ -81,6 +92,7 @@ export const usePantryStore = create<PantryState>()(
       mealPlan: {},
       consumptionLog: [],
       wasteLog: [],
+      toasts: [],
 
       addMasterIngredient: (ingredient) =>
         set((state) => ({
@@ -230,9 +242,25 @@ export const usePantryStore = create<PantryState>()(
         set((state) => ({
           recipes: [...state.recipes, recipe],
         })),
+
+        addToast: (message, type = 'info') => {
+        const id = crypto.randomUUID();
+        set((state) => ({
+          toasts: [...state.toasts, { id, message, type }],
+        }));
+      },
+      
+      removeToast: (id) =>
+        set((state) => ({
+          toasts: state.toasts.filter((toast) => toast.id !== id),
+        })),
     }),
     {
       name: 'pantryveda-storage',
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(([key]) => !['toasts'].includes(key))
+        ),
     }
   )
 );
