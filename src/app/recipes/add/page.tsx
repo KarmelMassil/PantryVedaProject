@@ -17,8 +17,6 @@ const toTitleCase = (str: string): string => {
 export default function AddRecipePage() {
     const { masterIngredientList, addRecipe, addMasterIngredient } = usePantryStore();
     const router = useRouter();
-
-    // --- NEW STATE FOR RECIPE DETAILS ---
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
     const [instructions, setInstructions] = useState('');
@@ -53,17 +51,23 @@ export default function AddRecipePage() {
         const isDuplicate = masterIngredientList.some(
             item => item.name.toLowerCase() === formattedName.toLowerCase()
         );
-        if (isDuplicate) return alert(`'${formattedName}' already exists!`);
+        if (isDuplicate) {
+            alert(`'${formattedName}' already exists!`);
+            const existing = masterIngredientList.find(item => item.name.toLowerCase() === formattedName.toLowerCase());
+            if (existing) setCurrentIngredient(existing);
+            return;
+        }
+
 
         const finalIngredientData = { ...newDbIngredient, name: formattedName };
         
         addMasterIngredient(finalIngredientData);
         alert(`'${formattedName}' added to database.`);
-        setIngredients([...ingredients, {
-            name: finalIngredientData.name,
-            quantity: 1, // Default to 1
-            unit: finalIngredientData.unit
-        }]);
+        setCurrentIngredient(finalIngredientData);
+        setCurrentQty('1');
+        
+        setIsAddIngredientModalOpen(false);
+
     };
 
     const handleSaveRecipe = () => {
@@ -137,7 +141,7 @@ export default function AddRecipePage() {
                     </div>
                 </Card>
 
-                {/* --- UPDATED INGREDIENTS CARD --- */}
+                {/* --- INGREDIENTS CARD --- */}
                 <Card className="p-6">
                     <h2 className="text-xl font-bold mb-4">Ingredients</h2>
                     <div className="space-y-2 mb-4">

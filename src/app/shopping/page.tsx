@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
@@ -38,6 +38,7 @@ export default function ShoppingListPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [proposedSuggestions, setProposedSuggestions] = useState<Suggestion[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
     const formattedName = toTitleCase(ingredient.name.trim());
@@ -65,15 +66,6 @@ export default function ShoppingListPage() {
     setSelectedItem(null);
     setItemQuantity('1');
   };
-
-  const categorizedList = useMemo(() => {
-    return shoppingList.reduce((acc, item) => {
-      const category = item.category || 'Other';
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(item);
-      return acc;
-    }, {} as Record<string, ShoppingListItem[]>);
-  }, [shoppingList]);
 
   const handleGetSmartSuggestions = async () => {
     setIsSuggesting(true);
@@ -106,6 +98,18 @@ export default function ShoppingListPage() {
         restockCheckedItems();
     }
  };
+
+  const categorizedList = useMemo(() => {
+    const filteredList = shoppingList.filter(item =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    return filteredList.reduce((acc, item) => {
+      const category = item.category || 'Other';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(item);
+      return acc;
+    }, {} as Record<string, ShoppingListItem[]>);
+  }, [shoppingList, searchQuery]); 
 
   return (
     <>
@@ -166,6 +170,19 @@ export default function ShoppingListPage() {
           </div>
         </Card>
 
+        {/* Search Bar */}
+        <div className="relative">
+            <input
+              type="text"
+              placeholder="Search your shopping list..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-3 pl-10 border rounded-lg"
+            />
+            <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
+
+
         {/* List */}
         <div className="space-y-4">
           {Object.entries(categorizedList).map(([category, items]) => (
@@ -218,6 +235,11 @@ export default function ShoppingListPage() {
               </Card>
             </div>
           ))}
+          {/* Show message if list is empty due to search */}
+          {shoppingList.length > 0 && Object.keys(categorizedList).length === 0 && (
+            <p className="text-center text-gray-500">No items match your search.</p>
+          )}
+
         </div>
       </div>
 
