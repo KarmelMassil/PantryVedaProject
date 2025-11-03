@@ -15,7 +15,7 @@ import { CookingModeModal } from '@/components/CookingModeModal';
 type CookingContext = { date: string, meal: keyof DayPlan } | null;
 
 export default function MealPlannerPage() {
-  const { recipes, mealPlan, inventory, assignRecipeToMeal, addItemsToShoppingList, logConsumption, deductFromInventory, preferences } = usePantryStore();
+  const { recipes, mealPlan, inventory, assignRecipeToMeal, addItemsToShoppingList, logConsumption, deductFromInventory, preferences, addToast } = usePantryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeRecipe, setActiveRecipe] = useState<string | null>(null);
   const router = useRouter();
@@ -76,7 +76,7 @@ export default function MealPlannerPage() {
       deductFromInventory(ing.name, ing.quantity);
     });
 
-    alert(`Enjoy your ${recipe.name}! Ingredients have been logged and deducted.`);
+    addToast(`Enjoy your ${recipe.name}! Ingredients have been logged and deducted.`, 'success');
     handleCloseModal();
   };
   

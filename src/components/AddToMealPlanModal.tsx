@@ -3,6 +3,7 @@ import { Recipe } from '@/types';
 import { X, CalendarPlus } from 'lucide-react';
 import React, { useState } from 'react';
 import { format } from 'date-fns';
+import { usePantryStore } from '@/store/pantryStore';
 
 interface AddToMealPlanModalProps {
   recipe: Recipe;
@@ -13,10 +14,11 @@ interface AddToMealPlanModalProps {
 export const AddToMealPlanModal: React.FC<AddToMealPlanModalProps> = ({ recipe, onClose, onSave }) => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('dinner');
+  const addToast = usePantryStore((state) => state.addToast);
 
   const handleSave = () => {
     if (!selectedDate) {
-      alert("Please select a date.");
+      addToast("Please select a date.");
       return;
     }
     onSave(recipe.id, selectedDate, selectedMeal);

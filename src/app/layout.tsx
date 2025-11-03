@@ -3,6 +3,7 @@ import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelInitializer } from "@/components/ModelInitializer";
+import { NotificationSystem } from "@/components/NotificationSystem"; 
 
 const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "700"] });
 
@@ -19,7 +20,8 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={poppins.className}>
-        <ModelInitializer /> {/* Add the initializer here */}
+        <ModelInitializer /> 
+        <NotificationSystem />
         <div className="flex h-screen bg-background-light">
           <Sidebar />
           <main className="flex-1 p-6 overflow-y-auto">

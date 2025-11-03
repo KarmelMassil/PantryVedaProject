@@ -17,7 +17,7 @@ const toTitleCase = (str: string): string => {
 };
 
 export default function ScannerPage() {
-  const { addIngredient, masterIngredientList, addMasterIngredient } = usePantryStore();
+  const { addIngredient, masterIngredientList, addMasterIngredient, addToast } = usePantryStore();
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<Omit<Ingredient, 'id'>> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -25,18 +25,18 @@ export default function ScannerPage() {
   const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
     const formattedName = toTitleCase(ingredient.name.trim());
     if (!formattedName) {
-      alert("Ingredient name cannot be empty.");
+      addToast("Ingredient name cannot be empty.", 'error');
       return;
     }
     const isDuplicate = masterIngredientList.some(
       item => item.name.toLowerCase() === formattedName.toLowerCase()
     );
     if (isDuplicate) {
-      alert(`'${formattedName}' already exists in your ingredient database!`);
+      addToast(`'${formattedName}' already exists in your ingredient database!`, 'info');
       return;
     }
     addMasterIngredient({ ...ingredient, name: formattedName });
-    alert(`'${formattedName}' has been added to your master ingredient database!`);
+    addToast(`'${formattedName}' has been added to your master ingredient database!`, 'success');
     handleSelectItem({ ...ingredient, name: formattedName });
   }
 
@@ -64,7 +64,7 @@ export default function ScannerPage() {
     if (scannedItems.length === 0) return;
     scannedItems.forEach(item => addIngredient(item));
     setScannedItems([]);
-    alert(`${scannedItems.length} item(s) saved to your pantry!`);
+    addToast(`${scannedItems.length} item(s) saved to your pantry!`, 'success');
   };
 
   const handleRecognition = (detectedLabels: string[]) => {
@@ -88,7 +88,7 @@ export default function ScannerPage() {
       }
     }
     console.warn("Detected labels could not be mapped to any known ingredient:", detectedLabels);
-    alert("Could not recognize a known ingredient. Please try adding it manually.");
+    addToast("Could not recognize a known ingredient. Please try adding it manually.", 'error');
   };
 
 return (

@@ -7,6 +7,7 @@ import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocompl
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
+import { error } from 'console';
 
 // Helper function to format ingredient names to Title Case
 const toTitleCase = (str: string): string => {
@@ -30,7 +31,8 @@ export default function ShoppingListPage() {
     removeShoppingListItem, 
     addItemsToShoppingList,
     restockCheckedItems,
-    addMasterIngredient 
+    addMasterIngredient,
+    addToast 
   } = usePantryStore();
 
   const [selectedItem, setSelectedItem] = useState<MasterIngredient | null>(null);
@@ -42,13 +44,13 @@ export default function ShoppingListPage() {
 
   const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
     const formattedName = toTitleCase(ingredient.name.trim());
-    if (!formattedName) return alert("Ingredient name cannot be empty.");
+    if (!formattedName) return addToast("Ingredient name cannot be empty.", "error");
     
     const isDuplicate = masterIngredientList.some(item => item.name.toLowerCase() === formattedName.toLowerCase());
-    if (isDuplicate) return alert(`'${formattedName}' already exists in your database!`);
+    if (isDuplicate) return addToast(`'${formattedName}' already exists in your database!`, "info");
 
     addMasterIngredient({ ...ingredient, name: formattedName });
-    alert(`'${formattedName}' has been added to your master database.`);
+    addToast(`'${formattedName}' has been added to your master database and to shopping list.`, "success");
     // Optionally, select it in the form
     setSelectedItem({ ...ingredient, name: formattedName });
   };
@@ -76,9 +78,7 @@ export default function ShoppingListPage() {
   };
 
   const handleAcceptSuggestion = (suggestion: Suggestion) => {
-    // addItemsToShoppingList already handles merging quantities, so this works for both new and existing items
     addItemsToShoppingList([suggestion]);
-    // Remove the accepted suggestion from the proposed list
     setProposedSuggestions(prev => prev.filter(s => s.name !== suggestion.name));
   };
 

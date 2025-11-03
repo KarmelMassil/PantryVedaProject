@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { MasterIngredient } from '@/store/pantryStore';
 import { X } from 'lucide-react';
+import { usePantryStore } from '@/store/pantryStore';
 
 interface AddIngredientModalProps {
   isOpen: boolean;
@@ -14,10 +15,11 @@ export const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, 
   const [category, setCategory] = useState<MasterIngredient['category']>('Vegetables');
   const [expiry, setExpiry] = useState(7);
   const [unit, setUnit] = useState<MasterIngredient['unit']>('pcs');
+  const addToast = usePantryStore((state) => state.addToast);
 
   const handleSave = () => {
     if (!name || expiry <= 0) {
-      alert("Please fill in all fields correctly.");
+      addToast("Please fill in all fields correctly.", 'error');
       return;
     }
     onSave({ name, category, defaultExpiryDays: expiry, unit });

@@ -15,7 +15,7 @@ const toTitleCase = (str: string): string => {
 };
 
 export default function AddRecipePage() {
-    const { masterIngredientList, addRecipe, addMasterIngredient } = usePantryStore();
+    const { masterIngredientList, addRecipe, addMasterIngredient, addToast } = usePantryStore();
     const router = useRouter();
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');
@@ -47,12 +47,12 @@ export default function AddRecipePage() {
 
     const handleSaveNewIngredientAndAddToRecipe = (newDbIngredient: MasterIngredient) => {
         const formattedName = toTitleCase(newDbIngredient.name.trim());
-        if (!formattedName) return alert("Ingredient name cannot be empty.");
+        if (!formattedName) return addToast("Ingredient name cannot be empty.", 'error');
         const isDuplicate = masterIngredientList.some(
             item => item.name.toLowerCase() === formattedName.toLowerCase()
         );
         if (isDuplicate) {
-            alert(`'${formattedName}' already exists!`);
+            addToast(`'${formattedName}' already exists!`, 'info');
             const existing = masterIngredientList.find(item => item.name.toLowerCase() === formattedName.toLowerCase());
             if (existing) setCurrentIngredient(existing);
             return;
@@ -62,7 +62,7 @@ export default function AddRecipePage() {
         const finalIngredientData = { ...newDbIngredient, name: formattedName };
         
         addMasterIngredient(finalIngredientData);
-        alert(`'${formattedName}' added to database.`);
+        addToast(`'${formattedName}' added to database.`, 'success');
         setCurrentIngredient(finalIngredientData);
         setCurrentQty('1');
         
@@ -72,7 +72,7 @@ export default function AddRecipePage() {
 
     const handleSaveRecipe = () => {
         if (!name || ingredients.length === 0 || !instructions || cookingTime <= 0 || servings <= 0) {
-            alert("Please fill in all required fields (Dish Name, Ingredients, Instructions, Time, Servings).");
+            addToast("Please fill in all required fields (Dish Name, Ingredients, Instructions, Time, Servings).", 'error');
             return;
         }
         const newRecipe: Recipe = {
@@ -90,7 +90,7 @@ export default function AddRecipePage() {
             image: imageUrl || `https://placehold.co/600x400/FFF8E1/E67E22?text=${name.replace(' ', '+')}`,
         };
         addRecipe(newRecipe);
-        alert("Recipe saved successfully!");
+        addToast("Recipe saved successfully!", 'success');
         router.push('/recipes');
     };
 

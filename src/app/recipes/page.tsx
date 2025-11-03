@@ -18,7 +18,7 @@ const spiceLevels: Recipe['spiceLevel'][] = ['mild', 'medium', 'hot'];
 export default function RecipesPage() {
   const { 
       inventory, recipes, preferences, 
-      logConsumption, deductFromInventory, assignRecipeToMeal
+      logConsumption, deductFromInventory, assignRecipeToMeal, addToast
   } = usePantryStore();
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [cookingRecipe, setCookingRecipe] = useState<Recipe | null>(null);
@@ -105,13 +105,13 @@ export default function RecipesPage() {
       deductFromInventory(ing.name, ing.quantity);
     });
 
-    alert(`Enjoy your ${recipe.name}! Ingredients logged.`);
+    addToast(`Enjoy your ${recipe.name}! Ingredients logged.`, 'success');
     handleCloseModal();
   };
 
   const handleSaveToMealPlan = (recipeId: string, date: string, meal: keyof DayPlan) => {
     assignRecipeToMeal(date, meal, recipeId);
-    alert(`Recipe added to ${meal} on ${date}.`);
+    addToast(`Recipe added to ${meal} on ${date}.`, 'success');
   };
 
   return (

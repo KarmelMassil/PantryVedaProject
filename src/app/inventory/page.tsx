@@ -17,7 +17,7 @@ const toTitleCase = (str: string): string => {
   };
 
 export default function InventoryPage() {
-  const { inventory, logWaste, removeIngredient, addMasterIngredient, masterIngredientList } = usePantryStore();
+  const { inventory, logWaste, removeIngredient, addMasterIngredient, masterIngredientList, addToast } = usePantryStore();
   const totalItems = inventory.length;
   const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
   const [searchQuery, setSearchQuery] = useState('');
@@ -49,7 +49,7 @@ export default function InventoryPage() {
     // 3. Remove the item from inventory
     removeIngredient(item.id);
     
-    alert(`${item.name} marked as wasted and removed from pantry.`);
+    addToast(`${item.name} marked as wasted and removed from pantry.`, 'success');
   };
 
   const processedInventory = useMemo(() => {

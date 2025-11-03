@@ -4,6 +4,8 @@ import { usePantryStore } from '@/store/pantryStore';
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Mic, MicOff, Volume2, VolumeX, SkipBack, SkipForward, Play, Pause, RefreshCw, Clock, ChefHat, Save, Flame } from 'lucide-react';
 
+const addToast = usePantryStore((state) => state.addToast);
+
 // Helper function to parse time from a step, e.g., "cook for 10 minutes"
 const getTimerFromStep = (step: string): number | null => {
     const match = step.match(/(\d+)\s+(minute|second)s?/i);
@@ -334,7 +336,7 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onCl
         setIsListening(false);
       }
     } else if (!recognitionRef.current) {
-      alert("Speech recognition is not available on this browser.");
+      addToast("Speech recognition is not available on this browser.", 'error');
     }
   };
   const stopListening = () => {

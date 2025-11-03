@@ -4,6 +4,7 @@ import Webcam from 'webcam-easy';
 import { yoloService } from '@/lib/yoloService';
 import { Camera, Upload, Video, Circle, StopCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { set } from 'date-fns';
+import { usePantryStore } from '@/store/pantryStore';
 
 interface CameraScannerProps {
   onRecognize: (labels: string[]) => void;
@@ -14,7 +15,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const webcamRef = useRef<Webcam | null>(null);
-
+  const addToast = usePantryStore((state) => state.addToast);
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -37,7 +38,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
         const labels = detections.map(d => d.label);
         onRecognize(labels);
       } else {
-        alert("No ingredients recognized. Please try a clearer picture.");
+        addToast("No ingredients recognized. Please try a clearer picture.", 'error');
       }
     } catch (error: any) {
       console.error("Detection failed:", error);
