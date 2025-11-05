@@ -29,6 +29,7 @@ export default function RecipesPage() {
   const [filterDifficulty, setFilterDifficulty] = useState('all');
   const [filterDietary, setFilterDietary] = useState('all');
   const [filterSpice, setFilterSpice] = useState('all');
+  const [filterServings, setFilterServings] = useState(4);
 
   const processedRecipes = useMemo(() => {
     let items: MatchedRecipe[] = getRecipeMatches(inventory, recipes, preferences);
@@ -55,7 +56,9 @@ export default function RecipesPage() {
     if (filterSpice !== 'all') {
       items = items.filter(r => r.spiceLevel === filterSpice);
     }
-    // 6. Sort results
+    // 6. Filter by servings
+    items = items.filter(r => r.baseServings >= filterServings);
+    // 7. Sort results
     items.sort((a, b) => {
       switch (sortBy) {
         case 'time-asc':
@@ -109,8 +112,8 @@ export default function RecipesPage() {
     handleCloseModal();
   };
 
-  const handleSaveToMealPlan = (recipeId: string, date: string, meal: keyof DayPlan) => {
-    assignRecipeToMeal(date, meal, recipeId);
+  const handleSaveToMealPlan = (recipeId: string, date: string, meal: keyof DayPlan, servings: number) => {
+    assignRecipeToMeal(date, meal, recipeId, servings);
     addToast(`Recipe added to ${meal} on ${date}.`, 'success');
   };
 
@@ -185,7 +188,21 @@ export default function RecipesPage() {
                 </div>
             </div>
              {/* Filter Row 2 */}
-             <div className="flex justify-end">
+             <div className="flex justify-between items-center">
+                <div>
+                    <label className="block text-sm font-medium mb-1">Servings:</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="range"
+                            min="1"
+                            max="12"
+                            value={filterServings}
+                            onChange={e => setFilterServings(Number(e.target.value))}
+                            className="w-32"
+                        />
+                        <span className="font-bold">{filterServings}</span>
+                    </div>
+                </div>
                  <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="p-2 border rounded-md text-sm">
                     <option value="match-desc">Sort by Best Match</option>
                     <option value="time-asc">Sort by Cooking Time</option>
