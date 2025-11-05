@@ -16,7 +16,7 @@ export interface Recipe {
   cuisine: 'North Indian' | 'South Indian' | 'Bengali' | 'Gujarati';
   difficulty: 'beginner' | 'intermediate' | 'expert';
   cookingTime: number; // in minutes
-  servings: number;
+  baseServings: number;
   dietary: ('veg' | 'non-veg' | 'vegan' | 'gluten-free')[];
   ingredients: {
     name: string;

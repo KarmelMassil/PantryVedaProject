@@ -7,6 +7,7 @@ import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocompl
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
+import { getApproximateWeightDisplay } from '@/lib/unitConverter';
 import { error } from 'console';
 
 // Helper function to format ingredient names to Title Case
@@ -211,7 +212,7 @@ export default function ShoppingListPage() {
                           onChange={(e) => updateShoppingListItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
                           className="w-16 p-1 border rounded-md text-sm text-right"
                         />
-                        <span className="text-sm text-gray-500 w-12">{item.unit}</span>
+                        <span className="text-sm text-gray-500 w-24 text-left">{item.unit}{getApproximateWeightDisplay(item.quantity, item.name)}</span>
                         <input
                           type="number"
                           value={item.price}

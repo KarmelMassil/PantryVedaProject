@@ -1,8 +1,9 @@
 "use client";
 import { Recipe } from '@/types';
 import { usePantryStore } from '@/store/pantryStore';
-import React, { useState, useEffect, useRef } from 'react';
-import { X, Mic, MicOff, Volume2, VolumeX, SkipBack, SkipForward, Play, Pause, RefreshCw, Clock, ChefHat, Save, Flame } from 'lucide-react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { X, Mic, MicOff, Volume2, VolumeX, SkipBack, SkipForward, Play, Pause, RefreshCw, Clock, ChefHat, Save, Flame, Users, Plus, Minus } from 'lucide-react';
+import { scaleRecipeIngredients } from '@/lib/recipeUtils';
 
 const addToast = usePantryStore((state) => state.addToast);
 
@@ -97,13 +98,23 @@ declare global {
 
 interface CookingModeModalProps {
   recipe: Recipe;
+  initialServings?: number;
   onClose: () => void;
   onFinishCooking: (recipe: Recipe) => void; // This will handle the logging
 }
 
-export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onClose, onFinishCooking }) => {
+export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, initialServings, onClose, onFinishCooking }) => {
+  const [desiredServings, setDesiredServings] = useState(initialServings || recipe.baseServings);
   const [mode, setMode] = useState<'prep' | 'cook'>('prep');
   const [stepIndex, setStepIndex] = useState(0);
+
+  const scaledRecipe = useMemo(() => {
+    return scaleRecipeIngredients(recipe, desiredServings);
+  }, [recipe, desiredServings]);
+
+  const handleServingsChange = (amount: number) => {
+    setDesiredServings(prev => Math.max(1, prev + amount));
+  };
 
   const [timer, setTimer] = useState<number | null>(null);
   const [originalTimerValue, setOriginalTimerValue] = useState<number | null>(null);
@@ -125,7 +136,7 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onCl
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
-  const steps = mode === 'prep' ? recipe.ingredients.map(ing => `${ing.quantity} ${ing.unit} ${ing.name}`) : recipe.instructions;
+  const steps = mode === 'prep' ? scaledRecipe.ingredients.map(ing => `${ing.quantity.toFixed(1)} ${ing.unit} ${ing.name}`) : scaledRecipe.instructions;
   const currentStep = steps[stepIndex];
 
   // --- Text-to-Speech (TTS) Logic ---
@@ -217,7 +228,7 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onCl
       setStepIndex(stepIndex - 1);
     } else if (mode === 'cook') {
       setMode('prep');
-      setStepIndex(recipe.ingredients.length - 1);
+      setStepIndex(scaledRecipe.ingredients.length - 1);
     }
   };
 
@@ -239,7 +250,7 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onCl
       
       if (command.includes('next')) {
         setStepIndex(prev => {
-          const currentSteps = mode === 'prep' ? recipe.ingredients.map(ing => `${ing.quantity} ${ing.unit} ${ing.name}`) : recipe.instructions;
+          const currentSteps = mode === 'prep' ? scaledRecipe.ingredients.map(ing => `${ing.quantity} ${ing.unit} ${ing.name}`) : scaledRecipe.instructions;
           if (prev < currentSteps.length - 1) return prev + 1;
           if (mode === 'prep') {
             setMode('cook');
@@ -253,7 +264,7 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onCl
           if (prev > 0) return prev - 1;
           if (mode === 'cook') {
             setMode('prep');
-            return recipe.ingredients.length - 1;
+            return scaledRecipe.ingredients.length - 1;
           }
           return prev;
         });
@@ -324,7 +335,7 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onCl
       }
     };
     recognitionRef.current = recognition;
-  }, [isListening, currentStep, mode, recipe.ingredients.length, recipe.instructions.length]);
+  }, [isListening, currentStep, mode, scaledRecipe.ingredients.length, scaledRecipe.instructions.length]);
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
@@ -362,7 +373,7 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onCl
   }, [stepIndex, mode]);
 
   const handleFinish = () => {
-    onFinishCooking(recipe);
+    onFinishCooking(scaledRecipe);
     onClose();
   };
 
@@ -370,7 +381,14 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, onCl
     <div className="fixed inset-0 bg-white z-50 flex flex-col">
       {/* Header */}
       <header className="flex items-center justify-between p-4 border-b">
-        <h2 className="text-2xl font-bold text-accent-primary">{recipe.name}</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-accent-primary">{recipe.name}</h2>
+          <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+              <button onClick={() => handleServingsChange(-1)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"><Minus size={14}/></button>
+              <span className="flex items-center gap-1"><Users size={16} /> {desiredServings} servings</span>
+              <button onClick={() => handleServingsChange(1)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"><Plus size={14}/></button>
+            </div>
+        </div>
         <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
           <X size={32} />
         </button>

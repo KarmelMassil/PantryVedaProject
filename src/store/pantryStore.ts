@@ -35,10 +35,16 @@ export interface ShoppingListItem {
   priority?: 'high' | 'medium' | 'low';
 }
 
+export interface Meal {
+  recipeId: string | null;
+  servings: number;
+}
+
+
 export interface DayPlan {
-  breakfast: string | null; // We will store recipe IDs
-  lunch: string | null;
-  dinner: string | null;
+  breakfast: Meal;
+  lunch: Meal;
+  dinner: Meal;
 }
 
 // Define the main meal plan structure
@@ -64,7 +70,8 @@ interface PantryState {
   updateShoppingListItem: (id: string, updates: Partial<ShoppingListItem>) => void;
   removeShoppingListItem: (id: string) => void;
   clearShoppingList: () => void;
-  assignRecipeToMeal: (date: string, meal: keyof DayPlan, recipeId: string) => void;
+  assignRecipeToMeal: (date: string, meal: keyof DayPlan, recipeId: string, servings: number) => void;
+  updateMealServings: (date: string, meal: keyof DayPlan, servings: number) => void;
   removeRecipeFromMeal: (date: string, meal: keyof DayPlan) => void;
   logConsumption: (events: ConsumptionEvent[]) => void;
   logWaste: (event: WasteEvent) => void;
@@ -163,25 +170,37 @@ export const usePantryStore = create<PantryState>()(
         
       clearShoppingList: () => set({ shoppingList: [] }),
 
-      assignRecipeToMeal: (date, meal, recipeId) =>
-        set((state) => ({
-          mealPlan: {
-            ...state.mealPlan,
-            [date]: {
-              ...(state.mealPlan[date] || { breakfast: null, lunch: null, dinner: null }),
-              [meal]: recipeId,
-            },
-          },
-        })),
+      assignRecipeToMeal: (date, meal, recipeId, servings) =>
+        set(state => {
+          const newMealPlan = { ...state.mealPlan };
+          const day = newMealPlan[date] || {
+            breakfast: { recipeId: null, servings: 2 },
+            lunch: { recipeId: null, servings: 2 },
+            dinner: { recipeId: null, servings: 2 },
+          };
+          day[meal] = { recipeId, servings };
+          newMealPlan[date] = day;
+          return { mealPlan: newMealPlan };
+        }),
+
+      updateMealServings: (date, meal, servings) =>
+        set(state => {
+            const newMealPlan = { ...state.mealPlan };
+            if (newMealPlan[date] && newMealPlan[date][meal]) {
+                newMealPlan[date][meal].servings = servings;
+            }
+            return { mealPlan: newMealPlan };
+        }),
 
       removeRecipeFromMeal: (date, meal) =>
-        set((state) => {
+        set(state => {
           const newMealPlan = { ...state.mealPlan };
           if (newMealPlan[date]) {
-            newMealPlan[date][meal] = null;
+            newMealPlan[date][meal] = { recipeId: null, servings: 2 };
           }
           return { mealPlan: newMealPlan };
         }),
+
         logConsumption: (events) =>
         set((state) => ({
           consumptionLog: [...state.consumptionLog, ...events],
