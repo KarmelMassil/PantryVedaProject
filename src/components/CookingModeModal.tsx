@@ -5,8 +5,6 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Mic, MicOff, Volume2, VolumeX, SkipBack, SkipForward, Play, Pause, RefreshCw, Clock, ChefHat, Save, Flame, Users, Plus, Minus } from 'lucide-react';
 import { scaleRecipeIngredients } from '@/lib/recipeUtils';
 
-const addToast = usePantryStore((state) => state.addToast);
-
 // Helper function to parse time from a step, e.g., "cook for 10 minutes"
 const getTimerFromStep = (step: string): number | null => {
     const match = step.match(/(\d+)\s+(minute|second)s?/i);
@@ -104,6 +102,7 @@ interface CookingModeModalProps {
 }
 
 export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, initialServings, onClose, onFinishCooking }) => {
+  const addToast = usePantryStore((state) => state.addToast);
   const [desiredServings, setDesiredServings] = useState(initialServings || recipe.baseServings);
   const [mode, setMode] = useState<'prep' | 'cook'>('prep');
   const [stepIndex, setStepIndex] = useState(0);
