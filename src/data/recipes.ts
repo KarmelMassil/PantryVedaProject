@@ -8,7 +8,7 @@ export const indianRecipesDatabase: Recipe[] = [
     cuisine: 'North Indian',
     difficulty: 'beginner',
     cookingTime: 45,
-    servings: 4,
+    baseServings: 4,
     dietary: ['veg', 'gluten-free'],
     ingredients: [
       { name: 'Spinach', quantity: 500, unit: 'g' },
@@ -29,7 +29,7 @@ export const indianRecipesDatabase: Recipe[] = [
     cuisine: 'North Indian',
     difficulty: 'intermediate',
     cookingTime: 65,
-    servings: 4,
+    baseServings: 4,
     dietary: ['non-veg'],
     ingredients: [
       { name: 'Chicken', quantity: 500, unit: 'g' },
@@ -49,7 +49,7 @@ export const indianRecipesDatabase: Recipe[] = [
     cuisine: 'South Indian',
     difficulty: 'intermediate',
     cookingTime: 30,
-    servings: 2,
+    baseServings: 2,
     dietary: ['veg', 'vegan', 'gluten-free'],
     ingredients: [
       { name: 'Basmati Rice', quantity: 200, unit: 'g' },
@@ -69,7 +69,7 @@ export const indianRecipesDatabase: Recipe[] = [
     cuisine: "North Indian",
     difficulty: "intermediate",
     cookingTime: 50,
-    servings: 4,
+    baseServings: 4,
     dietary: ["veg", "gluten-free"],
     ingredients: [
       { name: "Paneer", quantity: 250, unit: 'g' },
@@ -103,7 +103,7 @@ export const indianRecipesDatabase: Recipe[] = [
     cuisine: "North Indian",
     difficulty: "beginner",
     cookingTime: 25,
-    servings: 4,
+    baseServings: 4,
     dietary: ["veg", "gluten-free"],
     ingredients: [
       { name: "Basmati Rice", quantity: 200, unit: 'g' },

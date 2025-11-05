@@ -32,8 +32,11 @@ export default function MealPlannerPage() {
     setActiveRecipe(null); 
     if (over && over.data.current && active.data.current) {
       const recipeId = active.data.current.recipeId as string;
+      const recipe = recipes.find(r => r.id === recipeId);
+      if (!recipe) return;
+
       const { date, meal } = over.data.current as { date: string; meal: keyof DayPlan };
-      assignRecipeToMeal(date, meal, recipeId);
+      assignRecipeToMeal(date, meal, recipeId, recipe.baseServings);
     }
   };
 
@@ -116,9 +119,10 @@ export default function MealPlannerPage() {
       {viewingRecipe && (
         <RecipeModal recipe={viewingRecipe} onClose={handleCloseModal} />
       )}
-      {cookingRecipe && (
+      {cookingRecipe && cookingContext && (
         <CookingModeModal
           recipe={cookingRecipe}
+          initialServings={mealPlan[cookingContext.date]?.[cookingContext.meal]?.servings}
           onClose={handleCloseModal}
           onFinishCooking={handleFinishCooking}
         />
@@ -163,14 +167,15 @@ export default function MealPlannerPage() {
           <div className="grid grid-cols-7 gap-4">
             {weekDays.map(day => {
               const dateString = format(day, 'yyyy-MM-dd');
+              const dayPlan = mealPlan[dateString];
               const daySuggestions = suggestions[dateString];
               return (
                 <div key={dateString} className="bg-white/60 p-3 rounded-lg space-y-3">
                   <p className="font-bold text-center">{format(day, 'EEE')}</p>
                   <p className="text-2xl font-bold text-center text-accent-primary">{format(day, 'd')}</p>
-                  <DroppableMealSlot date={dateString} meal="breakfast" onViewRecipe={handleOpenViewModal} suggestion={mealPlan[dateString]?.breakfast ? undefined : daySuggestions?.breakfast} />
-                  <DroppableMealSlot date={dateString} meal="lunch" onViewRecipe={handleOpenViewModal} suggestion={mealPlan[dateString]?.lunch ? undefined : daySuggestions?.lunch} />
-                  <DroppableMealSlot date={dateString} meal="dinner" onViewRecipe={handleOpenViewModal} suggestion={mealPlan[dateString]?.dinner ? undefined : daySuggestions?.dinner} />
+                  <DroppableMealSlot date={dateString} meal="breakfast" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.breakfast?.recipeId ? daySuggestions?.breakfast : undefined} />
+                  <DroppableMealSlot date={dateString} meal="lunch" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.lunch?.recipeId ? daySuggestions?.lunch : undefined} />
+                  <DroppableMealSlot date={dateString} meal="dinner" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.dinner?.recipeId ? daySuggestions?.dinner : undefined} />
                 </div>
               );
             })}

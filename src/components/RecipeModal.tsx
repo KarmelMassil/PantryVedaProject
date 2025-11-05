@@ -1,15 +1,32 @@
 "use client";
 import { Recipe } from '@/types';
-import { X, Clock, Users, Flame, Save } from 'lucide-react';
-import React from 'react';
+import { X, Clock, Users, Flame, Save, Minus, Plus } from 'lucide-react';
+import React, { useState, useMemo } from 'react';
+import { scaleRecipeIngredients } from '@/lib/recipeUtils';
 
 interface RecipeModalProps {
   recipe: Recipe;
   onClose: () => void;
-  onCook?: () => void; 
+  onCook?: (scaledRecipe: Recipe) => void;
 }
 
 export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onCook }) => {
+  const [desiredServings, setDesiredServings] = useState(recipe.baseServings);
+
+  const scaledRecipe = useMemo(() => {
+    return scaleRecipeIngredients(recipe, desiredServings);
+  }, [recipe, desiredServings]);
+
+  const handleServingsChange = (amount: number) => {
+    setDesiredServings(prev => Math.max(1, prev + amount));
+  };
+
+  const handleCookClick = () => {
+    if (onCook) {
+      onCook(scaledRecipe);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
@@ -24,7 +41,11 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onCoo
           <img src={recipe.image} alt={recipe.name} className="w-full h-64 object-cover rounded-lg" />
           <div className="flex justify-around items-center text-sm text-text-secondary py-2">
             <span className="flex items-center gap-1"><Clock size={16} /> {recipe.cookingTime}m</span>
-            <span className="flex items-center gap-1"><Users size={16} /> {recipe.servings} servings</span>
+            <div className="flex items-center gap-2">
+              <button onClick={() => handleServingsChange(-1)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"><Minus size={14}/></button>
+              <span className="flex items-center gap-1"><Users size={16} /> {desiredServings} servings</span>
+              <button onClick={() => handleServingsChange(1)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"><Plus size={14}/></button>
+            </div>
             <span className="flex items-center gap-1 capitalize"><Flame size={16} /> {recipe.spiceLevel}</span>
           </div>
           <p className="text-text-secondary">{recipe.description}</p>
@@ -32,8 +53,8 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onCoo
           <div>
             <h3 className="text-lg font-semibold mb-2">Ingredients</h3>
             <ul className="list-disc list-inside bg-gray-50 p-3 rounded-md text-sm">
-              {recipe.ingredients.map(ing => (
-                <li key={ing.name}>{ing.quantity} {ing.unit} {ing.name}</li>
+              {scaledRecipe.ingredients.map(ing => (
+                <li key={ing.name}>{ing.quantity.toFixed(1)} {ing.unit} {ing.name}</li>
               ))}
             </ul>
           </div>

@@ -3,6 +3,8 @@ import { ConsumptionEvent, Ingredient, WasteEvent, Recipe } from "@/types";
 import { generateHeuristicSuggestions } from "./suggestionEngine";
 import { trainAndSuggest, generateMlSuggestions, hasTrainedModel } from "./mlService";
 import { addDays, format } from "date-fns";
+import { scaleRecipeIngredients } from "./recipeUtils";
+import { convertUnit } from "./unitConverter";
 
 // The minimum number of consumption events required to trigger the first training
 const MIN_DATA_POINTS_FOR_TRAINING = 10;
@@ -19,16 +21,37 @@ function calculateMealPlanDemand(mealPlan: MealPlan, recipes: Recipe[]): Map<str
         const dayPlan = mealPlan[dateStr];
         if (!dayPlan) continue;
 
-        const recipeIds = [dayPlan.breakfast, dayPlan.lunch, dayPlan.dinner].filter(Boolean);
-        for (const id of recipeIds) {
-            const recipe = recipes.find(r => r.id === id);
+        const meals = [dayPlan.breakfast, dayPlan.lunch, dayPlan.dinner];
+        for (const meal of meals) {
+            if (!meal || !meal.recipeId) continue;
+
+            const recipe = recipes.find(r => r.id === meal.recipeId);
             if (!recipe) continue;
 
-            for (const ingredient of recipe.ingredients) {
-                const existing = demand.get(ingredient.name) || { quantity: 0, unit: ingredient.unit };
+            const scaledRecipe = scaleRecipeIngredients(recipe, meal.servings);
+
+            for (const ingredient of scaledRecipe.ingredients) {
+                const masterIngredient = masterIngredientList.find(mi => mi.name.toLowerCase() === ingredient.name.toLowerCase());
+                if (!masterIngredient) continue;
+
+                // Standardize to base unit
+                const baseUnit = masterIngredient.unit;
+                let convertedQuantity = ingredient.quantity;
+
+                if (ingredient.unit !== baseUnit) {
+                    const converted = convertUnit(ingredient.quantity, ingredient.unit as any, baseUnit as any, ingredient.name);
+                    if (converted !== null) {
+                        convertedQuantity = converted;
+                    } else {
+                        console.warn(`Could not convert ${ingredient.name} from ${ingredient.unit} to ${baseUnit}`);
+                        continue; // Skip if conversion fails
+                    }
+                }
+
+                const existing = demand.get(ingredient.name) || { quantity: 0, unit: baseUnit };
                 demand.set(ingredient.name, {
-                    quantity: existing.quantity + ingredient.quantity,
-                    unit: ingredient.unit
+                    quantity: existing.quantity + convertedQuantity,
+                    unit: baseUnit
                 });
             }
         }
