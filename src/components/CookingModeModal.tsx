@@ -404,8 +404,8 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({ recipe, init
           <p className="text-sm text-gray-500 uppercase">Step {stepIndex + 1} of {steps.length}</p>
           <p className="text-3xl md:text-5xl font-bold text-center my-10 min-h-[150px]">{currentStep}</p>
           <div className="flex gap-4">
-            <button onClick={goToPrevStep} className="p-4 bg-gray-200 rounded-full hover:bg-gray-300 disabled:opacity-50" disabled={mode === 'prep' && stepIndex === 0}><SkipBack /></button>
-            <button onClick={goToNextStep} className="p-4 bg-gray-200 rounded-full hover:bg-gray-300 disabled:opacity-50" disabled={mode === 'cook' && stepIndex === steps.length - 1}><SkipForward /></button>
+            <button onClick={goToPrevStep} className="p-6 bg-gray-200 rounded-full hover:bg-gray-300 disabled:opacity-50" disabled={mode === 'prep' && stepIndex === 0}><SkipBack size={32}/></button>
+            <button onClick={goToNextStep} className="p-6 bg-gray-200 rounded-full hover:bg-gray-300 disabled:opacity-50" disabled={mode === 'cook' && stepIndex === steps.length - 1}><SkipForward size={32} /></button>
           </div>
         </div>
         

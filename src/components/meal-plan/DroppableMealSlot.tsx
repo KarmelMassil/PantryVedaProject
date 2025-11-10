@@ -39,9 +39,9 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
     <div ref={setNodeRef} style={style} className="h-32 border rounded-lg p-2 flex flex-col justify-between transition-colors relative group">
       <p className="text-xs font-bold uppercase text-gray-500">{meal}</p>
       {recipe ? (
-        <div className="bg-white p-2 rounded-md shadow-sm text-sm">
+        <div className="bg-white p-2 rounded-md shadow-sm text-sm group">
             <p className="font-bold truncate">{recipe.name}</p>
-            <div className="flex items-center justify-between mt-1">
+            <div className="flex items-center justify-between mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="flex items-center gap-1">
                     <button onClick={() => handleServingsChange(-1)} className="p-0.5 rounded-full bg-gray-200 hover:bg-gray-300"><Minus size={12}/></button>
                     <span className="text-xs flex items-center gap-0.5"><Users size={12}/>{mealData?.servings}</span>

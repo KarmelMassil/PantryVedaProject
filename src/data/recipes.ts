@@ -120,5 +120,43 @@ export const indianRecipesDatabase: Recipe[] = [
     ],
     spiceLevel: "mild",
     image: '/images/jeera-rice.jpg'
-}
+},
+{
+    id: 'rec6',
+    name: "Chicken Biryani",
+    description: "A savory chicken and rice dish that includes layers of chicken, rice, and aromatics that are steamed together.",
+    cuisine: "North Indian",
+    difficulty: "expert",
+    cookingTime: 90,
+    baseServings: 4,
+    dietary: ["non-veg"],
+    ingredients: [
+      { name: "Basmati Rice", quantity: 500, unit: 'g' },
+      { name: "Chicken", quantity: 1000, unit: 'g' },
+      { name: "Yogurt", quantity: 200, unit: 'g' },
+      { name: "Onion", quantity: 4, unit: 'pcs' },
+      { name: "Tomato", quantity: 2, unit: 'pcs' },
+      { name: "Ginger", quantity: 20, unit: 'g' },
+      { name: "Garlic", quantity: 20, unit: 'g' },
+      { name: "Ghee", quantity: 4, unit: 'ml' },
+      { name: "Saffron", quantity: 1, unit: 'g' },
+      { name: "Milk", quantity: 50, unit: 'ml' },
+      { name: "Mint Leaves", quantity: 1, unit: 'bunches' },
+      { name: "Coriander Leaves", quantity: 1, unit: 'bunches' },
+      { name: "Garam Masala", quantity: 10, unit: 'g' },
+      { name: "Red Chili Powder", quantity: 10, unit: 'g' },
+      { name: "Turmeric Powder", quantity: 5, unit: 'g' },
+      { name: "Salt", quantity: 15, unit: 'g' }
+    ],
+    instructions: [
+      "Marinate chicken with yogurt, spices, ginger, garlic, and herbs for at least 1 hour.",
+      "Fry onions until golden brown (birista).",
+      "Par-boil basmati rice until 70% cooked.",
+      "Layer the marinated chicken and rice in a heavy-bottomed pot, topped with birista, saffron-milk, and ghee.",
+      "Seal the pot and cook on low heat (dum) for 30-40 minutes.",
+      "Garnish with fresh coriander and mint before serving."
+    ],
+    spiceLevel: "hot",
+    image: '/images/chicken-biryani.jpg'
+  }
 ];

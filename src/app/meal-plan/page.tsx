@@ -128,7 +128,7 @@ export default function MealPlannerPage() {
         />
       )}
       <DndContext onDragEnd={handleDragEnd}>
-        <div className="flex h-full gap-6">
+        <div className="flex h-full gap-6 overflow-hidden">
           <aside className="w-64 bg-white p-4 rounded-xl shadow-md flex-shrink-0">
             <h2 className="text-xl font-bold mb-4">Recipes</h2>
             {/* --- SEARCH BAR --- */}
@@ -154,8 +154,8 @@ export default function MealPlannerPage() {
             </div>
           </aside>
 
-        <main className="flex-1">
-          <div className="flex justify-between items-center mb-4">
+        <main className="flex-1 min-w-0 flex flex-col">
+          <div className="flex justify-between items-center mb-4 flex-shrink-0">
             <h1 className="text-3xl font-bold text-text-primary">Weekly Meal Planner</h1>
             <div className="flex items-center gap-4">
               <button onClick={goToPreviousWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowLeft size={20}/></button>

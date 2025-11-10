@@ -12,7 +12,6 @@ interface RecipeCardProps {
 }
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onCook, onAddToPlan }) => {
-  const [servings, setServings] = useState(recipe.servings);
   const { inventory, addItemsToShoppingList, masterIngredientList } = usePantryStore();
 
   const getMatchColor = () => {
@@ -42,7 +41,7 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onCook, 
       <div className="p-4 pt-2 mt-auto">
         <div className="flex justify-between items-center text-xs text-text-secondary mb-4">
           <div className="flex items-center gap-1"><Clock size={14} /> {recipe.cookingTime}m</div>
-          <div className="flex items-center gap-1"><Users size={14} /> {recipe.servings} servings</div>
+          <div className="flex items-center gap-1"><Users size={14} /> {recipe.baseServings} servings</div>
           <div className="flex items-center gap-1 capitalize"><Flame size={14} /> {recipe.spiceLevel}</div>
         </div>
 
