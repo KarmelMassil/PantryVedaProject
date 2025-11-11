@@ -164,15 +164,26 @@ export default function MealPlannerPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-7 gap-4">
+          <div className="space-y-4">
+            {/* Header Row */}
+            <div className="grid grid-cols-4 gap-4 font-bold text-center text-gray-500 uppercase">
+              <div>Day</div>
+              <div>Breakfast</div>
+              <div>Lunch</div>
+              <div>Dinner</div>
+            </div>
+
+            {/* Day Rows */}
             {weekDays.map(day => {
               const dateString = format(day, 'yyyy-MM-dd');
               const dayPlan = mealPlan[dateString];
               const daySuggestions = suggestions[dateString];
               return (
-                <div key={dateString} className="bg-white/60 p-3 rounded-lg space-y-3">
-                  <p className="font-bold text-center">{format(day, 'EEE')}</p>
-                  <p className="text-2xl font-bold text-center text-accent-primary">{format(day, 'd')}</p>
+                <div key={dateString} className="grid grid-cols-4 gap-4 items-center bg-white/60 p-3 rounded-lg">
+                  <div className="text-center">
+                    <p className="font-bold">{format(day, 'EEE')}</p>
+                    <p className="text-2xl font-bold text-accent-primary">{format(day, 'd')}</p>
+                  </div>
                   <DroppableMealSlot date={dateString} meal="breakfast" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.breakfast?.recipeId ? daySuggestions?.breakfast : undefined} />
                   <DroppableMealSlot date={dateString} meal="lunch" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.lunch?.recipeId ? daySuggestions?.lunch : undefined} />
                   <DroppableMealSlot date={dateString} meal="dinner" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.dinner?.recipeId ? daySuggestions?.dinner : undefined} />
