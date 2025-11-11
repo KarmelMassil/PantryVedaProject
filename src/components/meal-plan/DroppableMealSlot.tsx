@@ -36,7 +36,7 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="h-24 border rounded-lg p-2 flex flex-col justify-between transition-colors relative group">
+    <div ref={setNodeRef} style={style} className="h-20 border rounded-lg p-2 flex flex-col justify-between transition-colors relative group">
       {recipe ? (
         <div className="bg-white p-2 rounded-md shadow-sm text-sm group">
             <p className="font-bold truncate">{recipe.name}</p>
