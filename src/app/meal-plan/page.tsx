@@ -179,7 +179,7 @@ export default function MealPlannerPage() {
               const dayPlan = mealPlan[dateString];
               const daySuggestions = suggestions[dateString];
               return (
-                <div key={dateString} className="grid grid-cols-4 gap-4 items-center bg-white/60 p-3 rounded-lg">
+                <div key={dateString} className="grid grid-cols-4 gap-5 items-center bg-white/60 p-3 rounded-lg">
                   <div className="text-center">
                     <p className="font-bold">{format(day, 'EEE')}</p>
                     <p className="text-2xl font-bold text-accent-primary">{format(day, 'd')}</p>
