@@ -164,7 +164,7 @@ export default function MealPlannerPage() {
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-2">
             {/* Header Row */}
             <div className="grid grid-cols-4 gap-4 font-bold text-center text-gray-500 uppercase">
               <div>Day</div>

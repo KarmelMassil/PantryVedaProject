@@ -82,7 +82,7 @@ export default function AddRecipePage() {
             cuisine,
             difficulty: 'intermediate',
             cookingTime,
-            servings,
+             baseServings: servings,
             dietary: ['veg'],
             ingredients,
             instructions: instructions.split('\n').filter(line => line.trim() !== ''), // Split and remove empty lines

@@ -12,7 +12,7 @@ const MIN_DATA_POINTS_FOR_TRAINING = 10;
 type Suggestion = Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>;
 
 // -- Helper function --
-function calculateMealPlanDemand(mealPlan: MealPlan, recipes: Recipe[]): Map<string, { quantity: number, unit: string }> {
+function calculateMealPlanDemand(mealPlan: MealPlan, recipes: Recipe[], masterIngredientList: MasterIngredient[]): Map<string, { quantity: number, unit: string }> {
     const demand = new Map<string, { quantity: number, unit: string }>();
     const today = new Date();
 
@@ -103,7 +103,7 @@ export async function getSmartSuggestions(
     }
 
     // --- Merge with Meal Plan Demand ---
-    const mealPlanDemand = calculateMealPlanDemand(mealPlan, recipes);
+    const mealPlanDemand = calculateMealPlanDemand(mealPlan, recipes, masterIngredientList);
     const finalSuggestions = new Map<string, Suggestion & { reason: string, priority: 'high' | 'medium' | 'low' }>();
 
     //  Add historical suggestions first

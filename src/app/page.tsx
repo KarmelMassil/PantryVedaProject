@@ -49,7 +49,7 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-text-primary mb-3">Use It Before You Lose It!</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
              {recommendedRecipes.map(recipe => (
-               <RecipeCard key={recipe.id} recipe={recipe} />
+               <RecipeCard key={recipe.id} recipe={recipe} onView={() => {}} onCook={() => {}} onAddToPlan={() => {}} />
              ))}
           </div>
         </div>

@@ -74,7 +74,7 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onCoo
             Close
           </button>
           {onCook && (
-            <button onClick={onCook} className="bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2">
+            <button onClick={handleCookClick} className="bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg flex items-center gap-2">
               <Save size={18} /> Finish Cooking & Log
             </button>
           )}
