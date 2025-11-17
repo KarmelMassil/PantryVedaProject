@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Webcam from 'webcam-easy';
 import { yoloService } from '@/lib/yoloService';
-import { Camera, Upload, Video, Circle, StopCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { Camera, Upload, Video, Circle, StopCircle, Loader2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { set } from 'date-fns';
 import { usePantryStore } from '@/store/pantryStore';
 
@@ -151,10 +151,25 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
               className={`w-full h-full object-cover ${!isCameraActive && 'hidden'}`}
             ></video>
             {!isCameraActive && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500">
-                <Video size={48} />
-                <p className="mt-2">Camera preview will appear here</p>
-              </div>
+                 <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gray-50">
+                    <p className="font-semibold text-gray-700 mb-4 text-center">Photo Tips for Best Results:</p>
+                    <div className="grid grid-cols-2 gap-4 w-full">
+                      <div className="text-center">
+                        <img src="/images/good-scan-example.jpg" alt="Good lighting, clear view" className="rounded-md border-2 border-green-400 aspect-square object-cover" />
+                        <div className="flex items-center justify-center mt-1">
+                          <CheckCircle size={16} className="text-green-600 mr-1" />
+                          <p className="text-xs font-medium text-gray-600">Clear & Well-Lit</p>
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <img src="/images/bad-scan-example.jpg" alt="Blurry, dark, or cluttered" className="rounded-md border-2 border-red-400 aspect-square object-cover" />
+                         <div className="flex items-center justify-center mt-1">
+                          <XCircle size={16} className="text-red-600 mr-1" />
+                          <p className="text-xs font-medium text-gray-600">Blurry & Dark</p>
+                        </div>
+                      </div>
+                    </div>
+                </div>
             )}
           </>
         )}
@@ -165,19 +180,19 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
       <div className="space-y-3">
         {!isCameraActive ? (
           <>
-            <button onClick={handleStartCamera} disabled={isDetecting} className="bg-blue-600 text-white font-semibold px-6 py-2 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50">
+            <button onClick={handleStartCamera} disabled={isDetecting} className="bg-primary text-white font-semibold px-6 py-3 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 shadow-md disabled:opacity-50">
               <Camera size={20} /> Start Camera
             </button>
-            <button onClick={handleUploadClick} disabled={isDetecting} className="bg-white border border-gray-300 text-text-primary font-semibold px-6 py-2 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors disabled:opacity-50">
+            <button onClick={handleUploadClick} disabled={isDetecting} className="bg-white border-2 border-gray-300 text-text-primary font-semibold px-6 py-2.5 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-gray-100 hover:border-gray-400 transition-colors disabled:opacity-50">
               <Upload size={20} /> Upload Image to Scan
             </button>
           </>
         ) : (
           <div className="flex gap-4">
-            <button onClick={handleCapture} disabled={isDetecting} className="bg-accent-secondary text-white font-semibold px-6 py-2 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-green-700 transition-colors disabled:opacity-50">
+            <button onClick={handleCapture} disabled={isDetecting} className="bg-green-500 text-white font-semibold px-6 py-2 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-green-600 transition-colors disabled:opacity-50">
               <Circle size={20} /> Capture
             </button>
-            <button onClick={handleStopCamera} disabled={isDetecting} className="bg-chili-red text-white font-semibold px-6 py-2 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-red-700 transition-colors disabled:opacity-50">
+            <button onClick={handleStopCamera} disabled={isDetecting} className="bg-red-500 text-white font-semibold px-6 py-2 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-red-600 transition-colors disabled:opacity-50">
               <StopCircle size={20} /> Stop
             </button>
           </div>

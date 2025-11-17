@@ -50,6 +50,12 @@ export interface DayPlan {
 // Define the main meal plan structure
 export type MealPlan = Record<string, DayPlan>; // Key is ISO date string 'YYYY-MM-DD'
 
+export interface WeeklySnapshot {
+  date: string; // ISO date string 'YYYY-MM-DD'
+  totalItems: number;
+  totalValue: number;
+  freshItems: number;
+}
 
 interface PantryState {
   masterIngredientList: MasterIngredient[];
@@ -60,7 +66,9 @@ interface PantryState {
   mealPlan: MealPlan; 
   consumptionLog: ConsumptionEvent[];
   wasteLog: WasteEvent[];
+  weeklySnapshots: WeeklySnapshot[];
   toasts: Toast[];
+  recipeIngredientFilter: string | null;
   addMasterIngredient: (ingredient: MasterIngredient) => void;
   addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
   removeIngredient: (id: string) => void;
@@ -78,8 +86,10 @@ interface PantryState {
   deductFromInventory: (name: string, quantity: number) => void;
   restockCheckedItems: () => void;
   addRecipe: (recipe: Recipe) => void;
+  createWeeklySnapshot: () => void;
   addToast: (message: string, type?: ToastType) => void;
   removeToast: (id: string) => void;
+  setRecipeIngredientFilter: (ingredientName: string | null) => void;
 }
 
 export const usePantryStore = create<PantryState>()(
@@ -99,7 +109,9 @@ export const usePantryStore = create<PantryState>()(
       mealPlan: {},
       consumptionLog: [],
       wasteLog: [],
+      weeklySnapshots: [],
       toasts: [],
+      recipeIngredientFilter: null,
 
       addMasterIngredient: (ingredient) =>
         set((state) => ({
@@ -262,6 +274,24 @@ export const usePantryStore = create<PantryState>()(
           recipes: [...state.recipes, recipe],
         })),
 
+        createWeeklySnapshot: () => {
+        const { inventory, weeklySnapshots } = get();
+        const today = new Date();
+        const lastSnapshotDate = weeklySnapshots.length > 0 ? new Date(weeklySnapshots[weeklySnapshots.length - 1].date) : null;
+        if (!lastSnapshotDate || today.getTime() - lastSnapshotDate.getTime() > 7 * 24 * 60 * 60 * 1000) {
+          const totalItems = inventory.length;
+          const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
+          const freshItems = inventory.filter(item => new Date(item.expiryDate) > new Date()).length;
+          const newSnapshot: WeeklySnapshot = {
+            date: today.toISOString(),
+            totalItems,
+            totalValue,
+            freshItems,
+          };
+          set({ weeklySnapshots: [...weeklySnapshots, newSnapshot] });
+        }
+      },
+
         addToast: (message, type = 'info') => {
         const id = crypto.randomUUID();
         set((state) => ({
@@ -273,6 +303,8 @@ export const usePantryStore = create<PantryState>()(
         set((state) => ({
           toasts: state.toasts.filter((toast) => toast.id !== id),
         })),
+
+      setRecipeIngredientFilter: (ingredientName) => set({ recipeIngredientFilter: ingredientName }),
     }),
     {
       name: 'pantryveda-storage',

@@ -18,12 +18,13 @@ const spiceLevels: Recipe['spiceLevel'][] = ['mild', 'medium', 'hot'];
 export default function RecipesPage() {
   const { 
       inventory, recipes, preferences, 
-      logConsumption, deductFromInventory, assignRecipeToMeal, addToast
+      logConsumption, deductFromInventory, assignRecipeToMeal, addToast,
+      recipeIngredientFilter, setRecipeIngredientFilter
   } = usePantryStore();
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [cookingRecipe, setCookingRecipe] = useState<Recipe | null>(null);
   const [addToPlanRecipe, setAddToPlanRecipe] = useState<Recipe | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(recipeIngredientFilter || '');
   const [filterCuisine, setFilterCuisine] = useState('all');
   const [sortBy, setSortBy] = useState('match-desc');
   const [filterDifficulty, setFilterDifficulty] = useState('all');
@@ -147,13 +148,26 @@ export default function RecipesPage() {
         </div>
       
       <Card className="p-4 space-y-4 mb-6">
-          <input 
-              type="text"
-              placeholder="Search recipes by name or ingredient..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-2 border rounded-md"
-          />
+          <div className="flex items-center gap-4">
+            <input
+                type="text"
+                placeholder="Search recipes by name or ingredient..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-grow p-2 border rounded-md"
+            />
+            {recipeIngredientFilter && (
+                <button
+                    onClick={() => {
+                        setSearchQuery('');
+                        setRecipeIngredientFilter(null);
+                    }}
+                    className="bg-red-500 text-white px-3 py-1 rounded-full text-sm"
+                >
+                    Clear Filter
+                </button>
+            )}
+          </div>
           {/* Filter Row 1 */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div>

@@ -21,10 +21,10 @@ export const Sidebar = () => {
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
   return (
-    <aside className={`bg-white flex flex-col shadow-lg transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
+    <aside className={`bg-card flex flex-col shadow-subtle transition-all duration-300 ${isCollapsed ? 'w-20' : 'w-64'}`}>
       <div className="flex items-center justify-center h-20 border-b relative">
-        {!isCollapsed && <h1 className="text-2xl font-bold text-accent-primary">PantryVeda</h1>}
-        <button onClick={toggleSidebar} className="absolute -right-3 top-1/2 -translate-y-1/2 bg-white border rounded-full p-1 shadow-md z-10">
+        {!isCollapsed && <h1 className="text-2xl font-bold text-primary font-poppins">PantryVeda</h1>}
+        <button onClick={toggleSidebar} className="absolute -right-3 top-1/2 -translate-y-1/2 bg-card border rounded-full p-1 shadow-subtle z-10">
           {isCollapsed ? <ChevronsRight size={16} /> : <ChevronsLeft size={16} />}
         </button>
       </div>
@@ -32,14 +32,14 @@ export const Sidebar = () => {
         <ul>
           {navItems.map((item) => (
             <li key={item.href}>
-              <Link href={item.href} className={`flex items-center gap-4 px-4 py-3 my-1 rounded-lg transition-colors ${
+              <Link href={item.href} className={`flex items-center gap-4 px-4 py-3 my-1 rounded-lg transition-all duration-200 transform hover:scale-105 ${
                   pathname === item.href
-                    ? 'bg-accent-primary text-white'
-                    : 'text-text-secondary hover:bg-accent-primary/10 hover:text-accent-primary'
+                    ? 'gradient-accent text-white'
+                    : 'text-secondary hover:bg-primary/10 hover:text-primary'
                 } ${isCollapsed ? 'justify-center' : ''}`}
               >
                 <item.icon size={20} />
-                {!isCollapsed && <span className="font-semibold">{item.label}</span>}
+                {!isCollapsed && <span className="font-semibold font-inter">{item.label}</span>}
               </Link>
             </li>
           ))}

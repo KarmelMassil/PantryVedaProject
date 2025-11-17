@@ -154,7 +154,11 @@ export default function AddRecipePage() {
                          {ingredients.length === 0 && <p className="text-sm text-gray-500 text-center">No ingredients added yet.</p>}
                     </div>
                     <div className="p-4 border-t space-y-3">
-                        <IngredientAutocomplete masterList={masterIngredientList} onSelect={setCurrentIngredient} />
+                        <IngredientAutocomplete
+                            masterList={masterIngredientList}
+                            onSelect={setCurrentIngredient}
+                            onAddNew={() => setIsAddIngredientModalOpen(true)}
+                        />
                         {currentIngredient && (
                             <div className="flex items-center gap-2">
                                <input type="number" value={currentQty} onChange={e => setCurrentQty(e.target.value)} className="w-24 p-2 border rounded-md" placeholder='Qty'/>
@@ -162,14 +166,6 @@ export default function AddRecipePage() {
                                <button onClick={handleAddIngredientToList} className="ml-auto bg-accent-secondary text-white p-2 rounded-lg"><Plus /></button>
                             </div>
                         )}
-                        {/* --- BUTTON TO ADD NEW INGREDIENT TO DATABASE --- */}
-                        <button 
-                            onClick={() => setIsAddIngredientModalOpen(true)}
-                            className="w-full text-sm flex items-center justify-center gap-1 text-accent-secondary font-semibold hover:underline mt-2"
-                        >
-                            <PlusCircle size={16} />
-                            Ingredient not found? Add to Database
-                        </button>
                     </div>
                 </Card>
                 

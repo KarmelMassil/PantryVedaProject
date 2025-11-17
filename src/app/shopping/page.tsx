@@ -151,6 +151,7 @@ export default function ShoppingListPage() {
             <IngredientAutocomplete 
               masterList={masterIngredientList}
               onSelect={(ingredient) => setSelectedItem(ingredient)} 
+              onAddNew={() => setIsModalOpen(true)}
             />
             {selectedItem && (
               <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">

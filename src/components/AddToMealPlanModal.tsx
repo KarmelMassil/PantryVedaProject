@@ -36,7 +36,7 @@ export const AddToMealPlanModal: React.FC<AddToMealPlanModalProps> = ({ recipe, 
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
           <X size={24} />
         </button>
-        <h2 className="text-xl font-bold mb-4">Add "{recipe.name}" to Meal Plan</h2>
+        <h2 className="text-xl font-bold mb-4">Add &quot;{recipe.name}&quot; to Meal Plan</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Select Date</label>
