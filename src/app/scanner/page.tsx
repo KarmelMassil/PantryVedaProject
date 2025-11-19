@@ -21,6 +21,7 @@ export default function ScannerPage() {
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<Omit<Ingredient, 'id'>> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [autocompleteQuery, setAutocompleteQuery] = useState('');
 
   const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
     const formattedName = toTitleCase(ingredient.name.trim());
@@ -125,7 +126,12 @@ return (
             <p className="text-sm text-text-secondary mb-4">Search and select an ingredient to add it to your list.</p>
             <IngredientAutocomplete 
               masterList={masterIngredientList}
-              onSelect={handleSelectItem}
+              value={autocompleteQuery}
+              onChange={setAutocompleteQuery}
+              onSelect={(ingredient) => {
+                handleSelectItem(ingredient);
+                setAutocompleteQuery('');
+              }}
               onAddNew={() => setIsModalOpen(true)}
             />
           </div>

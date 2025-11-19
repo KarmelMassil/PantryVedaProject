@@ -7,28 +7,30 @@ interface AutocompleteProps {
   masterList: MasterIngredient[];
   onSelect: (ingredient: MasterIngredient) => void;
   onAddNew: (newItemName: string) => void;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
 }
 
-export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList, onSelect, onAddNew }) => {
-  const [query, setQuery] = useState('');
+export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList, onSelect, onAddNew, value, onChange, placeholder }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const filteredIngredients = useMemo(() => {
-    if (!query) return [];
+    if (!value) return [];
     return masterList.filter(item => 
-      item.name.toLowerCase().includes(query.toLowerCase())
+      item.name.toLowerCase().includes(value.toLowerCase())
     ).slice(0, 10);
-  }, [query, masterList]);
+  }, [value, masterList]);
 
   const handleSelect = (ingredient: MasterIngredient) => {
-    setQuery('');
+    onChange('');
     setShowSuggestions(false);
     onSelect(ingredient);
   };
 
   const handleAddNew = () => {
-    onAddNew(query);
-    setQuery('');
+    onAddNew(value);
+    onChange('');
     setShowSuggestions(false);
   }
 
@@ -36,17 +38,17 @@ export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList
     <div className="relative">
       <input
         type="text"
-        value={query}
+        value={value}
         onChange={(e) => {
-          setQuery(e.target.value);
+          onChange(e.target.value);
           setShowSuggestions(true);
         }}
         onFocus={() => setShowSuggestions(true)}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        placeholder="Search your ingredients..."
-        className="w-full p-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent transition-shadow"
+        placeholder={placeholder || "Search your ingredients..."}
+        className="w-full p-3 pl-10 border rounded-lg"
       />
-      {showSuggestions && query && (
+      {showSuggestions && value && (
         <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
           {filteredIngredients.map((item) => (
             <li 
@@ -63,7 +65,7 @@ export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList
               className="px-4 py-3 flex items-center hover:bg-green-50 text-green-600 font-semibold cursor-pointer"
             >
               <PlusCircle size={18} className="mr-2.5" />
-              Add &quot;{query}&quot; to database
+              Add &quot;{value}&quot; to database
             </li>
           )}
         </ul>

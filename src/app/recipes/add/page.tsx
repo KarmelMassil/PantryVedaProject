@@ -30,6 +30,7 @@ export default function AddRecipePage() {
     >([]);
 
     const [currentIngredient, setCurrentIngredient] = useState<MasterIngredient | null>(null);
+    const [ingredientQuery, setIngredientQuery] = useState('');
     const [currentQty, setCurrentQty] = useState('1');
     const [isAddIngredientModalOpen, setIsAddIngredientModalOpen] = useState(false);
 
@@ -156,7 +157,12 @@ export default function AddRecipePage() {
                     <div className="p-4 border-t space-y-3">
                         <IngredientAutocomplete
                             masterList={masterIngredientList}
-                            onSelect={setCurrentIngredient}
+                            value={ingredientQuery}
+                            onChange={setIngredientQuery}
+                            onSelect={(ing) => {
+                                setCurrentIngredient(ing);
+                                setIngredientQuery('');
+                            }}
                             onAddNew={() => setIsAddIngredientModalOpen(true)}
                         />
                         {currentIngredient && (
