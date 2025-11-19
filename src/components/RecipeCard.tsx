@@ -3,6 +3,7 @@ import { Flame, Clock, Users, Utensils, CalendarPlus, Eye } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { usePantryStore } from '@/store/pantryStore';
 import { generateFromRecipe } from '@/lib/shoppingListGenerator';
+import Image from 'next/image';
 
 interface RecipeCardProps {
   recipe: MatchedRecipe;
@@ -10,6 +11,25 @@ interface RecipeCardProps {
   onCook: (recipe: MatchedRecipe) => void;
   onAddToPlan: (recipe: MatchedRecipe) => void;
 }
+
+const shimmer = (w: number, h: number) => `
+<svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g">
+      <stop stop-color="#f0f0f0" offset="20%" />
+      <stop stop-color="#e0e0e0" offset="50%" />
+      <stop stop-color="#f0f0f0" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#f0f0f0" />
+  <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+</svg>`
+
+const toBase64 = (str: string) =>
+  typeof window === 'undefined'
+    ? Buffer.from(str).toString('base64')
+    : window.btoa(str)
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onCook, onAddToPlan }) => {
   const { inventory, addItemsToShoppingList, masterIngredientList } = usePantryStore();
@@ -28,7 +48,14 @@ export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onCook, 
     <div className="bg-card rounded-lg overflow-hidden shadow-subtle border border-gray-200 flex flex-col transition-all duration-300 hover:shadow-lg">
       <div className="cursor-pointer" onClick={handleViewClick}>
         <div className="relative">
-          <img src={recipe.image} alt={recipe.name} className="w-full h-48 object-cover" />
+          <Image
+            src={recipe.image}
+            alt={recipe.name}
+            className="w-full h-48 object-cover"
+            width={400}
+            height={192}
+            placeholder={`data:image/svg+xml;base64,${toBase64(shimmer(400, 192))}`}
+          />
           <span className={`absolute top-2 right-2 text-xs font-bold px-2 py-1 rounded-full ${getMatchColor()}`}>
             {recipe.matchPercentage}% Match
           </span>

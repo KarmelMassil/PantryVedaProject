@@ -4,7 +4,7 @@ import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { getRecipeMatches, MatchedRecipe } from '@/lib/recipeMatcher';
 import { RecipeCard } from '@/components/RecipeCard';
 import { Card } from '@/components/ui/Card';
-import { Frown, PlusCircle } from 'lucide-react';
+import { Frown, PlusCircle, Sparkles, CookingPot, Filter, ChefHat } from 'lucide-react';
 import Link from 'next/link';
 import { RecipeModal } from '@/components/RecipeModal';
 import { AddToMealPlanModal } from '@/components/AddToMealPlanModal';
@@ -12,7 +12,6 @@ import { Recipe } from '@/types';
 import { CookingModeModal } from '@/components/CookingModeModal';
 
 const difficulties: Recipe['difficulty'][] = ['beginner', 'intermediate', 'expert'];
-const dietaryOptions: Recipe['dietary'][0][] = ['veg', 'non-veg', 'vegan', 'gluten-free'];
 const spiceLevels: Recipe['spiceLevel'][] = ['mild', 'medium', 'hot'];
 
 export default function RecipesPage() {
@@ -25,38 +24,28 @@ export default function RecipesPage() {
   const [cookingRecipe, setCookingRecipe] = useState<Recipe | null>(null);
   const [addToPlanRecipe, setAddToPlanRecipe] = useState<Recipe | null>(null);
   const [searchQuery, setSearchQuery] = useState(recipeIngredientFilter || '');
-  const [filterCuisine, setFilterCuisine] = useState('all');
   const [sortBy, setSortBy] = useState('match-desc');
-  const [filterDifficulty, setFilterDifficulty] = useState('all');
-  const [filterDietary, setFilterDietary] = useState('all');
-  const [filterSpice, setFilterSpice] = useState('all');
+  const [filterTime, setFilterTime] = useState('all');
 
   const processedRecipes = useMemo(() => {
     let items: MatchedRecipe[] = getRecipeMatches(inventory, recipes, preferences);
-    // 1. Filter by search (name or ingredient)
+
     if (searchQuery) {
       items = items.filter(r => 
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         r.ingredients.some(i => i.name.toLowerCase().includes(searchQuery.toLowerCase()))
       );
     }
-    // 2. Filter by cuisine
-    if (filterCuisine !== 'all') {
-      items = items.filter(r => r.cuisine === filterCuisine);
+
+    if (filterTime !== 'all') {
+        items = items.filter(r => {
+            if (filterTime === '<30') return r.cookingTime < 30;
+            if (filterTime === '30-60') return r.cookingTime >= 30 && r.cookingTime <= 60;
+            if (filterTime === '>60') return r.cookingTime > 60;
+            return true;
+        });
     }
-    // 3. Filter by difficulty
-    if (filterDifficulty !== 'all') {
-      items = items.filter(r => r.difficulty === filterDifficulty);
-    }
-    // 4. Filter by dietary needs
-    if (filterDietary !== 'all') {
-      items = items.filter(r => r.dietary.includes(filterDietary as any));
-    }
-    // 5. Filter by spice level
-    if (filterSpice !== 'all') {
-      items = items.filter(r => r.spiceLevel === filterSpice);
-    }
-    // 7. Sort results
+
     items.sort((a, b) => {
       switch (sortBy) {
         case 'time-asc':
@@ -70,9 +59,24 @@ export default function RecipesPage() {
     });
 
     return items;
-  }, [inventory, recipes, preferences, searchQuery, filterCuisine, sortBy, filterDifficulty, filterDietary, filterSpice]);
+  }, [inventory, recipes, preferences, searchQuery, sortBy, filterTime]);
 
-  const allCuisines = ['all', ...new Set(recipes.map(r => r.cuisine))]
+  const areFiltersActive = useMemo(() => {
+    return searchQuery || filterTime !== 'all';
+  }, [searchQuery, filterTime]);
+
+  const { canCookNow, almostReady } = useMemo(() => {
+    const canCookNow: MatchedRecipe[] = [];
+    const almostReady: MatchedRecipe[] = [];
+    processedRecipes.forEach(recipe => {
+      if (recipe.missingIngredients.length === 0) {
+        canCookNow.push(recipe);
+      } else {
+        almostReady.push(recipe);
+      }
+    });
+    return { canCookNow, almostReady };
+  }, [processedRecipes]);
 
   const handleOpenViewModal = (recipe: Recipe) => {
     setViewingRecipe(recipe);
@@ -142,84 +146,127 @@ export default function RecipesPage() {
               <h1 className="text-3xl font-bold text-text-primary">Recipe Discovery</h1>
               <p className="text-text-secondary">Find recipes based on your pantry.</p>
           </div>
-          <Link href="/recipes/add" className="flex items-center gap-2 bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg">
-            <PlusCircle size={20} /> Add Custom Dish
+          <Link href="/recipes/add" className="flex items-center gap-2 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+            <PlusCircle size={20} /> Add Custom Recipe
           </Link>
         </div>
       
-      <Card className="p-4 space-y-4 mb-6">
-          <div className="flex items-center gap-4">
-            <input
-                type="text"
-                placeholder="Search recipes by name or ingredient..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-grow p-2 border rounded-md"
-            />
-            {recipeIngredientFilter && (
-                <button
-                    onClick={() => {
-                        setSearchQuery('');
-                        setRecipeIngredientFilter(null);
-                    }}
-                    className="bg-red-500 text-white px-3 py-1 rounded-full text-sm"
-                >
-                    Clear Filter
-                </button>
+      <Card className="p-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
+            <div className="md:col-span-2">
+              <input
+                  type="text"
+                  placeholder="Search by name or ingredient..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full p-2 border rounded-md text-sm"
+              />
+            </div>
+            <div>
+              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                  <option value="match-desc">Sort by: Best Match</option>
+                  <option value="time-asc">Sort by: Cooking Time</option>
+                  <option value="name-asc">Sort by: Name (A-Z)</option>
+              </select>
+            </div>
+            <div>
+              <select value={filterTime} onChange={e => setFilterTime(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                  <option value="all">Filter by Time: All</option>
+                  <option value="<30">&lt; 30 mins</option>
+                  <option value="30-60">30-60 mins</option>
+                  <option value=">60">&gt; 60 mins</option>
+              </select>
+            </div>
+             {recipeIngredientFilter && (
+                <div className="md:col-span-3">
+                    <button
+                        onClick={() => {
+                            setSearchQuery('');
+                            setRecipeIngredientFilter(null);
+                        }}
+                        className="bg-red-500 text-white px-3 py-1 rounded-full text-xs"
+                    >
+                        Clear ingredient filter: &quot;{recipeIngredientFilter}&quot;
+                    </button>
+                </div>
             )}
           </div>
-          {/* Filter Row 1 */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div>
-                    <label className="block text-sm font-medium mb-1">Cuisine:</label>
-                    <select value={filterCuisine} onChange={e => setFilterCuisine(e.target.value)} className="w-full p-2 border rounded-md text-sm">
-                        {allCuisines.map(c => <option key={c} value={c}>{c === 'all' ? 'All' : c}</option>)}
-                    </select>
-                </div>
-                <div>
-                    <label className="block text-sm font-medium mb-1">Difficulty:</label>
-                    <select value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)} className="w-full p-2 border rounded-md text-sm">
-                        <option value="all">All</option>
-                        {difficulties.map(d => <option key={d} value={d} className="capitalize">{d}</option>)}
-                    </select>
-                </div>
-                 <div>
-                    <label className="block text-sm font-medium mb-1">Dietary:</label>
-                    <select value={filterDietary} onChange={e => setFilterDietary(e.target.value)} className="w-full p-2 border rounded-md text-sm">
-                        <option value="all">All</option>
-                        {dietaryOptions.map(d => <option key={d} value={d} className="capitalize">{d}</option>)}
-                    </select>
-                </div>
-                 <div>
-                    <label className="block text-sm font-medium mb-1">Spice Level:</label>
-                    <select value={filterSpice} onChange={e => setFilterSpice(e.target.value)} className="w-full p-2 border rounded-md text-sm">
-                        <option value="all">All</option>
-                        {spiceLevels.map(s => <option key={s} value={s} className="capitalize">{s}</option>)}
-                    </select>
-                </div>
-            </div>
-             {/* Filter Row 2 */}
-             <div className="flex justify-end items-center">
-                 <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="p-2 border rounded-md text-sm">
-                    <option value="match-desc">Sort by Best Match</option>
-                    <option value="time-asc">Sort by Cooking Time</option>
-                    <option value="name-asc">Sort by Name (A-Z)</option>
-                </select>
-             </div>
       </Card>
+
       {processedRecipes.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {processedRecipes.map((recipe) => (
-              <RecipeCard 
-                key={recipe.id} 
-                recipe={recipe} 
-                onView={handleOpenViewModal}
-                onCook={handleOpenCookModal}
-                onAddToPlan={handleOpenAddToPlanModal}
-              />
-            ))}
+        areFiltersActive ? (
+          <div>
+            <h2 className="flex items-center gap-2 text-2xl font-semibold mb-4 text-text-primary">
+              <Filter size={24} /> Filtered Results ({processedRecipes.length})
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {processedRecipes.map((recipe) => (
+                <RecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onView={handleOpenViewModal}
+                  onCook={handleOpenCookModal}
+                  onAddToPlan={handleOpenAddToPlanModal}
+                />
+              ))}
+            </div>
           </div>
         ) : (
+          <div className="space-y-12">
+            <div>
+              <h2 className="flex items-center gap-2 text-2xl font-semibold mb-4 text-text-primary">
+                <ChefHat size={24} className="text-accent" /> You Can Cook Now ({canCookNow.length})
+              </h2>
+              {canCookNow.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {canCookNow.map((recipe) => (
+                    <RecipeCard
+                      key={recipe.id}
+                      recipe={recipe}
+                      onView={handleOpenViewModal}
+                      onCook={handleOpenCookModal}
+                      onAddToPlan={handleOpenAddToPlanModal}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                  <CookingPot size={48} className="mx-auto text-gray-400" />
+                  <h3 className="mt-2 text-lg font-medium text-text-primary">No Recipes Match 100% Yet</h3>
+                  <p className="mt-1 text-sm text-text-secondary">Add more ingredients to see recipes you can make right away!</p>
+                  <Link href="/inventory" className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover:bg-primary/90">
+                    Add Ingredients
+                  </Link>
+                </div>
+              )}
+            </div>
+            <div>
+              <h2 className="flex items-center gap-2 text-2xl font-semibold mb-4 text-text-primary">
+                <CookingPot size={24} className="text-orange-500" /> Almost Ready ({almostReady.length})
+              </h2>
+              {almostReady.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {almostReady.map((recipe) => (
+                    <RecipeCard
+                      key={recipe.id}
+                      recipe={recipe}
+                      onView={handleOpenViewModal}
+                      onCook={handleOpenCookModal}
+                      onAddToPlan={handleOpenAddToPlanModal}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 border-2 border-dashed rounded-lg">
+                    <Frown size={48} className="mx-auto text-gray-400" />
+                    <h3 className="mt-2 text-lg font-medium text-text-primary">No Recipes to Show Here</h3>
+                    <p className="mt-1 text-sm text-text-secondary">Your pantry is well-stocked! No recipes are &quot;almost ready.&quot;</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )
+      ) : (
         <div className="text-center py-20 bg-white rounded-lg">
           <Frown className="mx-auto text-gray-400" size={48} />
           <h3 className="mt-2 text-lg font-medium text-text-primary">No Recipes Found</h3>

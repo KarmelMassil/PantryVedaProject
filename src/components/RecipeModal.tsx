@@ -3,12 +3,32 @@ import { Recipe } from '@/types';
 import { X, Clock, Users, Flame, Save, Minus, Plus } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 import { scaleRecipeIngredients } from '@/lib/recipeUtils';
+import Image from 'next/image';
 
 interface RecipeModalProps {
   recipe: Recipe;
   onClose: () => void;
   onCook?: (scaledRecipe: Recipe) => void;
 }
+
+const shimmer = (w: number, h: number) => `
+<svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <linearGradient id="g">
+      <stop stop-color="#f0f0f0" offset="20%" />
+      <stop stop-color="#e0e0e0" offset="50%" />
+      <stop stop-color="#f0f0f0" offset="70%" />
+    </linearGradient>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#f0f0f0" />
+  <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+  <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+</svg>`
+
+const toBase64 = (str: string) =>
+  typeof window === 'undefined'
+    ? Buffer.from(str).toString('base64')
+    : window.btoa(str)
 
 export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onCook }) => {
   const [desiredServings, setDesiredServings] = useState(recipe.baseServings);
@@ -38,7 +58,14 @@ export const RecipeModal: React.FC<RecipeModalProps> = ({ recipe, onClose, onCoo
         </div>
 
         <div className="overflow-y-auto p-6 space-y-4">
-          <img src={recipe.image} alt={recipe.name} className="w-full h-64 object-cover rounded-lg" />
+          <Image
+            src={recipe.image}
+            alt={recipe.name}
+            className="w-full h-64 object-cover rounded-lg"
+            width={600}
+            height={256}
+            placeholder={`data:image/svg+xml;base64,${toBase64(shimmer(600, 256))}`}
+          />
           <div className="flex justify-around items-center text-sm text-secondary py-2">
             <span className="flex items-center gap-1"><Clock size={16} /> {recipe.cookingTime}m</span>
             <div className="flex items-center gap-2">

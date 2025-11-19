@@ -5,6 +5,7 @@ import { yoloService } from '@/lib/yoloService';
 import { Camera, Upload, Video, Circle, StopCircle, Loader2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { set } from 'date-fns';
 import { usePantryStore } from '@/store/pantryStore';
+import Image from 'next/image';
 
 interface CameraScannerProps {
   onRecognize: (labels: string[]) => void;
@@ -20,6 +21,25 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
   const [isDetecting, setIsDetecting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [uploadedPreview, setUploadedPreview] = useState<string | null>(null);
+
+  const shimmer = (w: number, h: number) => `
+  <svg width="${w}" height="${h}" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <defs>
+      <linearGradient id="g">
+        <stop stop-color="#f0f0f0" offset="20%" />
+        <stop stop-color="#e0e0e0" offset="50%" />
+        <stop stop-color="#f0f0f0" offset="70%" />
+      </linearGradient>
+    </defs>
+    <rect width="${w}" height="${h}" fill="#f0f0f0" />
+    <rect id="r" width="${w}" height="${h}" fill="url(#g)" />
+    <animate xlink:href="#r" attributeName="x" from="-${w}" to="${w}" dur="1s" repeatCount="indefinite"  />
+  </svg>`
+
+  const toBase64 = (str: string) =>
+    typeof window === 'undefined'
+      ? Buffer.from(str).toString('base64')
+      : window.btoa(str)
 
   useEffect(() => {
     return () => {
@@ -60,7 +80,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
     const file = event.target.files[0];
     const imageURL = URL.createObjectURL(file);
     setUploadedPreview(imageURL); 
-    const img = new Image();
+    const img = new (window as any).Image();
     img.src = imageURL;
     img.onload = async () => {
       await runDetection(img);
@@ -137,10 +157,12 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
 
       <div className="relative w-full aspect-video bg-gray-200 rounded-lg overflow-hidden mb-4 border-2 border-dashed border-gray-300">
         {uploadedPreview ? (
-          <img
+          <Image
             src={uploadedPreview}
             alt="Uploaded preview"
             className="w-full h-full object-cover"
+            layout="fill"
+            placeholder={`data:image/svg+xml;base64,${toBase64(shimmer(400, 225))}`}
           />
         ) : (
           <>
@@ -155,14 +177,14 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
                     <p className="font-semibold text-gray-700 mb-4 text-center">Photo Tips for Best Results:</p>
                     <div className="grid grid-cols-2 gap-4 w-full">
                       <div className="text-center">
-                        <img src="/images/good-scan-example.jpg" alt="Good lighting, clear view" className="rounded-md border-2 border-green-400 aspect-square object-cover" />
+                        <Image src="/images/good-scan-example.jpg" alt="Good lighting, clear view" className="rounded-md border-2 border-green-400 aspect-square object-cover" width={150} height={150} />
                         <div className="flex items-center justify-center mt-1">
                           <CheckCircle size={16} className="text-green-600 mr-1" />
                           <p className="text-xs font-medium text-gray-600">Clear & Well-Lit</p>
                         </div>
                       </div>
                       <div className="text-center">
-                        <img src="/images/bad-scan-example.jpg" alt="Blurry, dark, or cluttered" className="rounded-md border-2 border-red-400 aspect-square object-cover" />
+                        <Image src="/images/bad-scan-example.jpg" alt="Blurry, dark, or cluttered" className="rounded-md border-2 border-red-400 aspect-square object-cover" width={150} height={150} />
                          <div className="flex items-center justify-center mt-1">
                           <XCircle size={16} className="text-red-600 mr-1" />
                           <p className="text-xs font-medium text-gray-600">Blurry & Dark</p>
