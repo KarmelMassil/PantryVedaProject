@@ -94,6 +94,14 @@ export default function MealPlannerPage() {
     );
   }, [recipes, searchQuery]);
 
+  const assignedRecipeIds = useMemo(() => {
+    return new Set(
+      Object.values(mealPlan).flatMap(dayPlan =>
+        Object.values(dayPlan).map(meal => meal?.recipeId)
+      ).filter(Boolean)
+    );
+  }, [mealPlan]);
+
   // --- CALCULATE SUGGESTIONS ---
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i));
 
@@ -115,7 +123,7 @@ export default function MealPlannerPage() {
         };
     }
     return dailySuggestions;
-  }, [inventory, mealPlan, recipes, preferences, currentDate]);
+  }, [inventory, mealPlan, recipes, preferences, weekDays]);
   
 
   return (
@@ -147,12 +155,13 @@ export default function MealPlannerPage() {
                 <Search size={16} className="absolute left-2 top-2.5 text-gray-400" />
             </div>
 
-            <div className="h-[calc(100vh-220px)] overflow-y-auto pr-2">
+            <div className="h-[calc(100vh-220px)] overflow-y-auto overflow-x-hidden pr-2">
               {filteredRecipes.map(recipe => (
                 <DraggableRecipeCard
                   key={recipe.id}
                   recipe={recipe}
                   onView={handleOpenViewModal}
+                  isAssigned={assignedRecipeIds.has(recipe.id)}
                 />
               ))}
             </div>
@@ -199,7 +208,7 @@ export default function MealPlannerPage() {
       </div>
       <DragOverlay>
         {activeRecipe ? (
-            <DraggableRecipeCard recipe={activeRecipe} onView={() => {}} />
+          <DraggableRecipeCard recipe={activeRecipe} onView={() => {}} isOverlay />
         ) : null}
       </DragOverlay>
     </DndContext>

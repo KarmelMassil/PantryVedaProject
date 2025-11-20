@@ -31,14 +31,13 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
   };
 
   const style = {
-    backgroundColor: isOver ? 'rgba(39, 174, 96, 0.1)' : undefined,
-    borderColor: isOver ? '#27AE60' : 'rgb(229 231 235)',
+    borderColor: isOver ? '#ED8936' : (recipe ? '#FBD38D' : '#E2E8F0'),
+    backgroundColor: isOver ? '#FEFBF6' : (recipe ? '#FFF5E6' : 'transparent'),
   };
 
   const containerClasses = [
-    "h-auto min-h-[60px]", "border", "rounded-lg", "p-1", "flex", "flex-col",
+    "h-auto min-h-[60px]", "border-2", "rounded-lg", "p-1", "flex", "flex-col",
     "justify-center", "transition-colors", "relative", "group",
-    recipe ? "bg-orange-100 border-orange-200" : "",
   ].join(" ");
 
   return (
@@ -55,9 +54,9 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
                       <span className="flex items-center gap-0.5"><Users size={12}/>{mealData?.servings}</span>
                       <button onClick={() => handleServingsChange(1)} className="p-0.5 rounded-full bg-gray-200 hover:bg-gray-300"><Plus size={12}/></button>
                     </div>
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 text-gray-600">
                       <Clock size={12} />
-                      <span>{recipe.cookingTime} min</span>
+                      <span className="font-medium">{recipe.cookingTime} min</span>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">

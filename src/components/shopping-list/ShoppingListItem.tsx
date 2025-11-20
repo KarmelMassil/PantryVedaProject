@@ -15,7 +15,7 @@ interface ShoppingListItemProps {
   onEditSave: (id: string) => void;
 }
 
-export const ShoppingListItem: React.FC<ShoppingListItemProps> = React.memo(({
+const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
   item,
   onUpdate,
   onDelete,
@@ -122,4 +122,8 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = React.memo(({
       </div>
     </li>
   );
-});
+};
+
+ShoppingListItemComponent.displayName = 'ShoppingListItem';
+
+export const ShoppingListItem = React.memo(ShoppingListItemComponent);

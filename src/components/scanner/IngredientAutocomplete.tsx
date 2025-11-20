@@ -10,9 +10,10 @@ interface AutocompleteProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  className?: string;
 }
 
-export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList, onSelect, onAddNew, value, onChange, placeholder }) => {
+export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList, onSelect, onAddNew, value, onChange, placeholder, className }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const filteredIngredients = useMemo(() => {
@@ -46,7 +47,7 @@ export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList
         onFocus={() => setShowSuggestions(true)}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
         placeholder={placeholder || "Search your ingredients..."}
-        className="w-full p-3 pl-10 border rounded-lg"
+        className={`w-full p-3 border rounded-lg ${className}`}
       />
       {showSuggestions && value && (
         <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
