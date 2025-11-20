@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useMemo } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from '@dnd-kit/core';
 import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { DraggableRecipeCard } from '@/components/meal-plan/DraggableRecipeCard';
 import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
@@ -17,7 +17,7 @@ type CookingContext = { date: string, meal: keyof DayPlan } | null;
 export default function MealPlannerPage() {
   const { recipes, mealPlan, inventory, assignRecipeToMeal, addItemsToShoppingList, logConsumption, deductFromInventory, preferences, addToast } = usePantryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [activeRecipe, setActiveRecipe] = useState<string | null>(null);
+  const [activeRecipe, setActiveRecipe] = useState<Recipe | null>(null);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
@@ -27,16 +27,20 @@ export default function MealPlannerPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    if (active.data.current?.recipe) {
+      setActiveRecipe(active.data.current.recipe as Recipe);
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { over, active } = event;
-    setActiveRecipe(null); 
-    if (over && over.data.current && active.data.current) {
-      const recipeId = active.data.current.recipeId as string;
-      const recipe = recipes.find(r => r.id === recipeId);
-      if (!recipe) return;
-
+    setActiveRecipe(null);
+    if (over && over.data.current && active.data.current?.recipe) {
+      const recipe = active.data.current.recipe as Recipe;
       const { date, meal } = over.data.current as { date: string; meal: keyof DayPlan };
-      assignRecipeToMeal(date, meal, recipeId, recipe.baseServings);
+      assignRecipeToMeal(date, meal, recipe.id, recipe.baseServings);
     }
   };
 
@@ -127,13 +131,13 @@ export default function MealPlannerPage() {
           onFinishCooking={handleFinishCooking}
         />
       )}
-      <DndContext onDragEnd={handleDragEnd}>
+      <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
         <div className="flex h-full gap-6 overflow-hidden">
           <aside className="w-64 bg-white p-4 rounded-xl shadow-md flex-shrink-0">
             <h2 className="text-xl font-bold mb-4">Recipes</h2>
             {/* --- SEARCH BAR --- */}
             <div className="relative mb-4">
-                <input 
+                <input
                     type="text"
                     placeholder="Search recipes..."
                     value={searchQuery}
@@ -149,7 +153,6 @@ export default function MealPlannerPage() {
                   key={recipe.id}
                   recipe={recipe}
                   onView={handleOpenViewModal}
-                  mealPlan={mealPlan}
                 />
               ))}
             </div>
@@ -183,7 +186,7 @@ export default function MealPlannerPage() {
                 <div key={dateString} className="grid grid-cols-4 gap-5 items-center bg-white/60 p-3 rounded-lg">
                   <div className="text-center">
                     <p className="font-bold">{format(day, 'EEE')}</p>
-                    <p className="text-2xl font-bold text-accent-primary">{format(day, 'd')}</p>
+                    <p className="text-2xl font-bold text-orange-500">{format(day, 'd')}</p>
                   </div>
                   <DroppableMealSlot date={dateString} meal="breakfast" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.breakfast?.recipeId ? daySuggestions?.breakfast : undefined} />
                   <DroppableMealSlot date={dateString} meal="lunch" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.lunch?.recipeId ? daySuggestions?.lunch : undefined} />
@@ -196,9 +199,7 @@ export default function MealPlannerPage() {
       </div>
       <DragOverlay>
         {activeRecipe ? (
-          <div className="p-2 bg-white border rounded-lg shadow-lg">
-            {recipes.find(r => r.id === activeRecipe)?.name}
-          </div>
+            <DraggableRecipeCard recipe={activeRecipe} onView={() => {}} />
         ) : null}
       </DragOverlay>
     </DndContext>

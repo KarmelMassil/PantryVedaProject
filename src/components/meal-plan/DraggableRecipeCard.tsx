@@ -2,28 +2,19 @@
 import { Recipe } from '@/types';
 import { useDraggable } from '@dnd-kit/core';
 import { Eye } from 'lucide-react';
-import React, { useMemo } from 'react';
-import { DayPlan } from '@/store/pantryStore';
+import React from 'react';
 import Image from 'next/image';
 
 interface DraggableRecipeCardProps {
   recipe: Recipe;
   onView: (recipe: Recipe) => void;
-  mealPlan: Record<string, DayPlan>;
 }
 
-export const DraggableRecipeCard: React.FC<DraggableRecipeCardProps> = ({ recipe, onView, mealPlan }) => {
+export const DraggableRecipeCard: React.FC<DraggableRecipeCardProps> = ({ recipe, onView }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `recipe-${recipe.id}`,
     data: { recipeId: recipe.id, recipe },
   });
-
-  const isPlanned = useMemo(() => {
-    if (!mealPlan) return false;
-    return Object.values(mealPlan).some(day =>
-      Object.values(day).some(meal => meal?.recipeId === recipe.id)
-    );
-  }, [mealPlan, recipe.id]);
 
   const style = {
     transition: 'box-shadow 0.2s ease',
@@ -40,7 +31,7 @@ export const DraggableRecipeCard: React.FC<DraggableRecipeCardProps> = ({ recipe
     "p-2", "mb-2", "border", "rounded-lg", "shadow-sm",
     "cursor-grab", "touch-none", "relative", "group",
     "flex", "items-center", "gap-3",
-    isPlanned ? "bg-orange-100 border-orange-200" : "bg-white",
+    "bg-white",
     isDragging ? "shadow-xl z-10" : "",
   ].join(" ");
 
