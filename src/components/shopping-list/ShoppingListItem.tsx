@@ -86,30 +86,32 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
   }
 
   return (
-    <li className={`flex items-center gap-4 p-3 ${item.checked ? 'bg-gray-100/50 opacity-70' : ''}`}>
-      <input
-        type="checkbox"
-        checked={item.checked}
-        onChange={(e) => onUpdate(item.id, { checked: e.target.checked })}
-        className="h-5 w-5 rounded border-gray-300 text-accent-secondary focus:ring-accent-secondary flex-shrink-0"
-      />
-      <div className={`flex-grow ${item.checked ? 'text-gray-400' : ''}`}>
-        <p className={`font-semibold text-lg ${item.checked ? 'line-through' : ''}`}>{item.name}</p>
-        <div className="flex items-center gap-4 text-sm text-text-secondary mt-1">
-            <span>{item.quantity} {item.unit} {getApproximateWeightDisplay(item.quantity, item.name)}</span>
-            <span>₹{item.price?.toFixed(2) ?? 'N/A'} / {item.unit}</span>
-            <span>{item.expiryDate ? format(new Date(item.expiryDate), 'MMM dd, yyyy') : 'N/A'}</span>
+    <li className={`p-1 ${item.checked ? 'opacity-70' : ''}`}>
+      <div className={`border rounded-lg p-3 flex items-center gap-4 ${item.checked ? 'bg-gray-50' : 'bg-white'}`}>
+        <input
+          type="checkbox"
+          checked={item.checked}
+          onChange={(e) => onUpdate(item.id, { checked: e.target.checked })}
+          className="h-5 w-5 rounded border-gray-300 text-accent-secondary focus:ring-accent-secondary flex-shrink-0"
+        />
+        <div className={`flex-grow ${item.checked ? 'text-gray-400' : ''}`}>
+          <p className={`font-semibold text-lg ${item.checked ? 'line-through' : ''}`}>{item.name}</p>
+          <div className="flex items-center gap-5 text-sm text-gray-500 mt-1">
+              <span>Qty: {item.quantity} {item.unit}</span>
+              <span>Price: ₹{item.price?.toFixed(2) ?? 'N/A'} / {item.unit}</span>
+              <span>Expiry: {item.expiryDate ? format(new Date(item.expiryDate), 'MMM dd, yyyy') : 'N/A'}</span>
+          </div>
         </div>
-      </div>
 
-      <div className="flex items-center gap-2 flex-shrink-0">
-        <p className="font-bold text-xl w-24 text-right">₹{totalPrice}</p>
-        <button onClick={() => onEditStart(item)} className="text-gray-500 hover:text-blue-600 p-2">
-          <Edit size={18}/>
-        </button>
-        <button onClick={() => onDelete(item.id)} className="text-gray-500 hover:text-red-600 p-2">
-          <Trash2 size={18}/>
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <p className="font-bold text-xl w-24 text-right">₹{totalPrice}</p>
+          <button onClick={() => onEditStart(item)} className="text-gray-500 hover:text-blue-600 p-2">
+            <Edit size={18}/>
+          </button>
+          <button onClick={() => onDelete(item.id)} className="text-gray-500 hover:text-red-600 p-2">
+            <Trash2 size={18}/>
+          </button>
+        </div>
       </div>
     </li>
   );

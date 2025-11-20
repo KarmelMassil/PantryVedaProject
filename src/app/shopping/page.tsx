@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
@@ -133,7 +133,19 @@ export default function ShoppingListPage() {
       acc[category].push(item);
       return acc;
     }, {} as Record<string, ShoppingListItem[]>);
-  }, [shoppingList, searchQuery]); 
+  }, [shoppingList, searchQuery]);
+
+  const categoryIcons: Record<string, React.ReactNode> = {
+    'Produce': <Carrot size={20} className="text-orange-500" />,
+    'Dairy': <div className="text-2xl">🥛</div>,
+    'Meat': <Beef size={20} className="text-red-600" />,
+    'Bakery': <Wheat size={20} className="text-yellow-500" />,
+    'Seafood': <Fish size={20} className="text-blue-500" />,
+    'Pantry Staples': <Tag size={20} className="text-gray-500" />,
+    'Fruit': <Apple size={20} className="text-green-500" />,
+    'Vegetable': <Leaf size={20} className="text-green-600" />,
+    'Other': <Tag size={20} className="text-gray-400" />,
+  };
 
   const { budgetSummary, checkedItemsCount } = useMemo(() => {
     const summary = shoppingList.reduce((acc, item) => {
@@ -165,11 +177,14 @@ export default function ShoppingListPage() {
       />
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary">Smart Shopping List</h1>
-          <p className="text-text-secondary mt-1">
-            Plan your grocery runs, manage your budget, and never forget an item again.
-          </p>
+        <div className="flex items-center gap-3">
+          <ShoppingCart size={32} className="text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold text-text-primary">Smart Shopping List</h1>
+            <p className="text-text-secondary mt-1">
+              Plan your grocery runs, manage your budget, and never forget an item again.
+            </p>
+          </div>
         </div>
         <button
           onClick={handleRestock}
@@ -181,131 +196,137 @@ export default function ShoppingListPage() {
         </button>
       </div>
 
-      <div className="relative">
-        <IngredientAutocomplete
-          masterList={masterIngredientList}
-          onSelect={(ingredient) => {
-            const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
-              name: ingredient.name,
-              category: ingredient.category,
-              quantity: 1, // Default quantity
-              unit: ingredient.unit,
-              defaultExpiryDays: ingredient.defaultExpiryDays || 14,
-            };
-            addItemsToShoppingList([itemToAdd]);
-            setSearchOrAddQuery(''); // Clear after adding
-          }}
-          onAddNew={() => setIsModalOpen(true)}
-          value={searchOrAddQuery}
-          onChange={(value) => {
-            setSearchOrAddQuery(value);
-            setSearchQuery(value); // Also filter the list as user types
-          }}
-          placeholder="Search to add or filter your list..."
-        />
-        <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+      <div className="flex justify-between items-center gap-4">
+        <div className="relative flex-grow">
+          <IngredientAutocomplete
+            masterList={masterIngredientList}
+            onSelect={(ingredient) => {
+              const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
+                name: ingredient.name,
+                category: ingredient.category,
+                quantity: 1, // Default quantity
+                unit: ingredient.unit,
+                defaultExpiryDays: ingredient.defaultExpiryDays || 14,
+              };
+              addItemsToShoppingList([itemToAdd]);
+              setSearchOrAddQuery(''); // Clear after adding
+            }}
+            onAddNew={() => setIsModalOpen(true)}
+            value={searchOrAddQuery}
+            onChange={(value) => {
+              setSearchOrAddQuery(value);
+              setSearchQuery(value); // Also filter the list as user types
+            }}
+            placeholder="Search or scan barcode..."
+            className="pl-10"
+          />
+          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        </div>
+        <Card className="flex-shrink-0">
+          <div className="flex items-center gap-4 p-2 px-4">
+            <div>
+              <p className="text-sm text-text-secondary">Estimated Total</p>
+              <p className="text-2xl font-bold text-primary">₹{estimatedTotal.toFixed(2)}</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="md:col-span-2 space-y-6">
-          {/* List */}
-          <div className="space-y-4">
-            {shoppingList.length === 0 ? (
-                <div className="text-center py-16 text-gray-500">
-                    <h3 className="text-xl font-semibold">Your Shopping List is Empty</h3>
-                    <p>Add items using the search bar above or get smart suggestions!</p>
-                </div>
-            ) : Object.keys(categorizedList).length === 0 ? (
-                <p className="text-center py-16 text-gray-500">No items match your search.</p>
-            ) : (
-                Object.entries(categorizedList).map(([category, items]) => (
-                    <div key={category}>
-                        <h2 className="text-xl font-bold text-text-primary mb-2">{category} ({items.length})</h2>
-                        <Card className="p-0">
-                            <ul className="divide-y divide-gray-200">
-                                {items.map(item => (
-                                    <ShoppingListItemComponent
-                                        key={item.id}
-                                        item={item}
-                                        onUpdate={updateShoppingListItem}
-                                        onDelete={removeShoppingListItem}
-                                        isEditing={editingItemId === item.id}
-                                        onEditStart={handleEditStart}
-                                        onEditCancel={handleEditCancel}
-                                        onEditSave={handleEditSave}
-                                    />
-                                ))}
-                            </ul>
-                        </Card>
-                    </div>
-                ))
-            )}
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-              <h3 className="font-bold text-lg mb-2">Budget Summary</h3>
-              <div className="space-y-3">
-                  <div className="text-center bg-gray-50 p-4 rounded-lg">
-                      <p className="text-text-secondary">Estimated Total ({shoppingList.length} items)</p>
-                      <p className="text-3xl font-bold text-primary">₹{estimatedTotal.toFixed(2)}</p>
-                  </div>
-                  <div className="text-xs text-gray-600 space-y-1">
-                      <p className="font-semibold mb-1">Breakdown by Category:</p>
-                      {Object.entries(budgetSummary).map(([category, data]) => (
-                          <div key={category} className="flex justify-between items-center">
-                              <span>{category} ({data.count})</span>
-                              <span>₹{data.total.toFixed(2)} ({estimatedTotal > 0 ? ((data.total / estimatedTotal) * 100).toFixed(0) : 0}%)</span>
-                          </div>
-                      ))}
-                  </div>
-              </div>
-          </Card>
-           <Card className="bg-yellow-50 border-yellow-200">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-bold text-lg flex items-center gap-2"><Lightbulb size={20} className="text-yellow-500"/> Smart Suggestions</h3>
+      <div className="my-8">
+        <div
+          className="max-w-2xl mx-auto rounded-xl shadow-lg"
+          style={{
+            background: 'linear-gradient(145deg, #F9FAFB 0%, #E9D8FF 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.5)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+          }}
+        >
+          <div className="p-5">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800">
+                <Sparkles size={22} className="text-purple-600" />
+                Smart Suggestions ({proposedSuggestions.length})
+              </h3>
+              <div className="flex items-center gap-4">
+                  <button onClick={handleAcceptAll} className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors">Accept All</button>
+                  <button onClick={() => setProposedSuggestions([])} className="text-sm font-semibold text-gray-600 hover:text-gray-800">Hide</button>
                   <button onClick={handleGetSmartSuggestions} disabled={isSuggesting} className="p-1 text-gray-500 hover:text-black disabled:opacity-50">
                     {isSuggesting ? <Loader2 className="animate-spin" size={18}/> : <RefreshCw size={18}/>}
                   </button>
-                </div>
+              </div>
+            </div>
 
-                {/* This is where the proposals will be rendered */}
-                <div className="space-y-3">
-                  {isSuggesting && <p className="text-sm text-center text-gray-600">Analyzing your habits...</p>}
+            <div className="space-y-3">
+              {isSuggesting && <p className="text-sm text-center text-gray-600 py-4">Analyzing your habits...</p>}
 
-                  {proposedSuggestions.length > 0 && (
-                    <>
-                      <button onClick={handleAcceptAll} className="w-full bg-accent-secondary text-white font-semibold py-1.5 rounded-md text-sm">Accept All</button>
-                      {proposedSuggestions.map((suggestion, index) => {
-                        const existingItem = findItemInList(suggestion.name);
-                        return (
-                          <div key={index} className="bg-white p-3 rounded-lg border border-yellow-300 shadow-sm">
-                            <p className="font-semibold">{suggestion.name}</p>
-                            <p className="text-xs text-gray-500 mb-2 italic">{suggestion.reason}</p>
+              {!isSuggesting && proposedSuggestions.length === 0 && (
+                <p className="text-sm text-center text-gray-600 py-4">Click the refresh button to get smart suggestions based on your pantry and meal plan.</p>
+              )}
 
-                            {existingItem ? (
-                              <p className="text-sm">Update quantity from {existingItem.quantity} to {suggestion.quantity} {suggestion.unit}</p>
-                            ) : (
-                              <p className="text-sm">Add {suggestion.quantity} {suggestion.unit} to your list</p>
-                            )}
-
-                            <div className="flex gap-2 mt-2">
-                              <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 bg-green-600 text-white text-xs font-bold py-1 rounded">Accept</button>
-                              <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-1 rounded">Dismiss</button>
+              {proposedSuggestions.length > 0 && (
+                <ul className="space-y-2">
+                  {proposedSuggestions.map((suggestion, index) => {
+                    const existingItem = findItemInList(suggestion.name);
+                    return (
+                      <li key={index} className="bg-white/70 p-3 rounded-lg border border-purple-100 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-2xl">
+                              {suggestion.emoji || '🛒'}
                             </div>
+                          <div>
+                            <p className="font-semibold text-gray-800">{suggestion.name} - {suggestion.quantity} {suggestion.unit}</p>
+                            <p className="text-xs text-gray-500 italic">{suggestion.reason}</p>
                           </div>
-                        );
-                      })}
-                    </>
-                  )}
-
-                  {!isSuggesting && proposedSuggestions.length === 0 && (
-                    <p className="text-sm text-center text-gray-600">Click the refresh button to get smart suggestions based on your pantry and meal plan.</p>
-                  )}
-                </div>
-            </Card>
+                        </div>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleAcceptSuggestion(suggestion)} className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-md hover:bg-green-600">Accept</button>
+                          <button onClick={() => handleDismissSuggestion(suggestion.name)} className="px-3 py-1 bg-transparent text-gray-600 text-xs font-bold rounded-md hover:bg-gray-100">Dismiss</button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="space-y-6">
+        {shoppingList.length === 0 ? (
+            <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
+                <ShoppingCart size={48} className="mx-auto text-gray-400 mb-4" />
+                <h3 className="text-xl font-semibold">Your Shopping List is Empty</h3>
+                <p>Add items using the search bar above or get smart suggestions!</p>
+            </div>
+        ) : Object.keys(categorizedList).length === 0 ? (
+            <p className="text-center py-16 text-gray-500">No items match your search.</p>
+        ) : (
+            Object.entries(categorizedList).map(([category, items]) => (
+                <div key={category}>
+                  <div className="flex items-center gap-3 mb-2">
+                    {categoryIcons[category] || <Tag size={20} className="text-gray-400" />}
+                    <h2 className="text-xl font-bold text-text-primary">{category} ({items.length})</h2>
+                  </div>
+                  <Card className="p-0">
+                      <ul className="divide-y divide-gray-200">
+                          {items.map(item => (
+                              <ShoppingListItemComponent
+                                  key={item.id}
+                                  item={item}
+                                  onUpdate={updateShoppingListItem}
+                                  onDelete={removeShoppingListItem}
+                                  isEditing={editingItemId === item.id}
+                                  onEditStart={handleEditStart}
+                                  onEditCancel={handleEditCancel}
+                                  onEditSave={handleEditSave}
+                              />
+                          ))}
+                      </ul>
+                  </Card>
+                </div>
+            ))
+        )}
       </div>
     </div>
     </>
