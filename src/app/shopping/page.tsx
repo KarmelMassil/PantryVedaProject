@@ -136,15 +136,15 @@ export default function ShoppingListPage() {
   }, [shoppingList, searchQuery]);
 
   const categoryIcons: Record<string, React.ReactNode> = {
-    'Produce': <span className="text-2xl">🥕</span>,
-    'Dairy': <span className="text-2xl">🥛</span>,
-    'Meat': <span className="text-2xl">🥩</span>,
-    'Bakery': <span className="text-2xl">🍞</span>,
-    'Seafood': <span className="text-2xl">🐟</span>,
-    'Pantry Staples': <span className="text-2xl">🥫</span>,
-    'Fruit': <span className="text-2xl">🍎</span>,
-    'Vegetable': <span className="text-2xl">🥬</span>,
-    'Other': <span className="text-2xl">🛒</span>,
+    'Produce': <Carrot />,
+    'Dairy': <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z"/><path d="M12 22v-2"/><path d="M14 18H8"/><path d="M12 18v4"/><path d="M12 4V2"/></svg>, // Custom milk icon
+    'Meat': <Beef />,
+    'Bakery': <Wheat />,
+    'Seafood': <Fish />,
+    'Pantry Staples': <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="7" y="5" width="10" height="14" rx="2"/><path d="M10 5v14"/><path d="M14 5v14"/></svg>, // Custom can icon
+    'Fruit': <Apple />,
+    'Vegetable': <Leaf />,
+    'Other': <ShoppingCart />,
   };
 
   const { budgetSummary, checkedItemsCount } = useMemo(() => {
@@ -169,181 +169,206 @@ export default function ShoppingListPage() {
   }, [budgetSummary]);
 
   return (
-    <>
+    <div className="space-y-6">
       <AddIngredientModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSave={handleSaveNewIngredient}
       />
-    <div className="grid grid-cols-3 gap-6">
-      <div className="col-span-2 space-y-6">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-3">
-            <ShoppingCart size={32} className="text-primary" />
-            <div>
-              <h1 className="text-3xl font-bold text-text-primary">Smart Shopping List</h1>
-              <p className="text-text-secondary mt-1">
-                Plan your grocery runs, manage your budget, and never forget an item again.
-              </p>
-            </div>
+      <div className="flex justify-between items-center">
+        <div className="flex items-center gap-3">
+          <ShoppingCart size={32} className="text-primary" />
+          <div>
+            <h1 className="text-3xl font-bold text-text-primary">Smart Shopping List</h1>
+            <p className="text-text-secondary mt-1">
+              Plan your grocery runs, manage your budget, and never forget an item again.
+            </p>
           </div>
-        </div>
-
-        <div className="relative">
-          <IngredientAutocomplete
-            masterList={masterIngredientList}
-            onSelect={(ingredient) => {
-              const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
-                name: ingredient.name,
-                category: ingredient.category,
-                quantity: 1,
-                unit: ingredient.unit,
-                defaultExpiryDays: ingredient.defaultExpiryDays || 14,
-              };
-              addItemsToShoppingList([itemToAdd]);
-              setSearchOrAddQuery('');
-            }}
-            onAddNew={() => setIsModalOpen(true)}
-            value={searchOrAddQuery}
-            onChange={(value) => {
-              setSearchOrAddQuery(value);
-              setSearchQuery(value);
-            }}
-            placeholder="Search or scan barcode..."
-            className="pl-10"
-          />
-          <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-        </div>
-
-        <div
-          className="rounded-xl shadow-lg"
-          style={{
-            background: 'linear-gradient(145deg, #F9FAFB 0%, #E9D8FF 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.5)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-          }}
-        >
-          <div className="p-5">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-bold text-lg flex items-center gap-2 text-gray-800">
-                <Sparkles size={22} className="text-purple-600" />
-                Smart Suggestions ({proposedSuggestions.length})
-              </h3>
-              <div className="flex items-center gap-4">
-                  <button onClick={handleAcceptAll} className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors">Accept All</button>
-                  <button onClick={() => setProposedSuggestions([])} className="text-sm font-semibold text-gray-600 hover:text-gray-800">Hide</button>
-                  <button onClick={handleGetSmartSuggestions} disabled={isSuggesting} className="p-1 text-gray-500 hover:text-black disabled:opacity-50">
-                    {isSuggesting ? <Loader2 className="animate-spin" size={18}/> : <RefreshCw size={18}/>}
-                  </button>
-              </div>
-            </div>
-            <div className="space-y-3 max-h-72 overflow-y-auto">
-              {isSuggesting && <p className="text-sm text-center text-gray-600 py-4">Analyzing your habits...</p>}
-              {!isSuggesting && proposedSuggestions.length === 0 && (
-                <p className="text-sm text-center text-gray-600 py-4">Click the refresh button to get smart suggestions.</p>
-              )}
-              {proposedSuggestions.length > 0 && (
-                <ul className="space-y-2">
-                  {proposedSuggestions.map((suggestion, index) => (
-                    <li key={index} className="bg-white/70 p-3 rounded-lg border border-purple-100 shadow-sm flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                         <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-2xl">
-                            {suggestion.emoji || '🛒'}
-                          </div>
-                        <div>
-                          <p className="font-semibold text-gray-800">{suggestion.name} - {suggestion.quantity} {suggestion.unit}</p>
-                          <p className="text-xs text-gray-500 italic">{suggestion.reason}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <button onClick={() => handleAcceptSuggestion(suggestion)} className="px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-md hover:bg-green-600">Accept</button>
-                        <button onClick={() => handleDismissSuggestion(suggestion.name)} className="px-3 py-1 bg-transparent text-gray-600 text-xs font-bold rounded-md hover:bg-gray-100">Dismiss</button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-6">
-          {shoppingList.length === 0 ? (
-              <div className="text-center py-16 text-gray-500 bg-gray-50 rounded-lg">
-                  <ShoppingCart size={48} className="mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-xl font-semibold">Your Shopping List is Empty</h3>
-                  <p>Add items using the search bar above or get smart suggestions!</p>
-              </div>
-          ) : Object.keys(categorizedList).length === 0 ? (
-              <p className="text-center py-16 text-gray-500">No items match your search.</p>
-          ) : (
-              Object.entries(categorizedList).map(([category, items]) => (
-                  <Card key={category} className="p-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      {categoryIcons[category] || <Tag size={20} className="text-gray-400" />}
-                      <h2 className="text-xl font-bold text-text-primary">{category} ({items.length})</h2>
-                    </div>
-                    <ul className="space-y-2">
-                        {items.map(item => (
-                            <ShoppingListItemComponent
-                                key={item.id}
-                                item={item}
-                                onUpdate={updateShoppingListItem}
-                                onDelete={removeShoppingListItem}
-                                isEditing={editingItemId === item.id}
-                                onEditStart={handleEditStart}
-                                onEditCancel={handleEditCancel}
-                                onEditSave={handleEditSave}
-                            />
-                        ))}
-                    </ul>
-                  </Card>
-              ))
-          )}
         </div>
       </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
 
-      <div className="col-span-1 space-y-6">
-        <Card>
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="font-bold text-lg">Budget Summary</h3>
-            <button
-              onClick={handleRestock}
-              disabled={checkedItemsCount === 0}
-              className={`flex items-center gap-2 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-sm ${
-                checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
-              }`}
-            >
-              <PackagePlus size={18} />
-              Restock ({checkedItemsCount})
-            </button>
+          {/* Smart Suggestions */}
+          <div className="bg-gradient-to-br from-gray-50 to-purple-50 p-6 rounded-2xl shadow-sm border border-gray-200">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-xl flex items-center gap-3 text-gray-800">
+                    <Sparkles size={24} className="text-purple-600" />
+                    <span>Smart Suggestions</span>
+                </h3>
+                <div className="flex items-center gap-2">
+                    {proposedSuggestions.length > 0 && (
+                      <>
+                        <button onClick={handleAcceptAll} className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-sm">Accept All</button>
+                        <button onClick={() => setProposedSuggestions([])} className="text-sm font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-200">Hide</button>
+                      </>
+                    )}
+                    <button onClick={handleGetSmartSuggestions} disabled={isSuggesting} className="p-2 text-gray-500 hover:text-black disabled:opacity-50 rounded-full hover:bg-gray-200 transition-colors">
+                        {isSuggesting ? <Loader2 className="animate-spin" size={20}/> : <RefreshCw size={20}/>}
+                    </button>
+                </div>
+            </div>
+            {isSuggesting ? (
+                <div className="text-center py-8 text-gray-600">
+                    <Loader2 className="animate-spin inline-block mr-2" />
+                    Analyzing your habits...
+                </div>
+            ) : proposedSuggestions.length > 0 ? (
+                <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {proposedSuggestions.map((suggestion, index) => (
+                        <li key={index} className="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-purple-100 shadow-md flex flex-col justify-between transition-transform hover:scale-105">
+                            <div>
+                                <div className="flex items-center gap-3 mb-2">
+                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-2xl shadow-inner">
+                                        {suggestion.emoji || '🛒'}
+                                    </div>
+                                    <p className="font-semibold text-gray-800">{suggestion.name}</p>
+                                </div>
+                                <p className="text-xs text-gray-500 italic mb-3 ml-1">{suggestion.reason}</p>
+                            </div>
+                            <div className="flex gap-2 mt-auto">
+                                <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-md hover:bg-green-600 transition-all">Accept</button>
+                                <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-md hover:bg-gray-200 transition-all">Dismiss</button>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <div className="text-center py-8 text-gray-500">
+                    <p>Click the refresh button to get smart suggestions based on your pantry and habits.</p>
+                </div>
+            )}
           </div>
-          <div className="space-y-3">
-              <div className="text-center bg-gray-50 p-4 rounded-lg">
-                  <p className="text-text-secondary">Estimated Total ({shoppingList.length} items)</p>
-                  <p className="text-3xl font-bold text-primary">₹{estimatedTotal.toFixed(2)}</p>
+
+          {/* Shopping List Items */}
+          <div className="space-y-6">
+            {shoppingList.length === 0 ? (
+              <div className="text-center py-20 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">
+                  <ShoppingCart size={48} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700">Your Shopping List is Empty</h3>
+                  <p className="mt-1">Add items using the search bar or get smart suggestions!</p>
               </div>
-              <div className="text-sm text-gray-600 space-y-2">
-                  <p className="font-semibold mb-1">Breakdown by Category:</p>
-                  {Object.entries(budgetSummary).map(([category, data]) => (
-                      <div key={category}>
-                        <div className="flex justify-between items-center font-medium">
-                            <span>{category} ({data.count})</span>
-                            <span>₹{data.total.toFixed(2)}</span>
-                        </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                          <div
-                            className="bg-primary h-2 rounded-full"
-                            style={{ width: `${estimatedTotal > 0 ? ((data.total / estimatedTotal) * 100).toFixed(0) : 0}%` }}
-                          ></div>
-                        </div>
-                      </div>
-                  ))}
+            ) : Object.keys(categorizedList).length === 0 ? (
+              <div className="text-center py-20 text-gray-500">
+                  <Search size={48} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold">No items match your search.</h3>
               </div>
+            ) : (
+              Object.entries(categorizedList).map(([category, items]) => (
+                <div key={category} className="p-5 rounded-xl border shadow-sm bg-white">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="text-primary bg-primary/10 p-2 rounded-lg">
+                      {React.cloneElement(categoryIcons[category] || <Tag />, { size: 22 })}
+                    </div>
+                    <h2 className="text-xl font-bold text-text-primary">{category} ({items.length})</h2>
+                  </div>
+                  <ul className="space-y-3">
+                      {items.map(item => (
+                          <ShoppingListItemComponent
+                              key={item.id}
+                              item={item}
+                              onUpdate={updateShoppingListItem}
+                              onDelete={removeShoppingListItem}
+                              isEditing={editingItemId === item.id}
+                              onEditStart={handleEditStart}
+                              onEditCancel={handleEditCancel}
+                              onEditSave={handleEditSave}
+                          />
+                      ))}
+                  </ul>
+                </div>
+              ))
+            )}
           </div>
-        </Card>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="sticky top-6 space-y-6">
+            {/* Search and Add */}
+            <Card className="p-4">
+              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                <PlusCircle size={20} /> Add to List
+              </h3>
+              <div className="relative">
+                <IngredientAutocomplete
+                  masterList={masterIngredientList}
+                  onSelect={(ingredient) => {
+                    const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
+                      name: ingredient.name,
+                      category: ingredient.category,
+                      quantity: 1,
+                      unit: ingredient.unit,
+                      defaultExpiryDays: ingredient.defaultExpiryDays || 14,
+                    };
+                    addItemsToShoppingList([itemToAdd]);
+                    setSearchOrAddQuery('');
+                  }}
+                  onAddNew={() => setIsModalOpen(true)}
+                  value={searchOrAddQuery}
+                  onChange={(value) => {
+                    setSearchOrAddQuery(value);
+                    setSearchQuery(value);
+                  }}
+                  placeholder="Type to search or add..."
+                  className="w-full pl-10"
+                />
+                <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              </div>
+            </Card>
+
+            {/* Restock Button */}
+            <div className="flex justify-center">
+                <button
+                  onClick={handleRestock}
+                  disabled={checkedItemsCount === 0}
+                  className={`w-full flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
+                    checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  <PackagePlus size={20} />
+                  Restock Checked Items ({checkedItemsCount})
+                </button>
+            </div>
+
+            {/* Budget Summary */}
+            <Card className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  <Tag size={20} /> Budget Summary
+                </h3>
+              </div>
+              <div className="space-y-4">
+                  <div className="text-center bg-gray-50 p-4 rounded-lg border">
+                      <p className="text-sm text-text-secondary">Estimated Total ({shoppingList.length} items)</p>
+                      <p className="text-3xl font-bold text-primary">₹{estimatedTotal.toFixed(2)}</p>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-3">
+                      <p className="font-semibold mb-1">Breakdown by Category:</p>
+                      {Object.entries(budgetSummary).length > 0 ? Object.entries(budgetSummary).map(([category, data]) => (
+                          <div key={category}>
+                            <div className="flex justify-between items-center font-medium">
+                                <span className="flex items-center gap-2">
+                                  {React.cloneElement(categoryIcons[category] || <Tag/>, {size: 16, className: "text-gray-500"})}
+                                  {category} ({data.count})
+                                </span>
+                                <span>₹{data.total.toFixed(2)}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1.5">
+                              <div
+                                className="bg-primary h-2.5 rounded-full"
+                                style={{ width: `${estimatedTotal > 0 ? ((data.total / estimatedTotal) * 100).toFixed(0) : 0}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                      )) : <p className="text-center text-gray-500 py-3">No items with prices yet.</p>}
+                  </div>
+              </div>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
-    </>
   );
 }

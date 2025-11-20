@@ -28,56 +28,45 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
 
   if (isEditing) {
     return (
-      <li className="p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
-        <div className="grid grid-cols-4 gap-4 items-end">
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Item Name</label>
-            <input
-              type="text"
-              value={item.name}
-              disabled
-              className="w-full p-2 border rounded-md bg-gray-100"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Quantity</label>
-            <div className="flex items-center">
+      <li className="p-3 bg-primary/10 rounded-lg border border-primary">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+          {/* Info Column */}
+          <div className="font-semibold">{item.name}</div>
+
+          {/* Inputs Column */}
+          <div className="md:col-span-2 grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Quantity</label>
               <input
                 type="number"
                 value={item.quantity}
                 onChange={(e) => onUpdate(item.id, { quantity: parseFloat(e.target.value) || 0 })}
-                className="w-full p-2 border rounded-md"
+                className="w-full p-2 border rounded-md bg-white"
+                autoFocus
               />
-              <span className="ml-2 text-sm text-gray-500">{item.unit}</span>
             </div>
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Price/Unit</label>
-            <input
-              type="number"
-              value={item.price || ''}
-              onChange={(e) => onUpdate(item.id, { price: parseFloat(e.target.value) || 0 })}
-              className="w-full p-2 border rounded-md"
-              placeholder="Price"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-gray-600 mb-1">Expiry</label>
-            <input
-              type="date"
-              value={item.expiryDate ? format(new Date(item.expiryDate), 'yyyy-MM-dd') : ''}
-              onChange={(e) => onUpdate(item.id, { expiryDate: e.target.valueAsDate?.toISOString() })}
-              className="w-full p-2 border rounded-md"
-            />
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Price/Unit</label>
+              <div className="relative">
+                 <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+                <input
+                  type="number"
+                  value={item.price || ''}
+                  onChange={(e) => onUpdate(item.id, { price: parseFloat(e.target.value) || 0 })}
+                  className="w-full p-2 pl-6 border rounded-md bg-white"
+                  placeholder="Price"
+                />
+              </div>
+            </div>
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={() => onEditSave(item.id)} className="flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
-            <Save size={18} />
+          <button onClick={() => onEditSave(item.id)} className="flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 text-sm font-semibold">
+            <Save size={16} />
             Save
           </button>
-          <button onClick={onEditCancel} className="flex items-center justify-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-100">
-            <X size={18} />
+          <button onClick={onEditCancel} className="flex items-center justify-center gap-2 bg-white border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-100 text-sm font-semibold">
+            <X size={16} />
             Cancel
           </button>
         </div>
@@ -86,34 +75,40 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
   }
 
   return (
-    <li className={`p-1 ${item.checked ? 'opacity-70' : ''}`}>
-      <div className={`border rounded-lg p-3 flex items-center gap-4 ${item.checked ? 'bg-gray-50' : 'bg-white'}`}>
+    <li className={`transition-all duration-200 rounded-lg group ${item.checked ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'}`}>
+      <div className="flex items-center gap-4 p-3">
         <input
           type="checkbox"
           checked={item.checked}
           onChange={(e) => onUpdate(item.id, { checked: e.target.checked })}
-          className="h-5 w-5 rounded border-gray-300 text-accent-secondary focus:ring-accent-secondary flex-shrink-0"
+          className="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary transition-all duration-200 flex-shrink-0"
         />
-        <div className={`flex-grow ${item.checked ? 'text-gray-400' : ''}`}>
-          <p className={`font-semibold text-lg ${item.checked ? 'line-through' : ''}`}>{item.name}</p>
-          <div className="flex items-center gap-5 text-sm text-gray-500 mt-1">
-              <span>{item.quantity} {item.unit}</span>
-              <span>₹{item.price?.toFixed(2) ?? 'N/A'} / {item.unit}</span>
-              <span>{item.expiryDate ? format(new Date(item.expiryDate), 'MMM dd, yyyy') : 'N/A'}</span>
+
+        <div className="flex-grow">
+          <p className={`font-medium transition-colors ${item.checked ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
+            {item.name}
+          </p>
+          <div className={`flex items-center gap-4 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
+            <span>{item.quantity} {item.unit}</span>
+            <span className="text-gray-400">•</span>
+            <span>₹{item.price?.toFixed(2) ?? '0.00'} / {item.unit}</span>
           </div>
         </div>
 
-        <div className="text-right">
-          <p className="font-bold text-xl">₹{totalPrice}</p>
-          <p className="text-sm text-gray-400">Total</p>
-        </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button onClick={() => onEditStart(item)} className="text-gray-500 hover:text-blue-600 p-2">
-            <Edit size={18}/>
-          </button>
-          <button onClick={() => onDelete(item.id)} className="text-gray-500 hover:text-red-600 p-2">
-            <Trash2 size={18}/>
-          </button>
+        <div className="flex items-center gap-4">
+          <div className="hidden sm:block text-right">
+            <p className={`font-semibold transition-colors text-lg ${item.checked ? 'text-gray-400' : 'text-primary'}`}>
+              ₹{totalPrice}
+            </p>
+          </div>
+          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+            <button onClick={() => onEditStart(item)} className="p-2 hover:bg-gray-200 rounded-full text-gray-600">
+              <Edit size={16} />
+            </button>
+            <button onClick={() => onDelete(item.id)} className="p-2 hover:bg-red-100 rounded-full text-red-500">
+              <Trash2 size={16} />
+            </button>
+          </div>
         </div>
       </div>
     </li>
