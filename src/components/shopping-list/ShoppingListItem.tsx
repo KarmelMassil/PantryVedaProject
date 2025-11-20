@@ -97,14 +97,17 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
         <div className={`flex-grow ${item.checked ? 'text-gray-400' : ''}`}>
           <p className={`font-semibold text-lg ${item.checked ? 'line-through' : ''}`}>{item.name}</p>
           <div className="flex items-center gap-5 text-sm text-gray-500 mt-1">
-              <span>Qty: {item.quantity} {item.unit}</span>
-              <span>Price: ₹{item.price?.toFixed(2) ?? 'N/A'} / {item.unit}</span>
-              <span>Expiry: {item.expiryDate ? format(new Date(item.expiryDate), 'MMM dd, yyyy') : 'N/A'}</span>
+              <span>{item.quantity} {item.unit}</span>
+              <span>₹{item.price?.toFixed(2) ?? 'N/A'} / {item.unit}</span>
+              <span>{item.expiryDate ? format(new Date(item.expiryDate), 'MMM dd, yyyy') : 'N/A'}</span>
           </div>
         </div>
 
+        <div className="text-right">
+          <p className="font-bold text-xl">₹{totalPrice}</p>
+          <p className="text-sm text-gray-400">Total</p>
+        </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <p className="font-bold text-xl w-24 text-right">₹{totalPrice}</p>
           <button onClick={() => onEditStart(item)} className="text-gray-500 hover:text-blue-600 p-2">
             <Edit size={18}/>
           </button>
