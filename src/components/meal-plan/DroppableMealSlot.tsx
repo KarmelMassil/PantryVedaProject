@@ -2,7 +2,7 @@
 import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { Recipe } from '@/types';
 import { useDroppable } from '@dnd-kit/core';
-import { Trash2, Utensils, Sparkles, Plus, Users, Minus } from 'lucide-react';
+import { Trash2, Utensils, Sparkles, Plus, Users, Minus, Clock } from 'lucide-react';
 import React from 'react';
 
 interface DroppableMealSlotProps {
@@ -36,10 +36,16 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
   };
 
   return (
-    <div ref={setNodeRef} style={style} className="h-[50px] border rounded-lg p-0.3 flex flex-col justify-center transition-colors relative group">
+    <div ref={setNodeRef} style={style} className="h-auto min-h-[60px] border rounded-lg p-1 flex flex-col justify-center transition-colors relative group">
       {recipe ? (
-        <div className="bg-white p-1 rounded-md shadow-sm text-sm group">
-            <p className="font-bold truncate">{recipe.name}</p>
+        <div className="bg-white p-1 rounded-md text-sm">
+           <div className="flex items-start justify-between">
+              <p className="font-bold truncate pr-2 flex-1">{recipe.name}</p>
+              <div className="flex items-center gap-1 text-xs text-gray-500 flex-shrink-0">
+                <Clock size={12} />
+                <span>{recipe.cookingTime} min</span>
+              </div>
+            </div>
             <div className="flex items-center justify-between mt-1">
                 <div className="flex items-center gap-1">
                     <button onClick={() => handleServingsChange(-1)} className="p-0.5 rounded-full bg-gray-200 hover:bg-gray-300"><Minus size={12}/></button>

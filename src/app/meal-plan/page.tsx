@@ -145,10 +145,11 @@ export default function MealPlannerPage() {
 
             <div className="h-[calc(100vh-220px)] overflow-y-auto pr-2">
               {filteredRecipes.map(recipe => (
-                <DraggableRecipeCard 
-                  key={recipe.id} 
-                  recipe={recipe} 
-                  onView={handleOpenViewModal} 
+                <DraggableRecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onView={handleOpenViewModal}
+                  mealPlan={mealPlan}
                 />
               ))}
             </div>
