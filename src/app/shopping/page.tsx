@@ -123,17 +123,15 @@ export default function ShoppingListPage() {
     }
  };
 
-  const categorizedList = useMemo(() => {
-    const filteredList = shoppingList.filter(item =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    return filteredList.reduce((acc, item) => {
-      const category = item.category || 'Other';
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(item);
-      return acc;
-    }, {} as Record<string, ShoppingListItem[]>);
-  }, [shoppingList, searchQuery]);
+  const filteredList = shoppingList.filter(item =>
+    item.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+  const categorizedList = filteredList.reduce((acc, item) => {
+    const category = item.category || 'Other';
+    if (!acc[category]) acc[category] = [];
+    acc[category].push(item);
+    return acc;
+  }, {} as Record<string, ShoppingListItem[]>);
 
   const categoryIcons: Record<string, React.ReactNode> = {
     'Produce': <Carrot />,
@@ -147,26 +145,19 @@ export default function ShoppingListPage() {
     'Other': <ShoppingCart />,
   };
 
-  const { budgetSummary, checkedItemsCount } = useMemo(() => {
-    const summary = shoppingList.reduce((acc, item) => {
-      const category = item.category || 'Other';
-      if (!acc[category]) {
-        acc[category] = { total: 0, count: 0 };
-      }
-      const itemTotal = (item.quantity || 0) * (item.price || 0);
-      acc[category].total += itemTotal;
-      acc[category].count += 1;
-      return acc;
-    }, {} as Record<string, { total: number; count: number }>);
+  const budgetSummary = shoppingList.reduce((acc, item) => {
+    const category = item.category || 'Other';
+    if (!acc[category]) {
+      acc[category] = { total: 0, count: 0 };
+    }
+    const itemTotal = (item.quantity || 0) * (item.price || 0);
+    acc[category].total += itemTotal;
+    acc[category].count += 1;
+    return acc;
+  }, {} as Record<string, { total: number; count: number }>);
 
-    const checkedCount = shoppingList.filter(item => item.checked).length;
-
-    return { budgetSummary: summary, checkedItemsCount: checkedCount };
-  }, [shoppingList]);
-
-  const estimatedTotal = useMemo(() => {
-      return Object.values(budgetSummary).reduce((total, category) => total + category.total, 0);
-  }, [budgetSummary]);
+  const checkedItemsCount = shoppingList.filter(item => item.checked).length;
+  const estimatedTotal = Object.values(budgetSummary).reduce((total, category) => total + category.total, 0);
 
   return (
     <div className="space-y-6">
@@ -185,10 +176,47 @@ export default function ShoppingListPage() {
             </p>
           </div>
         </div>
+        <button
+          onClick={handleRestock}
+          disabled={checkedItemsCount === 0}
+          className={`flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
+            checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
+          }`}
+        >
+          <PackagePlus size={20} />
+          Restock ({checkedItemsCount})
+        </button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
+
+          {/* Search and Add */}
+          <div className="relative">
+            <IngredientAutocomplete
+              masterList={masterIngredientList}
+              onSelect={(ingredient) => {
+                const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
+                  name: ingredient.name,
+                  category: ingredient.category,
+                  quantity: 1,
+                  unit: ingredient.unit,
+                  defaultExpiryDays: ingredient.defaultExpiryDays || 14,
+                };
+                addItemsToShoppingList([itemToAdd]);
+                setSearchOrAddQuery('');
+              }}
+              onAddNew={() => setIsModalOpen(true)}
+              value={searchOrAddQuery}
+              onChange={(value) => {
+                setSearchOrAddQuery(value);
+                setSearchQuery(value);
+              }}
+              placeholder="Type to search or add..."
+              className="w-full pl-10"
+            />
+            <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          </div>
 
           {/* Smart Suggestions */}
           <div className="bg-gradient-to-br from-gray-50 to-purple-50 p-6 rounded-2xl shadow-sm border border-gray-200">
@@ -286,52 +314,6 @@ export default function ShoppingListPage() {
         {/* Right Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           <div className="sticky top-6 space-y-6">
-            {/* Search and Add */}
-            <Card className="p-4">
-              <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                <PlusCircle size={20} /> Add to List
-              </h3>
-              <div className="relative">
-                <IngredientAutocomplete
-                  masterList={masterIngredientList}
-                  onSelect={(ingredient) => {
-                    const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
-                      name: ingredient.name,
-                      category: ingredient.category,
-                      quantity: 1,
-                      unit: ingredient.unit,
-                      defaultExpiryDays: ingredient.defaultExpiryDays || 14,
-                    };
-                    addItemsToShoppingList([itemToAdd]);
-                    setSearchOrAddQuery('');
-                  }}
-                  onAddNew={() => setIsModalOpen(true)}
-                  value={searchOrAddQuery}
-                  onChange={(value) => {
-                    setSearchOrAddQuery(value);
-                    setSearchQuery(value);
-                  }}
-                  placeholder="Type to search or add..."
-                  className="w-full pl-10"
-                />
-                <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-              </div>
-            </Card>
-
-            {/* Restock Button */}
-            <div className="flex justify-center">
-                <button
-                  onClick={handleRestock}
-                  disabled={checkedItemsCount === 0}
-                  className={`w-full flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
-                    checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
-                  }`}
-                >
-                  <PackagePlus size={20} />
-                  Restock Checked Items ({checkedItemsCount})
-                </button>
-            </div>
-
             {/* Budget Summary */}
             <Card className="p-4">
               <div className="flex justify-between items-center mb-4">

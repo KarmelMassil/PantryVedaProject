@@ -15,7 +15,7 @@ interface ShoppingListItemProps {
   onEditSave: (id: string) => void;
 }
 
-export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
+export const ShoppingListItem: React.FC<ShoppingListItemProps> = React.memo(({
   item,
   onUpdate,
   onDelete,
@@ -34,7 +34,7 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
           <div className="font-semibold">{item.name}</div>
 
           {/* Inputs Column */}
-          <div className="md:col-span-2 grid grid-cols-2 gap-4">
+          <div className="md:col-span-2 grid grid-cols-3 gap-4">
             <div>
               <label className="block text-xs font-semibold text-gray-600 mb-1">Quantity</label>
               <input
@@ -57,6 +57,15 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
                   placeholder="Price"
                 />
               </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-1">Expiry</label>
+              <input
+                type="date"
+                value={item.expiryDate ? format(new Date(item.expiryDate), 'yyyy-MM-dd') : ''}
+                onChange={(e) => onUpdate(item.id, { expiryDate: e.target.valueAsDate?.toISOString() })}
+                className="w-full p-2 border rounded-md bg-white"
+              />
             </div>
           </div>
         </div>
@@ -102,10 +111,10 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
             </p>
           </div>
           <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-            <button onClick={() => onEditStart(item)} className="p-2 hover:bg-gray-200 rounded-full text-gray-600">
+            <button onClick={() => onEditStart(item)} aria-label="Edit" className="p-2 hover:bg-gray-200 rounded-full text-gray-600">
               <Edit size={16} />
             </button>
-            <button onClick={() => onDelete(item.id)} className="p-2 hover:bg-red-100 rounded-full text-red-500">
+            <button onClick={() => onDelete(item.id)} aria-label="Delete" className="p-2 hover:bg-red-100 rounded-full text-red-500">
               <Trash2 size={16} />
             </button>
           </div>
@@ -113,4 +122,4 @@ export const ShoppingListItem: React.FC<ShoppingListItemProps> = ({
       </div>
     </li>
   );
-};
+});
