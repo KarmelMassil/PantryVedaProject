@@ -136,15 +136,15 @@ export default function ShoppingListPage() {
   }, [shoppingList, searchQuery]);
 
   const categoryIcons: Record<string, React.ReactNode> = {
-    'Produce': <Carrot size={20} className="text-orange-500" />,
-    'Dairy': <div className="text-2xl">🥛</div>,
-    'Meat': <Beef size={20} className="text-red-600" />,
-    'Bakery': <Wheat size={20} className="text-yellow-500" />,
-    'Seafood': <Fish size={20} className="text-blue-500" />,
-    'Pantry Staples': <Tag size={20} className="text-gray-500" />,
-    'Fruit': <Apple size={20} className="text-green-500" />,
-    'Vegetable': <Leaf size={20} className="text-green-600" />,
-    'Other': <Tag size={20} className="text-gray-400" />,
+    'Produce': <span className="text-2xl">🥕</span>,
+    'Dairy': <span className="text-2xl">🥛</span>,
+    'Meat': <span className="text-2xl">🥩</span>,
+    'Bakery': <span className="text-2xl">🍞</span>,
+    'Seafood': <span className="text-2xl">🐟</span>,
+    'Pantry Staples': <span className="text-2xl">🥫</span>,
+    'Fruit': <span className="text-2xl">🍎</span>,
+    'Vegetable': <span className="text-2xl">🥬</span>,
+    'Other': <span className="text-2xl">🛒</span>,
   };
 
   const { budgetSummary, checkedItemsCount } = useMemo(() => {
@@ -216,7 +216,7 @@ export default function ShoppingListPage() {
         </div>
 
         <div
-          className="rounded-xl shadow-lg h-64 overflow-y-auto"
+          className="rounded-xl shadow-lg"
           style={{
             background: 'linear-gradient(145deg, #F9FAFB 0%, #E9D8FF 100%)',
             border: '1px solid rgba(255, 255, 255, 0.5)',
@@ -237,7 +237,7 @@ export default function ShoppingListPage() {
                   </button>
               </div>
             </div>
-            <div className="space-y-3 max-h-48 overflow-y-auto">
+            <div className="space-y-3 max-h-72 overflow-y-auto">
               {isSuggesting && <p className="text-sm text-center text-gray-600 py-4">Analyzing your habits...</p>}
               {!isSuggesting && proposedSuggestions.length === 0 && (
                 <p className="text-sm text-center text-gray-600 py-4">Click the refresh button to get smart suggestions.</p>
@@ -305,7 +305,19 @@ export default function ShoppingListPage() {
 
       <div className="col-span-1 space-y-6">
         <Card>
-          <h3 className="font-bold text-lg mb-2">Budget Summary</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="font-bold text-lg">Budget Summary</h3>
+            <button
+              onClick={handleRestock}
+              disabled={checkedItemsCount === 0}
+              className={`flex items-center gap-2 text-white font-semibold px-3 py-1.5 rounded-lg transition-colors text-sm ${
+                checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <PackagePlus size={18} />
+              Restock ({checkedItemsCount})
+            </button>
+          </div>
           <div className="space-y-3">
               <div className="text-center bg-gray-50 p-4 rounded-lg">
                   <p className="text-text-secondary">Estimated Total ({shoppingList.length} items)</p>
@@ -330,16 +342,6 @@ export default function ShoppingListPage() {
               </div>
           </div>
         </Card>
-        <div className="flex justify-center">
-          <button
-            onClick={handleRestock}
-            disabled={checkedItemsCount === 0}
-            className="w-full flex items-center justify-center gap-2 bg-green-600 text-white font-semibold px-4 py-3 rounded-lg hover:bg-green-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-          >
-            <PackagePlus size={20} />
-            Restock ({checkedItemsCount})
-          </button>
-        </div>
       </div>
     </div>
     </>
