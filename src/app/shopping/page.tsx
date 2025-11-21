@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple, ArrowUp, ArrowDown } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
@@ -123,15 +123,19 @@ export default function ShoppingListPage() {
     }
  };
 
-  const filteredList = shoppingList.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const categorizedList = filteredList.reduce((acc, item) => {
-    const category = item.category || 'Other';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(item);
-    return acc;
-  }, {} as Record<string, ShoppingListItem[]>);
+  const filteredList = useMemo(() =>
+    shoppingList.filter(item =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [shoppingList, searchQuery]);
+
+  const categorizedList = useMemo(() =>
+    filteredList.reduce((acc, item) => {
+      const category = item.category || 'Other';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(item);
+      return acc;
+    }, {} as Record<string, ShoppingListItem[]>),
+  [filteredList]);
 
   const categoryIcons: Record<string, React.ReactElement> = {
     'Produce': <Carrot />,
@@ -145,16 +149,18 @@ export default function ShoppingListPage() {
     'Other': <ShoppingCart />,
   };
 
-  const budgetSummary = shoppingList.reduce((acc, item) => {
-    const category = item.category || 'Other';
-    if (!acc[category]) {
-      acc[category] = { total: 0, count: 0 };
-    }
-    const itemTotal = (item.quantity || 0) * (item.price || 0);
-    acc[category].total += itemTotal;
-    acc[category].count += 1;
-    return acc;
-  }, {} as Record<string, { total: number; count: number }>);
+  const budgetSummary = useMemo(() =>
+    shoppingList.reduce((acc, item) => {
+      const category = item.category || 'Other';
+      if (!acc[category]) {
+        acc[category] = { total: 0, count: 0 };
+      }
+      const itemTotal = (item.quantity || 0) * (item.price || 0);
+      acc[category].total += itemTotal;
+      acc[category].count += 1;
+      return acc;
+    }, {} as Record<string, { total: number; count: number }>),
+  [shoppingList]);
 
   const checkedItemsCount = shoppingList.filter(item => item.checked).length;
   const estimatedTotal = Object.values(budgetSummary).reduce((total, category) => total + category.total, 0);
@@ -252,28 +258,18 @@ export default function ShoppingListPage() {
                                     <div className="flex items-start justify-between mb-2">
                                         <div>
                                             <p className="font-bold text-gray-800 text-lg">{suggestion.name}</p>
-                                            <p className="font-semibold text-primary text-sm">{suggestion.quantity} {suggestion.unit}</p>
                                         </div>
-                                        {(() => {
-                                            const currentQty = existingItem?.quantity || 0;
-                                            const diff = suggestion.quantity - currentQty;
-                                            if (diff > 0) {
-                                                return (
-                                                    <div className="flex items-center gap-1 text-green-600">
-                                                        <ArrowUp size={16} />
-                                                        <span className="text-sm font-semibold">({suggestion.quantity})</span>
-                                                    </div>
-                                                );
-                                            } else if (diff < 0) {
-                                                return (
-                                                    <div className="flex items-center gap-1 text-red-600">
-                                                        <ArrowDown size={16} />
-                                                        <span className="text-sm font-semibold">({suggestion.quantity})</span>
-                                                    </div>
-                                                );
-                                            }
-                                            return null;
-                                        })()}
+                                        <div className="text-right">
+                                            {existingItem ? (
+                                                <p className="text-sm text-blue-600 font-semibold">
+                                                    Update from {existingItem.quantity} to {suggestion.quantity} {suggestion.unit}
+                                                </p>
+                                            ) : (
+                                                <p className="text-sm text-green-600 font-semibold">
+                                                    Add {suggestion.quantity} {suggestion.unit} to list
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
                                     <p className="text-xs text-gray-500 italic mb-3">{suggestion.reason}</p>
                                 </div>
