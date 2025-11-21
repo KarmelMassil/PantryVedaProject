@@ -150,8 +150,8 @@ export const usePantryStore = create<PantryState>()(
           );
 
           if (existingItemIndex > -1) {
-            // If item exists, just add to its quantity
-            updatedList[existingItemIndex].quantity += newItem.quantity;
+            // If item exists, update its quantity to the new suggested amount
+            updatedList[existingItemIndex].quantity = newItem.quantity;
           } else if (existingItemIndex === -1) {
             // If item doesn't exist, add it with additional fields
             const purchaseDate = new Date();

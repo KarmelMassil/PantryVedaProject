@@ -260,17 +260,18 @@ export default function ShoppingListPage() {
                                             <p className="font-bold text-gray-800 text-lg">{suggestion.name}</p>
                                         </div>
                                         <div className="text-right">
-                                            {existingItem ? (
-                                                <p className="text-sm text-blue-600 font-semibold">
-                                                    Update from {existingItem.quantity} to {suggestion.quantity} {suggestion.unit}
-                                                </p>
-                                            ) : (
-                                                <p className="text-sm text-green-600 font-semibold">
-                                                    Add {suggestion.quantity} {suggestion.unit} to list
-                                                </p>
-                                            )}
+
                                         </div>
                                     </div>
+                                    {existingItem ? (
+                                        <p className="text-sm text-blue-600 font-semibold mb-3">
+                                            Update from {existingItem.quantity} to {suggestion.quantity} {suggestion.unit}
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm text-green-600 font-semibold mb-3">
+                                            Add {suggestion.quantity} {suggestion.unit} to list
+                                        </p>
+                                    )}
                                     <p className="text-xs text-gray-500 italic mb-3">{suggestion.reason}</p>
                                 </div>
                                 <div className="flex gap-2 mt-auto">
