@@ -186,7 +186,7 @@ export default function MealPlannerPage() {
 
           <div className="space-y-2">
             {/* Header Row */}
-            <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 font-bold text-gray-500 uppercase text-sm">
+            <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 p-3 font-bold text-gray-500 uppercase text-sm">
               <div className="text-center flex items-center justify-center gap-2"><Calendar size={16} />Day</div>
               <div className="text-center flex items-center justify-center gap-2"><Coffee size={16} />Breakfast</div>
               <div className="text-center flex items-center justify-center gap-2"><Beef size={16} />Lunch</div>
@@ -199,7 +199,7 @@ export default function MealPlannerPage() {
               const dayPlan = mealPlan[dateString];
               const daySuggestions = suggestions[dateString];
               return (
-                <div key={dateString} className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 items-center bg-white/60 p-2 rounded-lg">
+                <div key={dateString} className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 items-center bg-white/60 p-1 rounded-lg">
                   <div className="text-center">
                     <p className="font-bold text-md">{format(day, 'EEE')}</p>
                     <p className="text-3xl font-bold text-orange-500">{format(day, 'd')}</p>
