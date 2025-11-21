@@ -1,4 +1,5 @@
-import { Ingredient, ConsumptionEvent, WasteEvent, MasterIngredient } from "@/types";
+import { Ingredient, ConsumptionEvent, WasteEvent } from "@/types";
+import { MasterIngredient } from "@/store/pantryStore";
 import { differenceInDays, subDays, addDays, format, startOfDay } from "date-fns";
 
 // This is the main function that will calculate all our stats

@@ -243,25 +243,36 @@ export default function ShoppingListPage() {
                     Analyzing your habits...
                 </div>
             ) : proposedSuggestions.length > 0 ? (
-                <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {proposedSuggestions.map((suggestion, index) => (
-                        <li key={index} className="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-purple-100 shadow-md flex flex-col justify-between transition-transform hover:scale-105">
-                            <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-2xl shadow-inner">
-                                        {suggestion.emoji || '🛒'}
+                <div className="flex overflow-x-auto gap-4 pb-4">
+                    {proposedSuggestions.map((suggestion, index) => {
+                        const existingItem = findItemInList(suggestion.name);
+                        return (
+                            <div key={index} className="min-w-[250px] max-w-[250px] bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-purple-100 shadow-md flex flex-col justify-between transition-transform hover:scale-105">
+                                <div>
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div>
+                                            <p className="font-bold text-gray-800 text-lg">{suggestion.name}</p>
+                                            <p className="font-semibold text-primary text-sm">{suggestion.quantity} {suggestion.unit}</p>
+                                        </div>
+                                        {existingItem && (
+                                            <div className="group relative">
+                                                <PlusCircle size={18} className="text-blue-500"/>
+                                                <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    Will be added to existing item
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
-                                    <p className="font-semibold text-gray-800">{suggestion.name}</p>
+                                    <p className="text-xs text-gray-500 italic mb-3">{suggestion.reason}</p>
                                 </div>
-                                <p className="text-xs text-gray-500 italic mb-3 ml-1">{suggestion.reason}</p>
+                                <div className="flex gap-2 mt-auto">
+                                    <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-md hover:bg-green-600 transition-all">Accept</button>
+                                    <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-md hover:bg-gray-200 transition-all">Dismiss</button>
+                                </div>
                             </div>
-                            <div className="flex gap-2 mt-auto">
-                                <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-md hover:bg-green-600 transition-all">Accept</button>
-                                <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-md hover:bg-gray-200 transition-all">Dismiss</button>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                        );
+                    })}
+                </div>
             ) : (
                 <div className="text-center py-8 text-gray-500">
                     <p>Click the refresh button to get smart suggestions based on your pantry and habits.</p>
@@ -285,12 +296,7 @@ export default function ShoppingListPage() {
             ) : (
               Object.entries(categorizedList).map(([category, items]) => (
                 <div key={category} className="p-5 rounded-xl border shadow-sm bg-white">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="text-primary bg-primary/10 p-2 rounded-lg">
-                      {React.cloneElement(categoryIcons[category] || <Tag />, { size: 22 })}
-                    </div>
-                    <h2 className="text-xl font-bold text-text-primary">{category} ({items.length})</h2>
-                  </div>
+                  <h2 className="text-xl font-bold text-text-primary mb-4">{category} ({items.length})</h2>
                   <ul className="space-y-3">
                       {items.map(item => (
                           <ShoppingListItemComponent
