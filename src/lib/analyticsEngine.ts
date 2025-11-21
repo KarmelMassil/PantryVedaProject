@@ -238,6 +238,24 @@ export function calculateAnalytics(
         });
     }
 
+    // Most used ingredient
+    if (recentConsumption.length > 0) {
+        const consumptionCounts = recentConsumption.reduce((acc, event) => {
+            acc[event.ingredientName] = (acc[event.ingredientName] || 0) + event.quantityConsumed;
+            return acc;
+        }, {} as Record<string, number>);
+
+        const mostUsedIngredient = Object.entries(consumptionCounts).sort((a, b) => b[1] - a[1])[0];
+
+        if (mostUsedIngredient) {
+            insights.push({
+                type: 'shopping' as const,
+                title: 'Top Ingredient',
+                message: `Your most used ingredient recently is '${mostUsedIngredient[0]}'. Consider buying it in bulk!`
+            });
+        }
+    }
+
     // Empty pantry
     if (totalItems === 0) {
         insights.push({
