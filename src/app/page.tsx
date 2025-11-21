@@ -48,7 +48,7 @@ export default function DashboardPage() {
       <div className="text-center">
         <WelcomeMessage />
         <div className="mt-8 bg-white p-8 rounded-lg shadow-md">
-          <Image src="/images/empty-pantry.png" alt="Empty Pantry Illustration" width={200} height={200} className="mx-auto" />
+          <Image src="/images/empty-pantry.png" alt="Empty Pantry Illustration" width={100} height={100} className="mx-auto" />
           <h2 className="mt-6 text-2xl font-bold text-gray-800">Your Pantry is Empty <span className="font-normal text-gray-500">(for now!)</span></h2>
           <p className="mt-2 text-gray-600">
             Add your first ingredient to start tracking and reducing waste.
