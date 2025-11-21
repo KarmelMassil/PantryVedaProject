@@ -151,14 +151,8 @@ export const usePantryStore = create<PantryState>()(
 
           if (existingItemIndex > -1) {
             const existingItem = updatedList[existingItemIndex];
-            // If suggestion is for a meal and item exists, add to quantity
-            if (newItem.reason?.toLowerCase().includes('meal')) {
-              existingItem.quantity += newItem.quantity;
-            } else {
-              // Otherwise, just set the new quantity (for historical/waste suggestions)
-              existingItem.quantity = newItem.quantity;
-            }
-             updatedList[existingItemIndex] = existingItem;
+            existingItem.quantity = newItem.quantity;
+            updatedList[existingItemIndex] = existingItem;
           } else {
             // If item doesn't exist, add it
             const purchaseDate = new Date();
