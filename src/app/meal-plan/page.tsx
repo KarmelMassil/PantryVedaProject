@@ -172,8 +172,9 @@ export default function MealPlannerPage() {
             <h1 className="text-3xl font-bold text-text-primary">Weekly Meal Planner</h1>
             <div className="flex items-center gap-4">
               <button onClick={goToPreviousWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowLeft size={20}/></button>
-              <h2 className="text-xl font-semibold">{format(weekStart, 'MMMM yyyy')}</h2>
+              <h2 className="text-xl font-semibold w-32 text-center">{format(weekStart, 'MMMM yyyy')}</h2>
               <button onClick={goToNextWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowRight size={20}/></button>
+              <button onClick={() => setCurrentDate(new Date())} className="text-sm font-semibold bg-gray-200 hover:bg-gray-300 rounded-lg px-4 py-2">Today</button>
             </div>
           </div>
 

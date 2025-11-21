@@ -60,8 +60,8 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
-                    <button onClick={() => removeRecipeFromMeal(date, meal)} className="p-0.5  text-gray-400 hover:text-red-500"><Trash2 size={12}/></button>
-                    <button onClick={() => onViewRecipe?.(recipe, { date, meal })} className="p-0.5 text-gray-400 hover:text-accent-secondary"><Utensils size={12}/></button>
+                    <button onClick={() => removeRecipeFromMeal(date, meal)} className="p-0.5 rounded-full text-gray-400 hover:bg-red-100 hover:text-red-500"><Trash2 size={12}/></button>
+                    <button onClick={() => onViewRecipe?.(recipe, { date, meal })} className="p-0.5 rounded-full text-gray-400 hover:bg-green-100 hover:text-green-600"><Utensils size={12}/></button>
                 </div>
             </div>
         </div>
