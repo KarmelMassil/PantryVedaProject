@@ -150,16 +150,23 @@ export const usePantryStore = create<PantryState>()(
           );
 
           if (existingItemIndex > -1) {
-            // If item exists, update its quantity to the new suggested amount
-            updatedList[existingItemIndex].quantity = newItem.quantity;
-          } else if (existingItemIndex === -1) {
-            // If item doesn't exist, add it with additional fields
+            const existingItem = updatedList[existingItemIndex];
+            // If suggestion is for a meal plan and item exists, add to quantity
+            if (newItem.reason?.toLowerCase().includes('meal plan')) {
+              existingItem.quantity += newItem.quantity;
+            } else {
+              // Otherwise, just set the new quantity (for historical/waste suggestions)
+              existingItem.quantity = newItem.quantity;
+            }
+             updatedList[existingItemIndex] = existingItem;
+          } else {
+            // If item doesn't exist, add it
             const purchaseDate = new Date();
             updatedList.push({
                 ...newItem,
                 id: crypto.randomUUID(),
                 checked: false,
-                price: 0,
+                price: 0, // Default price, can be edited
                 expiryDate: formatISO(addDays(purchaseDate, newItem.defaultExpiryDays || 14)),
             });
           }

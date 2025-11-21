@@ -182,16 +182,6 @@ export default function ShoppingListPage() {
             </p>
           </div>
         </div>
-        <button
-          onClick={handleRestock}
-          disabled={checkedItemsCount === 0}
-          className={`flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
-            checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
-          }`}
-        >
-          <PackagePlus size={20} />
-          Restock Checked Items ({checkedItemsCount})
-        </button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
@@ -329,6 +319,18 @@ export default function ShoppingListPage() {
         {/* Right Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           <div className="sticky top-6 space-y-6">
+            {/* Restock Button */}
+            <button
+              onClick={handleRestock}
+              disabled={checkedItemsCount === 0}
+              className={`w-full flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
+                checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <PackagePlus size={20} />
+              Restock Checked Items ({checkedItemsCount})
+            </button>
+
             {/* Budget Summary */}
             <Card className="p-4">
               <div className="flex justify-between items-center mb-4">
