@@ -39,8 +39,9 @@ export function calculateAnalytics(
     const totalWastedValue = recentWaste.reduce((sum, event) => sum + getValueForEvent(event), 0);
     const totalConsumedValue = recentConsumption.reduce((sum, event) => sum + getValueForEvent(event), 0);
     
-    const foodWastePercentage = totalConsumedValue + totalWastedValue > 0 
-        ? (totalWastedValue / (totalConsumedValue + totalWastedValue)) * 100 
+    const totalAvailableValue = totalValue + totalConsumedValue + totalWastedValue;
+    const foodWastePercentage = totalAvailableValue > 0
+        ? (totalWastedValue / totalAvailableValue) * 100
         : 0;
 
     const shelfLives = inventory.map(item => differenceInDays(new Date(item.expiryDate), new Date()))
@@ -91,8 +92,13 @@ export function calculateAnalytics(
         return acc;
     }, {} as Record<string, number>);
 
-    const valueByCategory = Object.entries(categoryValues)
-        .map(([name, totalValue]) => ({ name, totalValue }))
+    const allCategoryNames = [...new Set(masterIngredientList.map(item => item.category))];
+
+    const valueByCategory = allCategoryNames
+        .map(name => ({
+            name: name as string,
+            totalValue: categoryValues[name as string] || 0,
+        }))
         .sort((a, b) => b.totalValue - a.totalValue);
 
     // --- 4. Trends Tab: Items Added vs Used Over Time ---

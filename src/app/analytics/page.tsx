@@ -4,7 +4,7 @@ import { usePantryStore } from '@/store/pantryStore';
 import { calculateAnalytics } from '@/lib/analyticsEngine';
 import { Card } from '@/components/ui/Card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Package, IndianRupee, AlertTriangle, CalendarCheck, ShieldCheck } from 'lucide-react';
+import { Package, IndianRupee, AlertTriangle, CalendarCheck, ShieldCheck, BarChartHorizontal } from 'lucide-react';
 import { CategoriesTab } from '@/components/analytics/CategoriesTab';
 import { TrendsTab } from '@/components/analytics/TrendsTab';
 import { InsightsTab } from '@/components/analytics/InsightsTab';
@@ -94,9 +94,12 @@ export default function AnalyticsPage() {
 
     return (
         <div className="space-y-6">
-        <div>
-                <h1 className="text-3xl font-bold text-text-primary">Kitchen Analytics</h1>
-                <p className="text-text-secondary">Insights into your pantry management and food usage</p>
+            <div className="flex items-center gap-4">
+                <BarChartHorizontal size={36} className="text-accent-primary" />
+                <div>
+                    <h1 className="text-3xl font-bold text-text-primary">Kitchen Analytics</h1>
+                    <p className="text-text-secondary">Insights into your pantry management and food usage</p>
+                </div>
             </div>
             
             {/* Summary Cards */}
