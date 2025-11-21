@@ -28,7 +28,7 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
 
   if (isEditing) {
     return (
-      <li className="p-3 bg-primary/10 rounded-lg border border-primary">
+      <li className="p-3 bg-blue-50 rounded-lg border border-blue-300">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
           {/* Info Column */}
           <div className="font-semibold">{item.name}</div>
@@ -97,10 +97,12 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
           <p className={`font-medium transition-colors ${item.checked ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
             {item.name}
           </p>
-          <div className={`flex items-center gap-4 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className={`flex items-center gap-6 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
             <span>{item.quantity} {item.unit}</span>
-            <span className="text-gray-400">•</span>
             <span>₹{item.price?.toFixed(2) ?? '0.00'} / {item.unit}</span>
+            {item.expiryDate && (
+                <span>Expires: {format(new Date(item.expiryDate), 'do MMMM yyyy')}</span>
+            )}
           </div>
         </div>
 
@@ -110,8 +112,8 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
               ₹{totalPrice}
             </p>
           </div>
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-            <button onClick={() => onEditStart(item)} aria-label="Edit" className="p-2 hover:bg-gray-200 rounded-full text-gray-600">
+          <div className="flex items-center gap-2">
+            <button onClick={() => onEditStart(item)} aria-label="Edit" className="p-2 hover:bg-blue-100 rounded-full text-blue-500">
               <Edit size={16} />
             </button>
             <button onClick={() => onDelete(item.id)} aria-label="Delete" className="p-2 hover:bg-red-100 rounded-full text-red-500">

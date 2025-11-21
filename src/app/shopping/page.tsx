@@ -123,15 +123,19 @@ export default function ShoppingListPage() {
     }
  };
 
-  const filteredList = shoppingList.filter(item =>
-    item.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  const categorizedList = filteredList.reduce((acc, item) => {
-    const category = item.category || 'Other';
-    if (!acc[category]) acc[category] = [];
-    acc[category].push(item);
-    return acc;
-  }, {} as Record<string, ShoppingListItem[]>);
+  const filteredList = useMemo(() =>
+    shoppingList.filter(item =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    ), [shoppingList, searchQuery]);
+
+  const categorizedList = useMemo(() =>
+    filteredList.reduce((acc, item) => {
+      const category = item.category || 'Other';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(item);
+      return acc;
+    }, {} as Record<string, ShoppingListItem[]>),
+  [filteredList]);
 
   const categoryIcons: Record<string, React.ReactElement> = {
     'Produce': <Carrot />,
@@ -145,16 +149,18 @@ export default function ShoppingListPage() {
     'Other': <ShoppingCart />,
   };
 
-  const budgetSummary = shoppingList.reduce((acc, item) => {
-    const category = item.category || 'Other';
-    if (!acc[category]) {
-      acc[category] = { total: 0, count: 0 };
-    }
-    const itemTotal = (item.quantity || 0) * (item.price || 0);
-    acc[category].total += itemTotal;
-    acc[category].count += 1;
-    return acc;
-  }, {} as Record<string, { total: number; count: number }>);
+  const budgetSummary = useMemo(() =>
+    shoppingList.reduce((acc, item) => {
+      const category = item.category || 'Other';
+      if (!acc[category]) {
+        acc[category] = { total: 0, count: 0 };
+      }
+      const itemTotal = (item.quantity || 0) * (item.price || 0);
+      acc[category].total += itemTotal;
+      acc[category].count += 1;
+      return acc;
+    }, {} as Record<string, { total: number; count: number }>),
+  [shoppingList]);
 
   const checkedItemsCount = shoppingList.filter(item => item.checked).length;
   const estimatedTotal = Object.values(budgetSummary).reduce((total, category) => total + category.total, 0);
@@ -184,7 +190,7 @@ export default function ShoppingListPage() {
           }`}
         >
           <PackagePlus size={20} />
-          Restock ({checkedItemsCount})
+          Restock Checked Items ({checkedItemsCount})
         </button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -243,25 +249,39 @@ export default function ShoppingListPage() {
                     Analyzing your habits...
                 </div>
             ) : proposedSuggestions.length > 0 ? (
-                <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {proposedSuggestions.map((suggestion, index) => (
-                        <li key={index} className="bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-purple-100 shadow-md flex flex-col justify-between transition-transform hover:scale-105">
-                            <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-2xl shadow-inner">
-                                        {suggestion.emoji || '🛒'}
+                <div className="flex overflow-x-auto gap-4 pb-4">
+                    {proposedSuggestions.map((suggestion, index) => {
+                        const existingItem = findItemInList(suggestion.name);
+                        return (
+                            <div key={index} className="min-w-[250px] max-w-[250px] bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-purple-100 shadow-md flex flex-col justify-between transition-transform hover:scale-105">
+                                <div>
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div>
+                                            <p className="font-bold text-gray-800 text-lg">{suggestion.name}</p>
+                                        </div>
+                                        <div className="text-right">
+
+                                        </div>
                                     </div>
-                                    <p className="font-semibold text-gray-800">{suggestion.name}</p>
+                                    {existingItem ? (
+                                        <p className="text-sm text-blue-600 font-semibold mb-3">
+                                            Update from {existingItem.quantity} to {suggestion.quantity} {suggestion.unit}
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm text-green-600 font-semibold mb-3">
+                                            Add {suggestion.quantity} {suggestion.unit} to list
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-gray-500 italic mb-3">{suggestion.reason}</p>
                                 </div>
-                                <p className="text-xs text-gray-500 italic mb-3 ml-1">{suggestion.reason}</p>
+                                <div className="flex gap-2 mt-auto">
+                                    <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-md hover:bg-green-600 transition-all">Accept</button>
+                                    <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-md hover:bg-gray-200 transition-all">Dismiss</button>
+                                </div>
                             </div>
-                            <div className="flex gap-2 mt-auto">
-                                <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-md hover:bg-green-600 transition-all">Accept</button>
-                                <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-md hover:bg-gray-200 transition-all">Dismiss</button>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
+                        );
+                    })}
+                </div>
             ) : (
                 <div className="text-center py-8 text-gray-500">
                     <p>Click the refresh button to get smart suggestions based on your pantry and habits.</p>
@@ -285,12 +305,7 @@ export default function ShoppingListPage() {
             ) : (
               Object.entries(categorizedList).map(([category, items]) => (
                 <div key={category} className="p-5 rounded-xl border shadow-sm bg-white">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="text-primary bg-primary/10 p-2 rounded-lg">
-                      {React.cloneElement(categoryIcons[category] || <Tag />, { size: 22 })}
-                    </div>
-                    <h2 className="text-xl font-bold text-text-primary">{category} ({items.length})</h2>
-                  </div>
+                  <h2 className="text-xl font-bold text-text-primary mb-4">{category} ({items.length})</h2>
                   <ul className="space-y-3">
                       {items.map(item => (
                           <ShoppingListItemComponent
@@ -332,7 +347,6 @@ export default function ShoppingListPage() {
                           <div key={category}>
                             <div className="flex justify-between items-center font-medium">
                                 <span className="flex items-center gap-2">
-                                  {React.cloneElement(categoryIcons[category] || <Tag/>, {size: 16, className: "text-gray-500"})}
                                   {category} ({data.count})
                                 </span>
                                 <span>₹{data.total.toFixed(2)}</span>
