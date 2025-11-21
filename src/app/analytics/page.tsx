@@ -8,6 +8,7 @@ import { Package, IndianRupee, AlertTriangle, CalendarCheck, ShieldCheck } from 
 import { CategoriesTab } from '@/components/analytics/CategoriesTab';
 import { TrendsTab } from '@/components/analytics/TrendsTab';
 import { InsightsTab } from '@/components/analytics/InsightsTab';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const COLORS = {
     'Fresh': '#27AE60', // curry-green
@@ -18,13 +19,13 @@ const COLORS = {
 type Tab = 'Overview' | 'Categories' | 'Trends' | 'Insights';
 
 export default function AnalyticsPage() {
-    const { inventory, consumptionLog, wasteLog } = usePantryStore();
+    const { inventory, consumptionLog, wasteLog, masterIngredientList } = usePantryStore();
     const [activeTab, setActiveTab] = React.useState<Tab>('Overview');
 
     // useMemo will prevent recalculating on every render, improving performance
     const analyticsData = useMemo(
-        () => calculateAnalytics(inventory, consumptionLog, wasteLog),
-        [inventory, consumptionLog, wasteLog]
+        () => calculateAnalytics(inventory, consumptionLog, wasteLog, masterIngredientList),
+        [inventory, consumptionLog, wasteLog, masterIngredientList]
     );
 
     const { summary, charts, categories, trends, insights } = analyticsData;
@@ -39,6 +40,9 @@ export default function AnalyticsPage() {
                 return <InsightsTab data={insights} />;
             case 'Overview':
             default:
+                if (inventory.length === 0) {
+                    return <EmptyState type="no-analytics" />;
+                }
                 return (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Bar Chart */}

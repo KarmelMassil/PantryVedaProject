@@ -13,7 +13,6 @@ export const TrendsTab: React.FC<TrendsTabProps> = ({ data }) => {
                 <h3 className="text-xl font-bold">Monthly Trend</h3>
                 <p className="text-text-secondary">Items added vs. items used over the last 30 days.</p>
             </div>
-            <p className="text-sm text-text-secondary font-medium">{new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
         </div>
         <ResponsiveContainer width="100%" height={400}>
             <LineChart data={data}>

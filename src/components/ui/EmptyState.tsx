@@ -1,8 +1,8 @@
 import React from 'react';
-import { PackageSearch, Inbox } from 'lucide-react';
+import { PackageSearch, Inbox, BarChart2 } from 'lucide-react';
 
 interface EmptyStateProps {
-  type: 'no-inventory' | 'no-results';
+  type: 'no-inventory' | 'no-results' | 'no-analytics';
 }
 
 const illustrations = {
@@ -15,6 +15,11 @@ const illustrations = {
     icon: <PackageSearch size={64} className="text-gray-400" />,
     title: "No items found",
     message: "Try adjusting your search or filters to find what you're looking for.",
+  },
+  'no-analytics': {
+    icon: <BarChart2 size={64} className="text-gray-400" />,
+    title: "No data to display yet!",
+    message: "Start adding and using items in your pantry to see your kitchen analytics.",
   },
 };
 

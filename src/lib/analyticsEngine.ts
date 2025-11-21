@@ -1,11 +1,12 @@
-import { Ingredient, ConsumptionEvent, WasteEvent } from "@/types";
+import { Ingredient, ConsumptionEvent, WasteEvent, MasterIngredient } from "@/types";
 import { differenceInDays, subDays, addDays, format, startOfDay } from "date-fns";
 
 // This is the main function that will calculate all our stats
 export function calculateAnalytics(
     inventory: Ingredient[],
     consumptionLog: ConsumptionEvent[],
-    wasteLog: WasteEvent[]
+    wasteLog: WasteEvent[],
+    masterIngredientList: MasterIngredient[]
 ) {
     // --- 1. Summary Card Calculations ---
     const totalItems = inventory.length;
@@ -14,23 +15,29 @@ export function calculateAnalytics(
     const thirtyDaysAgo = subDays(new Date(), 30);
     const recentWaste = wasteLog.filter(e => new Date(e.timestamp) > thirtyDaysAgo);
     const recentConsumption = consumptionLog.filter(e => new Date(e.timestamp) > thirtyDaysAgo);
-    
-    // Calculate actual wasted and consumed values based on quantities
-    const totalWastedValue = recentWaste.reduce((sum, event) => {
-        const item = inventory.find(i => i.name === event.ingredientName);
-        if (!item) return sum;
-        // Calculate proportional value based on quantity wasted
-        const proportionalValue = (event.quantityWasted / item.quantity) * item.value;
-        return sum + proportionalValue;
-    }, 0);
-    
-    const totalConsumedValue = recentConsumption.reduce((sum, event) => {
-        const item = inventory.find(i => i.name === event.ingredientName);
-        if (!item) return sum;
-        // Calculate proportional value based on quantity consumed
-        const proportionalValue = (event.quantityConsumed / item.quantity) * item.value;
-        return sum + proportionalValue;
-    }, 0);
+
+    const getValueForEvent = (event: ConsumptionEvent | WasteEvent) => {
+        let itemInInventory = inventory.find(i => i.name === event.ingredientName);
+        if (itemInInventory) {
+            const quantity = 'quantityWasted' in event ? event.quantityWasted : event.quantityConsumed;
+            return (quantity / itemInInventory.quantity) * itemInInventory.value;
+        }
+
+        // Fallback for items no longer in inventory
+        const masterItem = masterIngredientList.find(i => i.name === event.ingredientName);
+        if (masterItem) {
+            // This is an estimation. We assume a default value since we can't know the purchase price.
+            // A better long-term solution would be to store price history.
+            const estimatedValuePerUnit = 50; // Arbitrary value, better than 0
+            const quantity = 'quantityWasted' in event ? event.quantityWasted : event.quantityConsumed;
+            return quantity * estimatedValuePerUnit;
+        }
+
+        return 0;
+    };
+
+    const totalWastedValue = recentWaste.reduce((sum, event) => sum + getValueForEvent(event), 0);
+    const totalConsumedValue = recentConsumption.reduce((sum, event) => sum + getValueForEvent(event), 0);
     
     const foodWastePercentage = totalConsumedValue + totalWastedValue > 0 
         ? (totalWastedValue / (totalConsumedValue + totalWastedValue)) * 100 
@@ -47,10 +54,17 @@ export function calculateAnalytics(
     // --- 2. Chart Data Calculations ---
     
     // Bar Chart: Inventory by Category
-    const categoryCounts = inventory.reduce((acc, item) => {
-        acc[item.category] = (acc[item.category] || 0) + 1;
+    const allCategories = [...new Set(masterIngredientList.map(item => item.category))];
+    const categoryCounts = allCategories.reduce((acc, category) => {
+        acc[category] = 0;
         return acc;
     }, {} as Record<string, number>);
+
+    inventory.forEach(item => {
+        if (categoryCounts.hasOwnProperty(item.category)) {
+            categoryCounts[item.category]++;
+        }
+    });
 
     const inventoryByCategory = Object.entries(categoryCounts).map(([name, value]) => ({ name, value }));
     
@@ -82,10 +96,10 @@ export function calculateAnalytics(
         .sort((a, b) => b.totalValue - a.totalValue);
 
     // --- 4. Trends Tab: Items Added vs Used Over Time ---
-    const trendStartDate = startOfDay(subDays(new Date(), 30));
+    const trendStartDate = startOfDay(subDays(new Date(), 29)); // Start from 29 days ago to include today
     const trendDataMap = new Map<string, { added: number, used: number }>();
     
-    // Populate dates for the last 30 days
+    // Populate dates for the last 30 days, including today
     for (let i = 0; i < 30; i++) {
         const date = format(addDays(trendStartDate, i), 'MMM d');
         trendDataMap.set(date, { added: 0, used: 0 });
