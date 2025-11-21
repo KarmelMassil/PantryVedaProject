@@ -36,7 +36,7 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
   };
 
   const containerClasses = [
-    "h-auto min-h-[60px]", "border-2", "rounded-lg", "p-1", "flex", "flex-col",
+    "h-auto min-h-[90px]", "border-2", "rounded-lg", "p-1", "flex", "flex-col",
     "justify-center", "transition-colors", "relative", "group",
   ].join(" ");
 

@@ -179,11 +179,11 @@ export default function MealPlannerPage() {
 
           <div className="space-y-2">
             {/* Header Row */}
-            <div className="grid grid-cols-4 gap-2 font-bold text-center text-gray-500 uppercase">
-              <div className="pl-14">Day</div>
-              <div>Breakfast</div>
-              <div>Lunch</div>
-              <div>Dinner</div>
+            <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-4 font-bold text-gray-500 uppercase">
+              <div className="text-left pl-4">Day</div>
+              <div className="text-center">Breakfast</div>
+              <div className="text-center">Lunch</div>
+              <div className="text-center">Dinner</div>
             </div>
 
             {/* Day Rows */}
@@ -192,10 +192,10 @@ export default function MealPlannerPage() {
               const dayPlan = mealPlan[dateString];
               const daySuggestions = suggestions[dateString];
               return (
-                <div key={dateString} className="grid grid-cols-4 gap-2 items-center bg-white/60 p-2 rounded-lg">
-                  <div className="text-center w-28">
-                    <p className="font-bold text-sm">{format(day, 'EEE')}</p>
-                    <p className="text-2xl font-bold text-orange-500">{format(day, 'd')}</p>
+                <div key={dateString} className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-4 items-center bg-white/60 p-2 rounded-lg">
+                  <div className="pl-4">
+                    <p className="font-bold text-md">{format(day, 'EEE')}</p>
+                    <p className="text-3xl font-bold text-orange-500">{format(day, 'd')}</p>
                   </div>
                   <DroppableMealSlot date={dateString} meal="breakfast" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.breakfast?.recipeId ? daySuggestions?.breakfast : undefined} />
                   <DroppableMealSlot date={dateString} meal="lunch" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.lunch?.recipeId ? daySuggestions?.lunch : undefined} />
