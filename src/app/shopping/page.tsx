@@ -96,7 +96,7 @@ export default function ShoppingListPage() {
   const handleGetSmartSuggestions = async () => {
     setIsSuggesting(true);
     setProposedSuggestions([]); // Clear old suggestions
-    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList);
+    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList, shoppingList);
     setProposedSuggestions(finalSuggestions);
     setIsSuggesting(false);
   };
