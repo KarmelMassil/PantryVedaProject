@@ -5,7 +5,7 @@ import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { DraggableRecipeCard } from '@/components/meal-plan/DraggableRecipeCard';
 import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
 import { format, addDays, startOfWeek, subDays, endOfWeek, set } from 'date-fns';
-import { ArrowLeft, ArrowRight, ShoppingCart, Search, CalendarDays, Calendar, Coffee, Soup, Utensils } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingCart, Search, CalendarDays, Calendar, Coffee, Soup, Utensils, Beef } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RecipeModal } from '@/components/RecipeModal';
 import { Recipe } from '@/types';
@@ -168,11 +168,14 @@ export default function MealPlannerPage() {
           </aside>
 
         <main className="flex-1 min-w-0 flex flex-col">
-          <div className="flex justify-between items-center mb-4 flex-shrink-0">
-            <h1 className="text-3xl font-bold text-text-primary flex items-center gap-3">
-              <CalendarDays size={32} className="text-orange-500" />
-              Weekly Meal Planner
-            </h1>
+          <div className="flex justify-between items-start mb-4 flex-shrink-0">
+            <div>
+              <h1 className="text-3xl font-bold text-text-primary flex items-center gap-3">
+                <CalendarDays size={32} className="text-orange-500" />
+                Weekly Meal Planner
+              </h1>
+              <p className="text-text-secondary mt-2">Drag and drop recipes to plan your week and stay organized.</p>
+            </div>
             <div className="flex items-center gap-4">
               <button onClick={goToPreviousWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowLeft size={20}/></button>
               <h2 className="text-xl font-semibold w-32 text-center">{format(weekStart, 'MMMM yyyy')}</h2>
@@ -186,8 +189,8 @@ export default function MealPlannerPage() {
             <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 font-bold text-gray-500 uppercase text-sm">
               <div className="text-center flex items-center justify-center gap-2"><Calendar size={16} />Day</div>
               <div className="text-center flex items-center justify-center gap-2"><Coffee size={16} />Breakfast</div>
-              <div className="text-center flex items-center justify-center gap-2"><Soup size={16} />Lunch</div>
-              <div className="text-center flex items-center justify-center gap-2"><Utensils size={16} />Dinner</div>
+              <div className="text-center flex items-center justify-center gap-2"><Beef size={16} />Lunch</div>
+              <div className="text-center flex items-center justify-center gap-2"><Soup size={16} />Dinner</div>
             </div>
 
             {/* Day Rows */}
