@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple, ArrowUp, ArrowDown } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
@@ -184,7 +184,7 @@ export default function ShoppingListPage() {
           }`}
         >
           <PackagePlus size={20} />
-          Restock ({checkedItemsCount})
+          Restock Checked Items ({checkedItemsCount})
         </button>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -254,14 +254,26 @@ export default function ShoppingListPage() {
                                             <p className="font-bold text-gray-800 text-lg">{suggestion.name}</p>
                                             <p className="font-semibold text-primary text-sm">{suggestion.quantity} {suggestion.unit}</p>
                                         </div>
-                                        {existingItem && (
-                                            <div className="group relative">
-                                                <PlusCircle size={18} className="text-blue-500"/>
-                                                <span className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-max px-2 py-1 bg-gray-700 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    Will be added to existing item
-                                                </span>
-                                            </div>
-                                        )}
+                                        {(() => {
+                                            const currentQty = existingItem?.quantity || 0;
+                                            const diff = suggestion.quantity - currentQty;
+                                            if (diff > 0) {
+                                                return (
+                                                    <div className="flex items-center gap-1 text-green-600">
+                                                        <ArrowUp size={16} />
+                                                        <span className="text-sm font-semibold">({suggestion.quantity})</span>
+                                                    </div>
+                                                );
+                                            } else if (diff < 0) {
+                                                return (
+                                                    <div className="flex items-center gap-1 text-red-600">
+                                                        <ArrowDown size={16} />
+                                                        <span className="text-sm font-semibold">({suggestion.quantity})</span>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                     </div>
                                     <p className="text-xs text-gray-500 italic mb-3">{suggestion.reason}</p>
                                 </div>
@@ -338,7 +350,6 @@ export default function ShoppingListPage() {
                           <div key={category}>
                             <div className="flex justify-between items-center font-medium">
                                 <span className="flex items-center gap-2">
-                                  {React.cloneElement(categoryIcons[category] || <Tag/>, {size: 16, className: "text-gray-500"})}
                                   {category} ({data.count})
                                 </span>
                                 <span>₹{data.total.toFixed(2)}</span>
