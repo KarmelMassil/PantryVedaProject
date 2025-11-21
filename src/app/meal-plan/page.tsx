@@ -177,10 +177,10 @@ export default function MealPlannerPage() {
             </div>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-2">
             {/* Header Row */}
-            <div className="grid grid-cols-4 gap-1  font-bold text-center text-gray-500 uppercase">
-              <div>Day</div>
+            <div className="grid grid-cols-4 gap-2 font-bold text-center text-gray-500 uppercase">
+              <div className="pl-14">Day</div>
               <div>Breakfast</div>
               <div>Lunch</div>
               <div>Dinner</div>
@@ -192,9 +192,9 @@ export default function MealPlannerPage() {
               const dayPlan = mealPlan[dateString];
               const daySuggestions = suggestions[dateString];
               return (
-                <div key={dateString} className="grid grid-cols-4 gap-5 items-center bg-white/60 p-3 rounded-lg">
-                  <div className="text-center">
-                    <p className="font-bold">{format(day, 'EEE')}</p>
+                <div key={dateString} className="grid grid-cols-4 gap-2 items-center bg-white/60 p-2 rounded-lg">
+                  <div className="text-center w-28">
+                    <p className="font-bold text-sm">{format(day, 'EEE')}</p>
                     <p className="text-2xl font-bold text-orange-500">{format(day, 'd')}</p>
                   </div>
                   <DroppableMealSlot date={dateString} meal="breakfast" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.breakfast?.recipeId ? daySuggestions?.breakfast : undefined} />
