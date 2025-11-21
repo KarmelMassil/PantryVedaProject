@@ -33,7 +33,7 @@ export default function AnalyticsPage() {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'Categories':
-                return <CategoriesTab data={categories.valueByCategory} />;
+                return <CategoriesTab data={categories.valueByCategory} inventory={inventory} />;
             case 'Trends':
                 return <TrendsTab data={trends.monthlyTrend} />;
             case 'Insights':
