@@ -174,13 +174,13 @@ export default function MealPlannerPage() {
               <button onClick={goToPreviousWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowLeft size={20}/></button>
               <h2 className="text-xl font-semibold w-32 text-center">{format(weekStart, 'MMMM yyyy')}</h2>
               <button onClick={goToNextWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowRight size={20}/></button>
-              <button onClick={() => setCurrentDate(new Date())} className="text-sm font-semibold bg-gray-200 hover:bg-gray-300 rounded-lg px-4 py-2">Today</button>
+              <button onClick={() => setCurrentDate(new Date())} className="text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 rounded-lg px-4 py-2">Today</button>
             </div>
           </div>
 
           <div className="space-y-2">
             {/* Header Row */}
-            <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-4 font-bold text-gray-500 uppercase">
+            <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-3 font-bold text-gray-500 uppercase">
               <div className="text-center">Day</div>
               <div className="text-center">Breakfast</div>
               <div className="text-center">Lunch</div>
@@ -193,7 +193,7 @@ export default function MealPlannerPage() {
               const dayPlan = mealPlan[dateString];
               const daySuggestions = suggestions[dateString];
               return (
-                <div key={dateString} className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-4 items-center bg-white/60 p-2 rounded-lg">
+                <div key={dateString} className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-3 items-center bg-white/60 p-2 rounded-lg">
                   <div className="text-center">
                     <p className="font-bold text-md">{format(day, 'EEE')}</p>
                     <p className="text-3xl font-bold text-orange-500">{format(day, 'd')}</p>
