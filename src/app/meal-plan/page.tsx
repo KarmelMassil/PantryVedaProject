@@ -212,7 +212,7 @@ export default function MealPlannerPage() {
             </div>
 
           </div>
-          
+
           <div className="space-y-2">
             {/* Header Row */}
             <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 p-3 font-bold text-gray-500 uppercase text-sm">
