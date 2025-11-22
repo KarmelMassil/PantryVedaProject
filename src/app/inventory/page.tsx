@@ -7,7 +7,7 @@ import { differenceInDays, format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import {
     Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2, PlusCircle,
-    ArrowDown, ArrowUp, Folder, Clock, Sparkles, ChevronDown, Inbox, Info
+    ArrowDown, ArrowUp, Folder, Clock, Sparkles, Inbox, Info
 } from 'lucide-react';
 import { WasteEvent } from '@/types';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -30,16 +30,10 @@ export default function InventoryPage() {
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all');
-  const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState('expiry-asc');
 
   const totalItems = inventory.length;
   const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
-
-  const categories = useMemo(() => {
-    const allCategories = inventory.map(item => item.category);
-    return ['all', ...Array.from(new Set(allCategories))];
-  }, [inventory]);
 
   const categoryCounts = useMemo(() => {
     return inventory.reduce((acc, item) => {
@@ -86,10 +80,6 @@ export default function InventoryPage() {
       });
     }
 
-    if (categoryFilter !== 'all') {
-        items = items.filter(item => item.category === categoryFilter);
-    }
-
     items.sort((a, b) => {
         switch (sortBy) {
             case 'expiry-desc': return new Date(b.expiryDate).getTime() - new Date(a.expiryDate).getTime();
@@ -105,38 +95,7 @@ export default function InventoryPage() {
     });
 
     return items;
-  }, [inventory, searchQuery, filterBy, sortBy, categoryFilter]);
-
-  const activeFilterCount = (filterBy !== 'all' ? 1 : 0) + (categoryFilter !== 'all' ? 1 : 0);
-
-    const filterContent = (
-    <div className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Expiry Status</label>
-        <div className="flex items-center gap-2 flex-wrap mt-1">
-            <button onClick={() => setFilterBy('all')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'all' ? 'bg-primary text-white' : 'bg-gray-200'}`}>All</button>
-            <button onClick={() => setFilterBy('fresh')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'fresh' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>Fresh</button>
-            <button onClick={() => setFilterBy('expiring-soon')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expiring-soon' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}>Expiring Soon</button>
-            <button onClick={() => setFilterBy('expired')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expired' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Expired</button>
-        </div>
-      </div>
-      <div>
-        <label htmlFor="category-select" className="block text-sm font-medium text-gray-700">Category</label>
-        <select
-            id="category-select"
-            value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="mt-1 block w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary sm:text-sm"
-        >
-            {categories.map(category => (
-                <option key={category} value={category}>
-                    {category === 'all' ? 'All Categories' : category}
-                </option>
-            ))}
-        </select>
-      </div>
-    </div>
-  );
+  }, [inventory, searchQuery, filterBy, sortBy]);
 
   return (
     <div className="space-y-2 py-1">
@@ -175,8 +134,8 @@ export default function InventoryPage() {
         <Card className="flex items-center gap-4"><IndianRupee className="text-purple-500" size={32}/><div><p className="text-text-secondary">Total Value</p><p className="text-2xl font-bold">₹{totalValue.toFixed(2)}</p></div></Card>
       </div>
 
-      <Card>
-        <div className="flex items-center justify-between p-4">
+      <Card className="p-4">
+        <div className="flex items-center justify-between gap-4">
             <input
                 type="text"
                 placeholder="Search ingredients..."
@@ -188,23 +147,25 @@ export default function InventoryPage() {
                 sortOptions={sortOptions}
                 sortBy={sortBy}
                 setSortBy={setSortBy}
-                filterContent={filterContent}
-                activeFilterCount={activeFilterCount}
+                activeFilterCount={filterBy !== 'all' ? 1 : 0}
+                filterContent={
+                    <div className="flex flex-col gap-2">
+                        <h4 className="font-semibold">Filter by Status</h4>
+                        <button onClick={() => setFilterBy('all')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'all' ? 'bg-primary text-white' : 'bg-gray-200'}`}>All ({totalItems})</button>
+                        <button onClick={() => setFilterBy('fresh')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'fresh' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>Fresh ({categoryCounts.fresh})</button>
+                        <button onClick={() => setFilterBy('expiring-soon')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expiring-soon' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}>Expiring Soon ({categoryCounts.expiringSoon})</button>
+                        <button onClick={() => setFilterBy('expired')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expired' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Expired ({categoryCounts.expired})</button>
+                    </div>
+                }
             />
         </div>
-      </Card>
+    </Card>
       
         {inventory.length === 0 ? (
             <EmptyState type="no-inventory" />
         ) : processedInventory.length === 0 ? (
             <EmptyState type="no-results" />
         ) : (
-            <>
-            { (searchQuery || filterBy !== 'all' || categoryFilter !== 'all') && (
-                <h2 className="text-xl font-semibold text-gray-800 my-4">
-                    Filtered Results ({processedInventory.length})
-                </h2>
-            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {processedInventory.map(item => {
                     const status = getExpiryStatus(item.expiryDate);
