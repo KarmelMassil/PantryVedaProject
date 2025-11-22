@@ -199,7 +199,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
     {/* BAD BLOCK */}
     <div className="flex flex-col items-center justify-center text-center">
       <Image
-        src="/images/bad-scan-example.jpg"
+        src="/images/bad-scan-example.png"
         alt="Blurry, dark, or cluttered"
         className="rounded-md border-2 border-red-400 aspect-square object-cover"
         width={150}
