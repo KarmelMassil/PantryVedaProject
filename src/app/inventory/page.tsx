@@ -7,12 +7,13 @@ import { differenceInDays, format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import {
     Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2, PlusCircle,
-    ArrowDown, ArrowUp, Folder, Clock, Sparkles, ChevronDown, Inbox, Info
+    ArrowDown, ArrowUp, Folder, Clock, Sparkles, Inbox, Info
 } from 'lucide-react';
 import { WasteEvent } from '@/types';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterAndSort, SortOption } from '@/components/ui/FilterAndSort';
 
-const sortOptions = [
+const sortOptions: SortOption[] = [
     { group: 'By Expiry', value: 'expiry-asc', label: 'Expiry Date (Soonest First)', icon: ArrowDown },
     { group: 'By Expiry', value: 'expiry-desc', label: 'Expiry Date (Latest First)', icon: ArrowUp },
     { group: 'By Name', value: 'name-asc', label: 'Name (A-Z)', icon: ArrowDown },
@@ -30,8 +31,6 @@ export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterBy, setFilterBy] = useState('all');
   const [sortBy, setSortBy] = useState('expiry-asc');
-  const [isSortOpen, setIsSortOpen] = useState(false);
-  const sortRef = useRef<HTMLDivElement>(null);
 
   const totalItems = inventory.length;
   const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
@@ -45,16 +44,6 @@ export default function InventoryPage() {
         return acc;
     }, { fresh: 0, expiringSoon: 0, expired: 0 });
   }, [inventory]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
-        setIsSortOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const getExpiryStatus = (expiryDate: string) => {
     const days = differenceInDays(new Date(expiryDate), new Date());
@@ -108,20 +97,6 @@ export default function InventoryPage() {
     return items;
   }, [inventory, searchQuery, filterBy, sortBy]);
 
-  const renderSortOption = (option: typeof sortOptions[0]) => {
-    const Icon = option.icon;
-    return (
-        <li
-            key={option.value}
-            className={`px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer flex items-center gap-2 ${sortBy === option.value ? 'bg-blue-500 text-white hover:bg-blue-600' : ''}`}
-            onMouseDown={() => { setSortBy(option.value); setIsSortOpen(false); }}
-        >
-            <Icon size={16} className={sortBy === option.value ? 'text-white' : 'text-gray-500'}/>
-            {option.label}
-        </li>
-    );
-  };
-
   return (
     <div className="space-y-2 py-1">
     <div className="flex items-center justify-between">
@@ -159,43 +134,32 @@ export default function InventoryPage() {
         <Card className="flex items-center gap-4"><IndianRupee className="text-purple-500" size={32}/><div><p className="text-text-secondary">Total Value</p><p className="text-2xl font-bold">₹{totalValue.toFixed(2)}</p></div></Card>
       </div>
 
-      <Card className="p-4 space-y-4">
-            <div className="flex items-center gap-4">
-                <input
-                    type="text"
-                    placeholder="Search ingredients..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="flex-grow p-2 border rounded-md"
-                />
-                <div className="relative" ref={sortRef} data-testid="sort-dropdown">
-                    <button onClick={() => setIsSortOpen(!isSortOpen)} className="p-2 border rounded-md text-sm w-56 flex items-center justify-between">
-                        {sortOptions.find(opt => opt.value === sortBy)?.label}
-                        <ChevronDown size={16} className={`transition-transform ${isSortOpen ? 'rotate-180' : ''}`} />
-                    </button>
-                    {isSortOpen && (
-                        <ul data-testid="sort-options" className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg max-h-80 overflow-auto">
-                            {sortOptions.reduce((acc, option, index) => {
-                                const prevOption = index > 0 ? sortOptions[index - 1] : null;
-                                if (!prevOption || prevOption.group !== option.group) {
-                                    acc.push(<li key={option.group} className="px-3 py-2 text-xs font-bold text-gray-500 uppercase bg-gray-50">{option.group}</li>);
-                                }
-                                acc.push(renderSortOption(option));
-                                return acc;
-                            }, [] as React.ReactNode[])}
-                        </ul>
-                    )}
-                </div>
-            </div>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                    <button onClick={() => setFilterBy('all')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'all' ? 'bg-primary text-white' : 'bg-gray-200'}`}>All <span className={filterBy === 'all' ? 'text-white' : 'text-primary font-bold'}>({totalItems})</span></button>
-                    <button onClick={() => setFilterBy('fresh')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'fresh' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>Fresh <span className={filterBy === 'fresh' ? 'text-white' : 'text-green-500 font-bold'}>({categoryCounts.fresh})</span></button>
-                    <button onClick={() => setFilterBy('expiring-soon')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expiring-soon' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}>Expiring Soon <span className={filterBy === 'expiring-soon' ? 'text-white' : 'text-orange-500 font-bold'}>({categoryCounts.expiringSoon})</span></button>
-                    <button onClick={() => setFilterBy('expired')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expired' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Expired <span className={filterBy === 'expired' ? 'text-white' : 'text-red-500 font-bold'}>({categoryCounts.expired})</span></button>
-                </div>
-            </div>
-        </Card>
+      <Card className="p-4">
+        <div className="flex items-center justify-between gap-4">
+            <input
+                type="text"
+                placeholder="Search ingredients..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-grow p-2 border rounded-md"
+            />
+            <FilterAndSort
+                sortOptions={sortOptions}
+                sortBy={sortBy}
+                setSortBy={setSortBy}
+                activeFilterCount={filterBy !== 'all' ? 1 : 0}
+                filterContent={
+                    <div className="flex flex-col gap-2">
+                        <h4 className="font-semibold">Filter by Status</h4>
+                        <button onClick={() => setFilterBy('all')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'all' ? 'bg-primary text-white' : 'bg-gray-200'}`}>All ({totalItems})</button>
+                        <button onClick={() => setFilterBy('fresh')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'fresh' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>Fresh ({categoryCounts.fresh})</button>
+                        <button onClick={() => setFilterBy('expiring-soon')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expiring-soon' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}>Expiring Soon ({categoryCounts.expiringSoon})</button>
+                        <button onClick={() => setFilterBy('expired')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expired' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Expired ({categoryCounts.expired})</button>
+                    </div>
+                }
+            />
+        </div>
+    </Card>
       
         {inventory.length === 0 ? (
             <EmptyState type="no-inventory" />

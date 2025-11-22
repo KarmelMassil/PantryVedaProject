@@ -4,15 +4,29 @@ import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { getRecipeMatches, MatchedRecipe } from '@/lib/recipeMatcher';
 import { RecipeCard } from '@/components/RecipeCard';
 import { Card } from '@/components/ui/Card';
-import { Frown, PlusCircle, Sparkles, CookingPot, Filter, ChefHat, BookOpen, Info } from 'lucide-react';
+import { 
+    Frown, PlusCircle, Sparkles, CookingPot, Filter, ChefHat, BookOpen, Info,
+    ArrowDown, ArrowUp, Star, Clock, Flame, BarChart 
+} from 'lucide-react';
 import Link from 'next/link';
 import { RecipeModal } from '@/components/RecipeModal';
 import { AddToMealPlanModal } from '@/components/AddToMealPlanModal';
 import { Recipe } from '@/types';
 import { CookingModeModal } from '@/components/CookingModeModal';
+import { FilterAndSort, SortOption } from '@/components/ui/FilterAndSort';
 
 const difficulties: Recipe['difficulty'][] = ['beginner', 'intermediate', 'expert'];
 const spiceLevels: Recipe['spiceLevel'][] = ['mild', 'medium', 'hot'];
+
+const sortOptions: SortOption[] = [
+    { group: 'By Match', value: 'match-desc', label: 'Best Match', icon: Star },
+    { group: 'By Time', value: 'time-asc', label: 'Cooking Time (Shortest)', icon: Clock },
+    { group: 'By Name', value: 'name-asc', label: 'Name (A-Z)', icon: ArrowDown },
+    { group: 'By Name', value: 'name-za', label: 'Name (Z-A)', icon: ArrowUp },
+    { group: 'By Difficulty', value: 'difficulty-asc', label: 'Difficulty (Easiest)', icon: ArrowUp },
+    { group: 'By Difficulty', value: 'difficulty-desc', label: 'Difficulty (Hardest)', icon: ArrowDown },
+    { group: 'By Spice Level', value: 'spice-asc', label: 'Spice Level (Mildest)', icon: Flame },
+];
 
 export default function RecipesPage() {
   const { 
@@ -26,6 +40,8 @@ export default function RecipesPage() {
   const [searchQuery, setSearchQuery] = useState(recipeIngredientFilter || '');
   const [sortBy, setSortBy] = useState('match-desc');
   const [filterTime, setFilterTime] = useState('all');
+  const [filterDifficulty, setFilterDifficulty] = useState('all');
+  const [filterSpice, setFilterSpice] = useState('all');
 
   const processedRecipes = useMemo(() => {
     let items: MatchedRecipe[] = getRecipeMatches(inventory, recipes, preferences);
@@ -46,24 +62,34 @@ export default function RecipesPage() {
         });
     }
 
+    if (filterDifficulty !== 'all') {
+        items = items.filter(r => r.difficulty === filterDifficulty);
+    }
+
+    if (filterSpice !== 'all') {
+        items = items.filter(r => r.spiceLevel === filterSpice);
+    }
+
     items.sort((a, b) => {
-      switch (sortBy) {
-        case 'time-asc':
-          return a.cookingTime - b.cookingTime;
-        case 'name-asc':
-          return a.name.localeCompare(b.name);
-        case 'match-desc':
-        default:
-          return b.finalScore - a.finalScore;
-      }
+        const difficultyOrder = { beginner: 1, intermediate: 2, expert: 3 };
+        const spiceOrder = { mild: 1, medium: 2, hot: 3 };
+        switch (sortBy) {
+            case 'time-asc': return a.cookingTime - b.cookingTime;
+            case 'name-asc': return a.name.localeCompare(b.name);
+            case 'name-za': return b.name.localeCompare(a.name);
+            case 'difficulty-asc': return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
+            case 'difficulty-desc': return difficultyOrder[b.difficulty] - difficultyOrder[a.difficulty];
+            case 'spice-asc': return spiceOrder[a.spiceLevel] - spiceOrder[b.spiceLevel];
+            case 'match-desc': default: return b.finalScore - a.finalScore;
+        }
     });
 
     return items;
-  }, [inventory, recipes, preferences, searchQuery, sortBy, filterTime]);
+  }, [inventory, recipes, preferences, searchQuery, sortBy, filterTime, filterDifficulty, filterSpice]);
 
   const areFiltersActive = useMemo(() => {
-    return searchQuery || filterTime !== 'all';
-  }, [searchQuery, filterTime]);
+    return searchQuery || filterTime !== 'all' || filterDifficulty !== 'all' || filterSpice !== 'all';
+  }, [searchQuery, filterTime, filterDifficulty, filterSpice]);
 
   const { canCookNow, almostReady } = useMemo(() => {
     const canCookNow: MatchedRecipe[] = [];
@@ -172,45 +198,61 @@ export default function RecipesPage() {
         
       
       <Card className="p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-            <div className="md:col-span-2">
-              <input
-                  type="text"
-                  placeholder="Search by name or ingredient..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full p-2 border rounded-md text-sm"
-              />
-            </div>
-            <div>
-              <select value={sortBy} onChange={(e) => setSortBy(e.target.value)} className="w-full p-2 border rounded-md text-sm">
-                  <option value="match-desc">Sort by: Best Match</option>
-                  <option value="time-asc">Sort by: Cooking Time</option>
-                  <option value="name-asc">Sort by: Name (A-Z)</option>
-              </select>
-            </div>
-            <div>
-              <select value={filterTime} onChange={e => setFilterTime(e.target.value)} className="w-full p-2 border rounded-md text-sm">
-                  <option value="all">Filter by Time: All</option>
-                  <option value="<30">&lt; 30 mins</option>
-                  <option value="30-60">30-60 mins</option>
-                  <option value=">60">&gt; 60 mins</option>
-              </select>
-            </div>
-             {recipeIngredientFilter && (
-                <div className="md:col-span-3">
-                    <button
-                        onClick={() => {
-                            setSearchQuery('');
-                            setRecipeIngredientFilter(null);
-                        }}
-                        className="bg-red-500 text-white px-3 py-1 rounded-full text-xs"
-                    >
-                        Clear ingredient filter: &quot;{recipeIngredientFilter}&quot;
-                    </button>
+        <div className="flex items-center justify-between gap-4">
+          <input
+              type="text"
+              placeholder="Search by name or ingredient..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-grow p-2 border rounded-md text-sm"
+          />
+          <FilterAndSort
+            sortOptions={sortOptions}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            activeFilterCount={[filterTime, filterDifficulty, filterSpice].filter(f => f !== 'all').length}
+            filterContent={
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Cooking Time</h4>
+                  <select aria-label="Filter by time" value={filterTime} onChange={e => setFilterTime(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                    <option value="all">Any</option>
+                    <option value="<30">&lt; 30 mins</option>
+                    <option value="30-60">30-60 mins</option>
+                    <option value=">60">&gt; 60 mins</option>
+                  </select>
                 </div>
-            )}
-          </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Difficulty</h4>
+                  <select aria-label="Filter by difficulty" value={filterDifficulty} onChange={e => setFilterDifficulty(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                    <option value="all">Any</option>
+                    {difficulties.map(d => <option key={d} value={d}>{d.charAt(0).toUpperCase() + d.slice(1)}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <h4 className="font-semibold mb-2">Spice Level</h4>
+                  <select aria-label="Filter by spice level" value={filterSpice} onChange={e => setFilterSpice(e.target.value)} className="w-full p-2 border rounded-md text-sm">
+                    <option value="all">Any</option>
+                    {spiceLevels.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
+                  </select>
+                </div>
+              </div>
+            }
+          />
+        </div>
+        {recipeIngredientFilter && (
+            <div>
+                <button
+                    onClick={() => {
+                        setSearchQuery('');
+                        setRecipeIngredientFilter(null);
+                    }}
+                    className="bg-red-500 text-white px-3 py-1 rounded-full text-xs"
+                >
+                    Clear ingredient filter: &quot;{recipeIngredientFilter}&quot;
+                </button>
+            </div>
+        )}
       </Card>
 
       {processedRecipes.length > 0 ? (
