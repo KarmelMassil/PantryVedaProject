@@ -3,7 +3,8 @@ import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { Recipe } from '@/types';
 import { useDroppable } from '@dnd-kit/core';
 import { Trash2, Utensils, Sparkles, Plus, Users, Minus, Clock } from 'lucide-react';
-import React from 'react';
+import React, {useState} from 'react';
+import { RecipeModal } from '../RecipeModal';
 
 interface DroppableMealSlotProps {
   date: string;
@@ -19,7 +20,7 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
     id: `slot-${date}-${meal}`,
     data: { date, meal },
   });
-
+  const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const mealData = mealPlan?.[meal];
   const recipe = mealData?.recipeId ? recipes.find(r => r.id === mealData.recipeId) : null;
 
@@ -29,6 +30,14 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
       updateMealServings(date, meal, newServings);
     }
   };
+
+  const handleOpenViewModal = (recipe: Recipe) => {
+      setViewingRecipe(recipe);
+    };
+  
+    const handleCloseModal = () => {
+    setViewingRecipe(null);
+    };
 
   const style = {
     borderColor: isOver ? '#ED8936' : (recipe ? '#FBD38D' : '#E2E8F0'),
@@ -41,11 +50,21 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
   ].join(" ");
 
   return (
+    <>
+    {/* Render Modals */}
+          {viewingRecipe && (
+            <RecipeModal recipe={viewingRecipe} onClose={handleCloseModal} />
+          )}
+
     <div ref={setNodeRef} style={style} className={containerClasses}>
       {recipe ? (
         <div className="p-1 rounded-md text-sm">
            <div className="flex items-start justify-between">
-              <p className="font-bold truncate pr-2 flex-1">{recipe.name}</p>
+              <p className="font-bold truncate pr-2 flex-1">
+                <span className="cursor-pointer hover:underline" onClick={() => handleOpenViewModal?.(recipe)}>
+                  {recipe.name}
+                </span>
+              </p>
             </div>
             <div className="flex items-center justify-between mt-1">
                 <div className="flex items-center gap-2 text-xs text-gray-500">
@@ -83,5 +102,6 @@ export const DroppableMealSlot: React.FC<DroppableMealSlotProps> = ({ date, meal
         </div>
       )}
     </div>
+    </>
   );
 };
