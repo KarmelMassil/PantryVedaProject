@@ -70,8 +70,8 @@ export const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, 
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-3">
-          <button onClick={onClose} className="bg-gray-200 text-gray-800 font-semibold px-4 py-2 rounded-lg hover:bg-gray-300 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">Cancel</button>
-          <button onClick={handleSave} className="flex items-center gap-2 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">Save to Database</button>
+          <button onClick={onClose} className="bg-gray-200 text-gray-800 font-semibold px-4 py-2 rounded-lg">Cancel</button>
+          <button onClick={handleSave} className="bg-accent-primary text-white font-semibold px-4 py-2 rounded-lg">Save to Database</button>
         </div>
       </div>
     </div>

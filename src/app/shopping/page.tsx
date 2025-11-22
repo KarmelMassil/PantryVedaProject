@@ -324,7 +324,7 @@ export default function ShoppingListPage() {
               onClick={handleRestock}
               disabled={checkedItemsCount === 0}
               className={`w-full flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
-                checkedItemsCount > 0 ? 'bg-green-500 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md' : 'bg-gray-400 cursor-not-allowed'
+                checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
               }`}
             >
               <PackagePlus size={20} />

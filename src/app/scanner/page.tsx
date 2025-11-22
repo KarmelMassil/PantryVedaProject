@@ -195,7 +195,7 @@ return (
                     <label className="text-xs font-medium text-transparent block mb-1">Del</label>
                     <button 
                       onClick={() => setScannedItems(prev => prev.filter((_, i) => i !== index))}
-                      className="w-full text-red-500 hover:bg-red-100 p-3 rounded-lg transition-all duration-200 transform hover:scale-110 flex items-center justify-center"
+                      className="w-full text-chili-red hover:bg-red-100 p-3 rounded-lg transition-all duration-200 transform hover:scale-110 flex items-center justify-center"
                       title="Remove item"
                     >
                       <Trash2 size={28} />

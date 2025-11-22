@@ -25,6 +25,7 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
   onEditSave,
 }) => {
   const totalPrice = (item.quantity * (item.price || 0)).toFixed(2);
+  const approxWeight = getApproximateWeightDisplay(item.quantity, item.unit, item.name);
 
   if (isEditing) {
     return (
@@ -84,7 +85,7 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
   }
 
   return (
-    <li className={`transition-all duration-200 rounded-lg group ${item.checked ? 'bg-gray-200' : 'bg-white hover:bg-gray-100'}`}>
+    <li className={`transition-all duration-200 rounded-lg group ${item.checked ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'}`}>
       <div className="flex items-center gap-4 p-3">
         <input
           type="checkbox"
@@ -99,9 +100,9 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
           </p>
           <div className={`flex items-center gap-4 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
             <span>{item.quantity} {item.unit}</span>
-            {(item.category === 'Vegetables' || item.category === 'Fruits') && (
+            {approxWeight && (
               <span className="text-xs italic text-gray-400">
-                ({getApproximateWeightDisplay(item.quantity, item.name)})
+                ({approxWeight})
               </span>
             )}
             <span className="text-gray-300">|</span>
