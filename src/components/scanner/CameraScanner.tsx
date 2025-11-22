@@ -174,24 +174,47 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
             ></video>
             {!isCameraActive && (
                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gray-50">
-                    <p className="font-semibold text-gray-700 mb-4 text-center">Photo Tips for Best Results:</p>
-                    <div className="grid grid-cols-2 gap-4 w-full">
-                      <div className="text-center">
-                        <Image src="/images/good-scan-example.jpg" alt="Good lighting, clear view" className="rounded-md border-2 border-green-400 aspect-square object-cover" width={150} height={150} />
-                        <div className="flex items-center justify-center mt-1">
-                          <CheckCircle size={16} className="text-green-600 mr-1" />
-                          <p className="text-xs font-medium text-gray-600">Clear & Well-Lit</p>
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <Image src="/images/bad-scan-example.jpg" alt="Blurry, dark, or cluttered" className="rounded-md border-2 border-red-400 aspect-square object-cover" width={150} height={150} />
-                         <div className="flex items-center justify-center mt-1">
-                          <XCircle size={16} className="text-red-600 mr-1" />
-                          <p className="text-xs font-medium text-gray-600">Blurry & Dark</p>
-                        </div>
-                      </div>
-                    </div>
-                </div>
+  <p className="font-semibold text-gray-700 mb-4 text-center">
+    Photo Tips for Best Results:
+  </p>
+
+  <div className="grid grid-cols-2 gap-4 w-full">
+
+    {/* GOOD BLOCK */}
+    <div className="flex flex-col items-center justify-center text-center">
+      <Image
+        src="/images/good-scan-example.jpg"
+        alt="Good lighting, clear view"
+        className="rounded-md border-2 border-green-400 aspect-square object-cover"
+        width={150}
+        height={150}
+      />
+
+      <div className="flex items-center justify-center mt-1">
+        <CheckCircle size={16} className="text-green-600 mr-1" />
+        <p className="text-xs font-medium text-gray-600">Clear & Well-Lit</p>
+      </div>
+    </div>
+
+    {/* BAD BLOCK */}
+    <div className="flex flex-col items-center justify-center text-center">
+      <Image
+        src="/images/bad-scan-example.jpg"
+        alt="Blurry, dark, or cluttered"
+        className="rounded-md border-2 border-red-400 aspect-square object-cover"
+        width={150}
+        height={150}
+      />
+
+      <div className="flex items-center justify-center mt-1">
+        <XCircle size={16} className="text-red-600 mr-1" />
+        <p className="text-xs font-medium text-gray-600">Blurry & Dark</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
             )}
           </>
         )}

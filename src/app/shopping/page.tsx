@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple, Info } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
@@ -166,23 +166,33 @@ export default function ShoppingListPage() {
   const estimatedTotal = Object.values(budgetSummary).reduce((total, category) => total + category.total, 0);
 
   return (
-    <div className="space-y-6">
-      <AddIngredientModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveNewIngredient}
-      />
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <ShoppingCart size={32} className="text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Smart Shopping List</h1>
-            <p className="text-text-secondary mt-1">
-              Plan your grocery runs, manage your budget, and never forget an item again.
-            </p>
-          </div>
+    <div className="space-y-2 py-1">
+  <AddIngredientModal 
+    isOpen={isModalOpen}
+    onClose={() => setIsModalOpen(false)}
+    onSave={handleSaveNewIngredient}
+  />
+
+  <div className="flex items-center justify-between">
+    
+    <div className="flex items-center gap-3">
+      <ShoppingCart className="text-primary" size={36} />
+      <div>
+        <h1 className="text-4xl font-bold text-text-primary tracking-tight">
+          Shopping List
+        </h1>
+        <div className="flex items-center gap-1.5">
+          <Info size={14} className="text-text-secondary" />
+          <p className="text-text-secondary font-medium">
+            Smart suggestions and your planned purchases
+          </p>
         </div>
       </div>
+    </div>
+
+  </div>
+
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">

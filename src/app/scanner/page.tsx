@@ -99,14 +99,14 @@ return (
           onClose={() => setIsModalOpen(false)}
           onSave={handleSaveNewIngredient}
         />
-    <div className="space-y-4">
+    <div className="space-y-2 py-1">
         <div className="flex items-center gap-3">
             <ScanLine className="text-primary" size={36} />
             <div>
-                <h1 className="text-4xl font-bold text-text-primary tracking-tight">Scan & Stock</h1>
+                <h1 className="text-4xl font-bold text-text-primary tracking-tight">Camera Scanner</h1>
                 <div className="flex items-center gap-1.5">
                     <Info size={14} className="text-text-secondary" />
-                    <p className="text-text-secondary font-medium">Scan, search, and add items to your pantry in a flash.</p>
+                    <p className="text-text-secondary font-medium">Scan ingredients or add them manually</p>
                 </div>
             </div>
         </div>
@@ -116,14 +116,14 @@ return (
         <div className="lg:col-span-2 space-y-6">
           {/* Camera Scanner */}
           <div className="bg-white rounded-xl shadow-md p-3">
-            <h2 className="text-xl font-bold mb-4">Camera Scanner</h2>
+            <h2 className="text-xl font-bold mb-2">Camera Scanner</h2>
             <CameraScanner onRecognize={handleRecognition}/>
           </div>
           
           {/* Manual Search */}
           <div className="bg-white rounded-xl shadow-md p-3">
              <h2 className="text-xl font-bold">Manual Search</h2>
-            <p className="text-sm text-text-secondary mb-4">Search and select an ingredient to add it to your list.</p>
+            <p className="text-sm text-text-secondary mb-2">Search and select an ingredient to add it to your list.</p>
             <IngredientAutocomplete 
               masterList={masterIngredientList}
               value={autocompleteQuery}

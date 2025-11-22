@@ -4,7 +4,7 @@ import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Recipe } from '@/types';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { Card } from '@/components/ui/Card';
-import { Plus, Trash2, Save, Upload, Clock, Users, Flame, GripVertical, Search } from 'lucide-react';
+import { Plus, Trash2, Save, Upload, Clock, Users, Flame, GripVertical, Search, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
 
@@ -223,9 +223,9 @@ export default function AddRecipePage() {
 
       <div className="space-y-6 max-w-4xl mx-auto">
         {/* Header */}
-        <div>
+        <div className="flex items-center gap-3">
+            <PlusCircle className="text-primary" size={36} />
           <h1 className="text-3xl font-bold text-gray-800">Add Your Custom Dish</h1>
-          <p className="text-gray-500 mt-1">Create a recipe to add to your collection</p>
         </div>
 
         {/* Section 1: Basic Information */}

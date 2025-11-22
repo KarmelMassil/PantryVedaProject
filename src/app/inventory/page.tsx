@@ -7,7 +7,7 @@ import { differenceInDays, format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import {
     Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2, PlusCircle,
-    ArrowDown, ArrowUp, Folder, Clock, Sparkles, ChevronDown
+    ArrowDown, ArrowUp, Folder, Clock, Sparkles, ChevronDown, Inbox, Info
 } from 'lucide-react';
 import { WasteEvent } from '@/types';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -123,19 +123,34 @@ export default function InventoryPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-start">
-            <div>
-                <h1 className="text-3xl font-bold text-text-primary">My Pantry</h1>
-                <p className="text-text-secondary mt-1">Manage your ingredients, track expiry dates, and reduce waste.</p>
-            </div>
-          <Link 
-            href="/scanner"
-            className="flex items-center gap-2 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md"
-          >
-            <PlusCircle size={20} /> Add New Ingredient
-          </Link>
+    <div className="space-y-2 py-1">
+    <div className="flex items-center justify-between">
+      
+      <div className="flex items-center gap-3">
+        <Inbox className="text-primary" size={36} />
+        <div>
+          <h1 className="text-4xl font-bold text-text-primary tracking-tight">
+            Inventory
+          </h1>
+          <div className="flex items-center gap-1.5">
+            <Info size={14} className="text-text-secondary" />
+            <p className="text-text-secondary font-medium">
+              All your ingredients in one place
+            </p>
+          </div>
         </div>
+      </div>
+
+      <Link 
+        href="/scanner"
+        className="flex items-center gap-2 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg 
+                  hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md"
+      >
+        <PlusCircle size={20} /> 
+        Add Ingredient
+      </Link>
+    </div>
+
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="flex items-center gap-4"><Package className="text-blue-500" size={32}/><div><p className="text-text-secondary">Total Items</p><p className="text-2xl font-bold">{totalItems}</p></div></Card>

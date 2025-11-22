@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { MasterIngredient } from '@/store/pantryStore';
-import { X } from 'lucide-react';
+import { PlusCircle, X } from 'lucide-react';
 import { usePantryStore } from '@/store/pantryStore';
 
 interface AddIngredientModalProps {
@@ -34,7 +34,10 @@ export const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, 
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
           <X size={24} />
         </button>
+        <div className="flex gap-3">
+            <PlusCircle className="text-primary" size={36} />
         <h2 className="text-2xl font-bold mb-4">Add a New Ingredient</h2>
+        </div>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Ingredient Name</label>

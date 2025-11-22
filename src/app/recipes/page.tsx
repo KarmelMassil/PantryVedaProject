@@ -4,7 +4,7 @@ import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { getRecipeMatches, MatchedRecipe } from '@/lib/recipeMatcher';
 import { RecipeCard } from '@/components/RecipeCard';
 import { Card } from '@/components/ui/Card';
-import { Frown, PlusCircle, Sparkles, CookingPot, Filter, ChefHat } from 'lucide-react';
+import { Frown, PlusCircle, Sparkles, CookingPot, Filter, ChefHat, BookOpen, Info } from 'lucide-react';
 import Link from 'next/link';
 import { RecipeModal } from '@/components/RecipeModal';
 import { AddToMealPlanModal } from '@/components/AddToMealPlanModal';
@@ -140,16 +140,36 @@ export default function RecipesPage() {
         />
       )}
 
-      <div>
-        <div className="flex justify-between items-center mb-6">
+    <div className="space-y-2 py-1">
+      <div className="flex items-center justify-between">
+        
+        <div className="flex items-center gap-3">
+          <BookOpen className="text-primary" size={36} />
           <div>
-              <h1 className="text-3xl font-bold text-text-primary">Recipe Discovery</h1>
-              <p className="text-text-secondary">Find recipes based on your pantry.</p>
+            <h1 className="text-4xl font-bold text-text-primary tracking-tight">
+              Recipes
+            </h1>
+            <div className="flex items-center gap-1.5">
+              <Info size={14} className="text-text-secondary" />
+              <p className="text-text-secondary font-medium">
+                Find meals based on what you already have
+              </p>
+            </div>
           </div>
-          <Link href="/recipes/add" className="flex items-center gap-2 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
-            <PlusCircle size={20} /> Add Custom Recipe
-          </Link>
-        </div>
+          </div>
+
+        <Link 
+          href="/recipes/add"
+          className="flex items-center gap-2 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg 
+                    hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg"
+        >
+          <PlusCircle size={20} />
+          Add Custom Recipe
+        </Link>
+      </div>
+
+
+        
       
       <Card className="p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">

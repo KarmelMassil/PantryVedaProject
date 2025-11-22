@@ -2,16 +2,16 @@
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, ScanLine, Inbox, ChefHat, ShoppingCart, Calendar, BarChart2, ChevronsLeft, ChevronsRight } from 'lucide-react';
+import { LayoutDashboard, ScanLine, Inbox, BookOpen, ShoppingCart, Calendar, BarChartHorizontal, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 const navItems = [
   { href: '/', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/scanner', label: 'Scanner', icon: ScanLine },
   { href: '/inventory', label: 'Inventory', icon: Inbox },
-  { href: '/recipes', label: 'Recipes', icon: ChefHat },
+  { href: '/recipes', label: 'Recipes', icon: BookOpen },
   { href: '/shopping', label: 'Shopping', icon: ShoppingCart },
   { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
-  { href: '/analytics', label: 'Analytics', icon: BarChart2 },
+  { href: '/analytics', label: 'Analytics', icon: BarChartHorizontal },
 ];
 
 export const Sidebar = () => {
