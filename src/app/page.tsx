@@ -8,11 +8,10 @@ import { ActionCard } from '@/components/dashboard/ActionCard';
 import { Card } from '@/components/ui/Card';
 import { differenceInDays, format } from 'date-fns';
 import Link from 'next/link';
-import { Package, AlertTriangle, IndianRupee, BadgeCheck, ScanLine, Inbox, ChefHat, ShoppingCart, Clock, Plus, Flame, PlusCircle, History, Sparkles, Box, Coins, Camera, Pencil } from 'lucide-react';
+import { Package, AlertTriangle, IndianRupee, BadgeCheck, ScanLine, Inbox, ChefHat, ShoppingCart, Clock, Flame, PlusCircle, History, Sparkles, Box, Coins, Camera, Pencil } from 'lucide-react';
 import { RecipeCard } from '@/components/RecipeCard';
 import WelcomeMessage from '@/components/dashboard/WelcomeMessage';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
-import { calculateTrends } from '@/lib/trendUtils';
 
 export default function DashboardPage() {
   const { inventory, weeklySnapshots, createWeeklySnapshot } = usePantryStore();
@@ -27,7 +26,6 @@ export default function DashboardPage() {
   }, [createWeeklySnapshot]);
 
   const stats = useMemo(() => getDashboardStats(inventory), [inventory]);
-  const trends = useMemo(() => calculateTrends(inventory, weeklySnapshots), [inventory, weeklySnapshots]);
   const expiringSoon = useMemo(() => getExpiringSoonItems(inventory, 3), [inventory]);
   const recentlyAdded = useMemo(() => getRecentlyAddedItems(inventory, 3), [inventory]);
   const recommendedRecipes = useMemo(() => getRecommendedRecipes(), [inventory]);
@@ -87,10 +85,10 @@ export default function DashboardPage() {
     <div className="space-y-6">
       <WelcomeMessage />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Total Items" value={stats.totalItems} icon={<Package size={24} className="text-blue-500"/>} colorClass="bg-blue-100" trend={trends.totalItems} />
-        <StatCard label="Expiring Soon" value={stats.expiringSoonCount} icon={<AlertTriangle size={24} className="text-orange-500"/>} colorClass="bg-orange-100" trend={trends.expiringSoon} />
-        <StatCard label="Total Value" value={`₹${stats.totalValue.toFixed(2)}`} icon={<IndianRupee size={24} className="text-purple-500"/>} colorClass="bg-purple-100" trend={trends.totalValue}/>
-        <StatCard label="Fresh Items" value={stats.freshItemsCount} icon={<BadgeCheck size={24} className="text-green-500"/>} colorClass="bg-green-100" trend={trends.freshItems}/>
+        <StatCard label="Total Items" value={stats.totalItems} icon={<Package size={24} className="text-blue-500"/>} colorClass="bg-blue-100" />
+        <StatCard label="Expiring Soon" value={stats.expiringSoonCount} icon={<AlertTriangle size={24} className="text-orange-500"/>} colorClass="bg-orange-100"/>
+        <StatCard label="Total Value" value={`₹${stats.totalValue.toFixed(2)}`} icon={<IndianRupee size={24} className="text-purple-500"/>} colorClass="bg-purple-100" />
+        <StatCard label="Fresh Items" value={stats.freshItemsCount} icon={<BadgeCheck size={24} className="text-green-500"/>} colorClass="bg-green-100" />
       </div>
 
       <div>
@@ -122,7 +120,6 @@ export default function DashboardPage() {
               const { text, color } = getDaysLabel(item.expiryDate);
               return (
                 <div key={item.id} className="flex items-center bg-gray-50 p-3 rounded-lg">
-                  <Clock size={20} className="text-warning mr-4"/>
                   <div className="flex-grow">
                     <p className="font-semibold">{item.name}</p>
                     <p className="text-sm text-text-secondary">{item.quantity} {item.unit}</p>
@@ -139,7 +136,6 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {recentlyAdded.length > 0 ? recentlyAdded.map(item => (
               <div key={item.id} className="flex items-center bg-gray-50 p-3 rounded-lg">
-                <Plus size={20} className="text-accent mr-4"/>
                 <div className="flex-grow">
                   <p className="font-semibold">{item.name}</p>
                   <p className="text-sm text-text-secondary">{item.quantity} {item.unit}</p>
