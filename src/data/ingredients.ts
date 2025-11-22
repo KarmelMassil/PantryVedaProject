@@ -1,11 +1,11 @@
 import { Ingredient } from "@/types";
 
 export const indianIngredientsDatabase: Omit<Ingredient, 'id' | 'quantity' | 'purchaseDate' | 'expiryDate' | 'value'>[] = [
-  { name: 'Onion', category: 'Vegetables', unit: 'kg' },
-  { name: 'Tomato', category: 'Vegetables', unit: 'kg' },
-  { name: 'Ginger', category: 'Vegetables', unit: 'g' },
-  { name: 'Garlic', category: 'Vegetables', unit: 'g' },
-  { name: 'Potato', category: 'Vegetables', unit: 'kg' },
+  { name: 'Onion', category: 'Vegetables', unit: 'pcs' },
+  { name: 'Tomato', category: 'Vegetables', unit: 'pcs' },
+  { name: 'Ginger', category: 'Vegetables', unit: 'pcs' },
+  { name: 'Garlic', category: 'Vegetables', unit: 'pcs' },
+  { name: 'Potato', category: 'Vegetables', unit: 'pcs' },
   { name: 'Paneer', category: 'Dairy', unit: 'g' },
   { name: 'Yogurt', category: 'Dairy', unit: 'g' },
   { name: 'Milk', category: 'Dairy', unit: 'l' },
