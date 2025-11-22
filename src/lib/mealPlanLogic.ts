@@ -2,7 +2,6 @@ import { Ingredient, Recipe } from "@/types";
 import { MealPlan } from "@/store/pantryStore";
 import { getRecipeMatches } from "./recipeMatcher";
 import { scaleRecipeIngredients } from "./recipeUtils";
-import { convertUnit } from "./unitConverter";
 
 /**
  * Calculates a "projected" inventory by simulating the consumption
@@ -37,18 +36,7 @@ export function getProjectedInventory(
         for (const req of scaledRecipe.ingredients) {
             if (inventoryMap.has(req.name)) {
                 const item = inventoryMap.get(req.name)!;
-
-                let quantityToDeduct = req.quantity;
-                if (req.unit !== item.unit) {
-                    const converted = convertUnit(req.quantity, req.unit as any, item.unit as any, req.name);
-                    if (converted !== null) {
-                        quantityToDeduct = converted;
-                    } else {
-                        console.warn(`Could not convert for projection: ${req.name} from ${req.unit} to ${item.unit}`);
-                        continue;
-                    }
-                }
-                item.quantity = Math.max(0, item.quantity - quantityToDeduct);
+                item.quantity = Math.max(0, item.quantity - req.quantity);
             }
         }
     }

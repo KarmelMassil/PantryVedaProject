@@ -7,8 +7,6 @@ import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocompl
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
-import { getApproximateWeightDisplay } from '@/lib/unitConverter';
-import { error } from 'console';
 import { ShoppingListItem as ShoppingListItemComponent } from '@/components/shopping-list/ShoppingListItem';
 
 // Helper function to format ingredient names to Title Case
@@ -135,17 +133,6 @@ export default function ShoppingListPage() {
     }, {} as Record<string, ShoppingListItem[]>),
   [filteredList]);
 
-  const categoryIcons: Record<string, React.ReactElement> = {
-    'Produce': <Carrot />,
-    'Dairy': <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Z"/><path d="M12 22v-2"/><path d="M14 18H8"/><path d="M12 18v4"/><path d="M12 4V2"/></svg>, // Custom milk icon
-    'Meat': <Beef />,
-    'Bakery': <Wheat />,
-    'Seafood': <Fish />,
-    'Pantry Staples': <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="7" y="5" width="10" height="14" rx="2"/><path d="M10 5v14"/><path d="M14 5v14"/></svg>, // Custom can icon
-    'Fruit': <Apple />,
-    'Vegetable': <Leaf />,
-    'Other': <ShoppingCart />,
-  };
 
   const budgetSummary = useMemo(() =>
     shoppingList.reduce((acc, item) => {

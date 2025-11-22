@@ -2,7 +2,6 @@
 import React from 'react';
 import { ShoppingListItem as ShoppingListItemType } from '@/store/pantryStore';
 import { Trash2, Edit, Save, X } from 'lucide-react';
-import { getApproximateWeightDisplay } from '@/lib/unitConverter';
 import { format } from 'date-fns';
 
 interface ShoppingListItemProps {
@@ -25,7 +24,6 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
   onEditSave,
 }) => {
   const totalPrice = (item.quantity * (item.price || 0)).toFixed(2);
-  const approxWeight = getApproximateWeightDisplay(item.quantity, item.unit, item.name);
 
   if (isEditing) {
     return (
@@ -100,11 +98,6 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
           </p>
           <div className={`flex items-center gap-4 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
             <span>{item.quantity} {item.unit}</span>
-            {approxWeight && (
-              <span className="text-xs italic text-gray-400">
-                ({approxWeight})
-              </span>
-            )}
             <span className="text-gray-300">|</span>
             <span>₹{item.price?.toFixed(2) ?? '0.00'} / {item.unit}</span>
             {item.expiryDate && (

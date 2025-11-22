@@ -4,7 +4,6 @@ import { generateHeuristicSuggestions } from "./suggestionEngine";
 import { trainAndSuggest, generateMlSuggestions, hasTrainedModel } from "./mlService";
 import { addDays, format } from "date-fns";
 import { scaleRecipeIngredients } from "./recipeUtils";
-import { convertUnit } from "./unitConverter";
 
 // The minimum number of consumption events required to trigger the first training
 const MIN_DATA_POINTS_FOR_TRAINING = 10;
@@ -34,23 +33,10 @@ function calculateMealPlanDemand(mealPlan: MealPlan, recipes: Recipe[], masterIn
                 const masterIngredient = masterIngredientList.find(mi => mi.name.toLowerCase() === ingredient.name.toLowerCase());
                 if (!masterIngredient) continue;
 
-                // Standardize to base unit
                 const baseUnit = masterIngredient.unit;
-                let convertedQuantity = ingredient.quantity;
-
-                if (ingredient.unit !== baseUnit) {
-                    const converted = convertUnit(ingredient.quantity, ingredient.unit as any, baseUnit as any, ingredient.name);
-                    if (converted !== null) {
-                        convertedQuantity = converted;
-                    } else {
-                        console.warn(`Could not convert ${ingredient.name} from ${ingredient.unit} to ${baseUnit}`);
-                        continue; // Skip if conversion fails
-                    }
-                }
-
                 const existing = demand.get(ingredient.name) || { quantity: 0, unit: baseUnit };
                 demand.set(ingredient.name, {
-                    quantity: existing.quantity + convertedQuantity,
+                    quantity: existing.quantity + ingredient.quantity,
                     unit: baseUnit
                 });
             }
