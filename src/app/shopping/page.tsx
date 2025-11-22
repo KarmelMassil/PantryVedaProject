@@ -118,9 +118,7 @@ export default function ShoppingListPage() {
   const findItemInList = (name: string) => shoppingList.find(item => item.name === name);
 
   const handleRestock = () => {
-    if (window.confirm("Are you sure you want to add all checked items to your pantry and remove them from this list?")) {
         restockCheckedItems();
-    }
  };
 
   const filteredList = useMemo(() =>
