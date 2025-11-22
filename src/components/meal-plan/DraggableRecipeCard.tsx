@@ -1,7 +1,7 @@
 "use client";
 import { Recipe } from '@/types';
 import { useDraggable } from '@dnd-kit/core';
-import { Eye, Clock, Flame } from 'lucide-react';
+import {Clock, Flame } from 'lucide-react';
 import React from 'react';
 import Image from 'next/image';
 
@@ -30,18 +30,6 @@ const RecipeCardContent: React.FC<{ recipe: Recipe; onView: (recipe: Recipe) => 
         <span className="flex items-center gap-1 capitalize"><Flame size={12} /> {recipe.spiceLevel}</span>
       </div>
     </div>
-    {!isOverlay && (
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onView(recipe);
-        }}
-        className="absolute top-1 right-1 p-1 text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity"
-        title="View Recipe"
-      >
-        <Eye size={16} />
-      </button>
-    )}
   </>
 );
 
