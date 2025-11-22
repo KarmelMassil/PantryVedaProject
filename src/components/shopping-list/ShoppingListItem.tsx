@@ -101,7 +101,7 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
             <span>{item.quantity} {item.unit}</span>
             {(item.category === 'Vegetables' || item.category === 'Fruits') && (
               <span className="text-xs italic text-gray-400">
-                ({getApproximateWeightDisplay(item.quantity, item.unit, item.name)})
+                ({getApproximateWeightDisplay(item.quantity, item.name)})
               </span>
             )}
             <span className="text-gray-300">|</span>
