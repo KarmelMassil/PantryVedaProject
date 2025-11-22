@@ -141,8 +141,7 @@ export const usePantryStore = create<PantryState>()(
         })),
       
       addItemsToShoppingList: (itemsToAdd) => {
-        const { shoppingList } = get();
-        const updatedList = [...shoppingList];
+        let updatedList = [...get().shoppingList];
 
         itemsToAdd.forEach(newItem => {
           const existingItemIndex = updatedList.findIndex(
@@ -150,10 +149,22 @@ export const usePantryStore = create<PantryState>()(
           );
 
           if (existingItemIndex > -1) {
+            // If the suggestion is to set quantity to 0, remove the item
+            if (newItem.quantity === 0) {
+                updatedList = updatedList.filter((_, index) => index !== existingItemIndex);
+                return; // continue to next item
+            }
+
             const existingItem = updatedList[existingItemIndex];
-            existingItem.quantity = newItem.quantity;
+            // If suggestion is for a meal and item exists, add to quantity
+            if (newItem.reason?.toLowerCase().includes('meal')) {
+              existingItem.quantity += newItem.quantity;
+            } else {
+              // Otherwise, just set the new quantity (for historical/waste suggestions)
+              existingItem.quantity = newItem.quantity;
+            }
             updatedList[existingItemIndex] = existingItem;
-          } else {
+          } else if (newItem.quantity > 0) { // Only add if the quantity is greater than 0
             // If item doesn't exist, add it
             const purchaseDate = new Date();
             updatedList.push({

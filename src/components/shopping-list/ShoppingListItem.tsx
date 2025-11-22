@@ -97,11 +97,20 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
           <p className={`font-medium transition-colors ${item.checked ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
             {item.name}
           </p>
-          <div className={`flex items-center gap-6 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className={`flex items-center gap-4 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
             <span>{item.quantity} {item.unit}</span>
+            {(item.category === 'Vegetables' || item.category === 'Fruits') && (
+              <span className="text-xs italic text-gray-400">
+                ({getApproximateWeightDisplay(item.quantity, item.unit, item.name)})
+              </span>
+            )}
+            <span className="text-gray-300">|</span>
             <span>₹{item.price?.toFixed(2) ?? '0.00'} / {item.unit}</span>
             {item.expiryDate && (
+              <>
+                <span className="text-gray-300">|</span>
                 <span>Expires: {format(new Date(item.expiryDate), 'do MMMM yyyy')}</span>
+              </>
             )}
           </div>
         </div>

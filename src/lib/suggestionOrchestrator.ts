@@ -140,7 +140,7 @@ export async function getSmartSuggestions(
     });
 
     // --- Compare with current shopping list and generate final suggestions ---
-    const finalSuggestions = [];
+    const finalSuggestions: (Suggestion & { reason: string, priority: 'high' | 'medium' | 'low' })[] = [];
 
     idealQuantities.forEach((idealItem, name) => {
         const shoppingListItem = shoppingList.find(item => item.name === name);
@@ -156,12 +156,15 @@ export async function getSmartSuggestions(
     shoppingList.forEach(shoppingListItem => {
         if (!idealQuantities.has(shoppingListItem.name)) {
             // If the ideal quantity is 0, but it's on the list, suggest reducing to 0
-            finalSuggestions.push({
-                ...shoppingListItem,
-                quantity: 0,
-                reason: "Not required based on current habits and plans",
-                priority: 'low',
-            });
+            const existingSuggestion = finalSuggestions.find(s => s.name === shoppingListItem.name);
+            if (!existingSuggestion) {
+                 finalSuggestions.push({
+                    ...shoppingListItem,
+                    quantity: 0,
+                    reason: "Not required based on current habits and plans",
+                    priority: 'low',
+                });
+            }
         }
     });
 
