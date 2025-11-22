@@ -135,7 +135,7 @@ export default function InventoryPage() {
       </div>
 
       <Card className="p-4">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-5">
             <input
                 type="text"
                 placeholder="Search ingredients..."
@@ -148,17 +148,14 @@ export default function InventoryPage() {
                 sortBy={sortBy}
                 setSortBy={setSortBy}
                 activeFilterCount={filterBy !== 'all' ? 1 : 0}
-                filterContent={
-                    <div className="flex flex-col gap-2">
-                        <h4 className="font-semibold">Filter by Status</h4>
-                        <button onClick={() => setFilterBy('all')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'all' ? 'bg-primary text-white' : 'bg-gray-200'}`}>All ({totalItems})</button>
-                        <button onClick={() => setFilterBy('fresh')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'fresh' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>Fresh ({categoryCounts.fresh})</button>
-                        <button onClick={() => setFilterBy('expiring-soon')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expiring-soon' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}>Expiring Soon ({categoryCounts.expiringSoon})</button>
-                        <button onClick={() => setFilterBy('expired')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expired' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Expired ({categoryCounts.expired})</button>
-                    </div>
-                }
             />
-        </div>
+            </div>
+                <div className="flex items-center gap-3 py-3">
+                    <button onClick={() => setFilterBy('all')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'all' ? 'bg-primary text-white' : 'bg-gray-200'}`}>All <span className={filterBy === 'all' ? 'text-white' : 'text-primary font-bold'}>({totalItems})</span></button>
+                    <button onClick={() => setFilterBy('fresh')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'fresh' ? 'bg-green-500 text-white' : 'bg-gray-200'}`}>Fresh <span className={filterBy === 'fresh' ? 'text-white' : 'text-green-500 font-bold'}>({categoryCounts.fresh})</span></button>
+                    <button onClick={() => setFilterBy('expiring-soon')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expiring-soon' ? 'bg-orange-500 text-white' : 'bg-gray-200'}`}>Expiring Soon <span className={filterBy === 'expiring-soon' ? 'text-white' : 'text-orange-500 font-bold'}>({categoryCounts.expiringSoon})</span></button>
+                    <button onClick={() => setFilterBy('expired')} className={`px-3 py-1 text-sm rounded-full ${filterBy === 'expired' ? 'bg-red-500 text-white' : 'bg-gray-200'}`}>Expired <span className={filterBy === 'expired' ? 'text-white' : 'text-red-500 font-bold'}>({categoryCounts.expired})</span></button>
+                </div>
     </Card>
       
         {inventory.length === 0 ? (
