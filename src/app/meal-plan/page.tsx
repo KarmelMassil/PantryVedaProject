@@ -180,10 +180,10 @@ export default function MealPlannerPage() {
               <button onClick={goToPreviousWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowLeft size={20}/></button>
               <h2 className="text-xl font-semibold w-32 text-center">{format(weekStart, 'MMMM yyyy')}</h2>
               <button onClick={goToNextWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowRight size={20}/></button>
-              <button onClick={() => setCurrentDate(new Date())} className="text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 rounded-lg px-4 py-2">Today</button>
+              <button onClick={() => setCurrentDate(new Date())} className="text-sm font-semibold bg-orange-500 text-white hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 shadow-md  rounded-lg px-4 py-2">Today</button>
             </div>
           </div>
-
+          
           <div className="space-y-2">
             {/* Header Row */}
             <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 p-3 font-bold text-gray-500 uppercase text-sm">

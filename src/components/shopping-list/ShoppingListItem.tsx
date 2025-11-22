@@ -84,7 +84,7 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
   }
 
   return (
-    <li className={`transition-all duration-200 rounded-lg group ${item.checked ? 'bg-gray-100' : 'bg-white hover:bg-gray-50'}`}>
+    <li className={`transition-all duration-200 rounded-lg group ${item.checked ? 'bg-gray-200' : 'bg-white hover:bg-gray-100'}`}>
       <div className="flex items-center gap-4 p-3">
         <input
           type="checkbox"

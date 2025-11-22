@@ -131,7 +131,7 @@ export default function InventoryPage() {
             </div>
           <Link 
             href="/scanner"
-            className="flex items-center gap-2 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition-colors"
+            className="flex items-center gap-2 bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md"
           >
             <PlusCircle size={20} /> Add New Ingredient
           </Link>

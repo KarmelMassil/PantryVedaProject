@@ -498,7 +498,7 @@ export default function AddRecipePage() {
                 />
                 <button
                   onClick={() => removeStep(idx)}
-                  className="p-2 text-red-500 hover:bg-red-50 rounded-lg mt-4"
+                  className="p-2 text-red-500 hover:bg-red-100 rounded-lg mt-4"
                 >
                   <Trash2 size={20} />
                 </button>
