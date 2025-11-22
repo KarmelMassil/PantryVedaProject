@@ -174,24 +174,47 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
             ></video>
             {!isCameraActive && (
                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4 bg-gray-50">
-                    <p className="font-semibold text-gray-700 mb-4 text-center">Photo Tips for Best Results:</p>
-                    <div className="grid grid-cols-2 gap-4 w-full">
-                      <div className="text-center">
-                        <Image src="/images/good-scan-example.jpg" alt="Good lighting, clear view" className="rounded-md border-2 border-green-400 aspect-square object-cover" width={150} height={150} />
-                        <div className="flex items-center justify-center mt-1">
-                          <CheckCircle size={16} className="text-green-600 mr-1" />
-                          <p className="text-xs font-medium text-gray-600">Clear & Well-Lit</p>
-                        </div>
-                      </div>
-                      <div className="text-center">
-                        <Image src="/images/bad-scan-example.jpg" alt="Blurry, dark, or cluttered" className="rounded-md border-2 border-red-400 aspect-square object-cover" width={150} height={150} />
-                         <div className="flex items-center justify-center mt-1">
-                          <XCircle size={16} className="text-red-600 mr-1" />
-                          <p className="text-xs font-medium text-gray-600">Blurry & Dark</p>
-                        </div>
-                      </div>
-                    </div>
-                </div>
+  <p className="font-semibold text-gray-700 mb-4 text-center">
+    Photo Tips for Best Results:
+  </p>
+
+  <div className="grid grid-cols-2 gap-4 w-full">
+
+    {/* GOOD BLOCK */}
+    <div className="flex flex-col items-center justify-center text-center">
+      <Image
+        src="/images/good-scan-example.jpg"
+        alt="Good lighting, clear view"
+        className="rounded-md border-2 border-green-400 aspect-square object-cover"
+        width={150}
+        height={150}
+      />
+
+      <div className="flex items-center justify-center mt-1">
+        <CheckCircle size={16} className="text-green-600 mr-1" />
+        <p className="text-xs font-medium text-gray-600">Clear & Well-Lit</p>
+      </div>
+    </div>
+
+    {/* BAD BLOCK */}
+    <div className="flex flex-col items-center justify-center text-center">
+      <Image
+        src="/images/bad-scan-example.jpg"
+        alt="Blurry, dark, or cluttered"
+        className="rounded-md border-2 border-red-400 aspect-square object-cover"
+        width={150}
+        height={150}
+      />
+
+      <div className="flex items-center justify-center mt-1">
+        <XCircle size={16} className="text-red-600 mr-1" />
+        <p className="text-xs font-medium text-gray-600">Blurry & Dark</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
             )}
           </>
         )}
@@ -205,7 +228,7 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
             <button onClick={handleStartCamera} disabled={isDetecting} className="bg-primary text-white font-semibold px-6 py-3 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-orange-600 transition-all duration-300 transform hover:scale-105 shadow-md disabled:opacity-50">
               <Camera size={20} /> Start Camera
             </button>
-            <button onClick={handleUploadClick} disabled={isDetecting} className="bg-white border-2 border-gray-300 text-text-primary font-semibold px-6 py-2.5 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-gray-100 hover:border-gray-400 transition-colors disabled:opacity-50">
+            <button onClick={handleUploadClick} disabled={isDetecting} className="bg-white border-2 border-gray-300 text-text-primary font-semibold px-6 py-2.5 rounded-lg w-full flex items-center justify-center gap-2 hover:bg-gray-100 hover:border-gray-400 transition-all duration-300 transform hover:scale-105 shadow-md disabled:opacity-50">
               <Upload size={20} /> Upload Image to Scan
             </button>
           </>

@@ -2,7 +2,7 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple, Info } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
@@ -96,7 +96,7 @@ export default function ShoppingListPage() {
   const handleGetSmartSuggestions = async () => {
     setIsSuggesting(true);
     setProposedSuggestions([]); // Clear old suggestions
-    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList);
+    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList, shoppingList);
     setProposedSuggestions(finalSuggestions);
     setIsSuggesting(false);
   };
@@ -166,33 +166,33 @@ export default function ShoppingListPage() {
   const estimatedTotal = Object.values(budgetSummary).reduce((total, category) => total + category.total, 0);
 
   return (
-    <div className="space-y-6">
-      <AddIngredientModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveNewIngredient}
-      />
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <ShoppingCart size={32} className="text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold text-text-primary">Smart Shopping List</h1>
-            <p className="text-text-secondary mt-1">
-              Plan your grocery runs, manage your budget, and never forget an item again.
-            </p>
-          </div>
+    <div className="space-y-2 py-1">
+  <AddIngredientModal 
+    isOpen={isModalOpen}
+    onClose={() => setIsModalOpen(false)}
+    onSave={handleSaveNewIngredient}
+  />
+
+  <div className="flex items-center justify-between">
+    
+    <div className="flex items-center gap-3">
+      <ShoppingCart className="text-primary" size={36} />
+      <div>
+        <h1 className="text-4xl font-bold text-text-primary tracking-tight">
+          Shopping List
+        </h1>
+        <div className="flex items-center gap-1.5">
+          <Info size={14} className="text-text-secondary" />
+          <p className="text-text-secondary font-medium">
+            Smart suggestions and your planned purchases
+          </p>
         </div>
-        <button
-          onClick={handleRestock}
-          disabled={checkedItemsCount === 0}
-          className={`flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
-            checkedItemsCount > 0 ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed'
-          }`}
-        >
-          <PackagePlus size={20} />
-          Restock Checked Items ({checkedItemsCount})
-        </button>
       </div>
+    </div>
+
+  </div>
+
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
@@ -329,6 +329,18 @@ export default function ShoppingListPage() {
         {/* Right Sidebar */}
         <div className="lg:col-span-1 space-y-6">
           <div className="sticky top-6 space-y-6">
+            {/* Restock Button */}
+            <button
+              onClick={handleRestock}
+              disabled={checkedItemsCount === 0}
+              className={`w-full flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
+                checkedItemsCount > 0 ? 'bg-green-500 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md' : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <PackagePlus size={20} />
+              Restock Checked Items ({checkedItemsCount})
+            </button>
+
             {/* Budget Summary */}
             <Card className="p-4">
               <div className="flex justify-between items-center mb-4">

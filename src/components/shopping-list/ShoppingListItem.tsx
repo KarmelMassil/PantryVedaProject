@@ -25,6 +25,7 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
   onEditSave,
 }) => {
   const totalPrice = (item.quantity * (item.price || 0)).toFixed(2);
+  const approxWeight = getApproximateWeightDisplay(item.quantity, item.unit, item.name);
 
   if (isEditing) {
     return (
@@ -70,7 +71,7 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-4">
-          <button onClick={() => onEditSave(item.id)} className="flex items-center justify-center gap-2 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 text-sm font-semibold">
+          <button onClick={() => onEditSave(item.id)} className="flex items-center justify-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 text-sm font-semibold">
             <Save size={16} />
             Save
           </button>
@@ -97,11 +98,20 @@ const ShoppingListItemComponent: React.FC<ShoppingListItemProps> = ({
           <p className={`font-medium transition-colors ${item.checked ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
             {item.name}
           </p>
-          <div className={`flex items-center gap-6 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
+          <div className={`flex items-center gap-4 text-sm transition-colors ${item.checked ? 'text-gray-400' : 'text-gray-500'}`}>
             <span>{item.quantity} {item.unit}</span>
+            {approxWeight && (
+              <span className="text-xs italic text-gray-400">
+                ({approxWeight})
+              </span>
+            )}
+            <span className="text-gray-300">|</span>
             <span>₹{item.price?.toFixed(2) ?? '0.00'} / {item.unit}</span>
             {item.expiryDate && (
+              <>
+                <span className="text-gray-300">|</span>
                 <span>Expires: {format(new Date(item.expiryDate), 'do MMMM yyyy')}</span>
+              </>
             )}
           </div>
         </div>

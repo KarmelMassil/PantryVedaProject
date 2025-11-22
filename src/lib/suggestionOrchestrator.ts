@@ -68,7 +68,8 @@ export async function getSmartSuggestions(
     wasteLog: WasteEvent[],
     mealPlan: MealPlan,
     recipes: Recipe[],
-    masterIngredientList: MasterIngredient[]
+    masterIngredientList: MasterIngredient[],
+    shoppingList: ShoppingListItem[]
 ) {
     const isModelAlreadyTrained = await hasTrainedModel();
     const hasEnoughData = consumptionLog.length >= MIN_DATA_POINTS_FOR_TRAINING;
@@ -104,32 +105,32 @@ export async function getSmartSuggestions(
 
     // --- Merge with Meal Plan Demand ---
     const mealPlanDemand = calculateMealPlanDemand(mealPlan, recipes, masterIngredientList);
-    const finalSuggestions = new Map<string, Suggestion & { reason: string, priority: 'high' | 'medium' | 'low' }>();
+    const idealQuantities = new Map<string, Suggestion & { reason: string, priority: 'high' | 'medium' | 'low' }>();
 
     //  Add historical suggestions first
     historicalSuggestions.forEach(s => {
-        finalSuggestions.set(s.name, {
+        idealQuantities.set(s.name, {
             ...s,
-            reason: s.priority || "Based on consumption history",
-            priority: s.priority || 'Low',
+            reason: s.reason || "Based on consumption history",
+            priority: s.priority || 'low',
         });
     });
 
     //  Add or update with meal plan demand
     mealPlanDemand.forEach((demand, name) => {
-        const existingSuggestion = finalSuggestions.get(name)
+        const existingSuggestion = idealQuantities.get(name)
         const inventoryItem = inventory.find(i => i.name === name);
         const currentStock = inventoryItem ? inventoryItem.quantity : 0;
         const neededForRecipes = Math.max(0, demand.quantity - currentStock);
 
         if (neededForRecipes > (existingSuggestion?.quantity ?? 0)) {
             const dbItem = masterIngredientList.find(i => i.name.toLowerCase() === name.toLowerCase());
-            finalSuggestions.set(name, {
+            idealQuantities.set(name, {
                 name: name,
                 quantity: Math.ceil(neededForRecipes),
                 unit: dbItem?.unit || 'pcs',
                 reason: existingSuggestion
-                    ? "Needed for upcoming meals"
+                    ? "Increased quantity for meal plan"
                     : "Required for your planned meals",
                 priority: 'high',
                 category: dbItem?.category || "Other",
@@ -138,5 +139,35 @@ export async function getSmartSuggestions(
         }
     });
 
-    return Array.from(finalSuggestions.values());
+    // --- Compare with current shopping list and generate final suggestions ---
+    const finalSuggestions: (Suggestion & { reason: string, priority: 'high' | 'medium' | 'low' })[] = [];
+
+    idealQuantities.forEach((idealItem, name) => {
+        const shoppingListItem = shoppingList.find(item => item.name === name);
+        const currentQuantity = shoppingListItem ? shoppingListItem.quantity : 0;
+
+        // Only create a suggestion if the ideal quantity is different from the current quantity
+        if (idealItem.quantity !== currentQuantity) {
+            finalSuggestions.push(idealItem);
+        }
+    });
+
+    // Also check for items on the shopping list that are NOT in the ideal plan (suggest removal/reduction)
+    shoppingList.forEach(shoppingListItem => {
+        if (!idealQuantities.has(shoppingListItem.name)) {
+            // If the ideal quantity is 0, but it's on the list, suggest reducing to 0
+            const existingSuggestion = finalSuggestions.find(s => s.name === shoppingListItem.name);
+            if (!existingSuggestion) {
+                 finalSuggestions.push({
+                    ...shoppingListItem,
+                    quantity: 0,
+                    reason: "Not required based on current habits and plans",
+                    priority: 'low',
+                });
+            }
+        }
+    });
+
+
+    return finalSuggestions;
 }

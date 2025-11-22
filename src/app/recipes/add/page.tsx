@@ -4,7 +4,7 @@ import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Recipe } from '@/types';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { Card } from '@/components/ui/Card';
-import { Plus, Trash2, Save, PlusCircle } from 'lucide-react';
+import { Plus, Trash2, Save, Upload, Clock, Users, Flame, GripVertical, Search, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AddIngredientModal } from '@/components/AddIngredientModal'; // Import the modal
 
@@ -61,12 +61,12 @@ export default function AddRecipePage() {
 
 
         const finalIngredientData = { ...newDbIngredient, name: formattedName };
-        
+
         addMasterIngredient(finalIngredientData);
         addToast(`'${formattedName}' added to database.`, 'success');
         setCurrentIngredient(finalIngredientData);
         setCurrentQty('1');
-        
+
         setIsAddIngredientModalOpen(false);
 
     };
@@ -105,8 +105,12 @@ export default function AddRecipePage() {
             />
 
             <div className="space-y-6 max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold">Add Your Custom Dish</h1>
-                
+                {/* Header */}
+            <div className="flex items-center gap-3">
+                <PlusCircle className="text-primary" size={36} />
+            <h1 className="text-3xl font-bold text-gray-800">Add Your Custom Dish</h1>
+            </div>
+
                 {/* --- UPDATED RECIPE DETAILS CARD --- */}
                 <Card className="p-6 space-y-4">
                     <input type="text" placeholder="Dish Name (e.g., Vegetable Pulao)" value={name} onChange={e => setName(e.target.value)} className="w-full text-2xl font-bold p-2 border-b-2 focus:outline-none focus:border-accent-primary" />
@@ -174,7 +178,7 @@ export default function AddRecipePage() {
                         )}
                     </div>
                 </Card>
-                
+
                 <Card className="p-6">
                     <h2 className="text-xl font-bold mb-4">Instructions</h2>
                     <textarea placeholder="Enter each step on a new line..." value={instructions} onChange={e => setInstructions(e.target.value)} className="w-full p-2 border rounded-md h-40" />

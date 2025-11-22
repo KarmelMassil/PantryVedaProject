@@ -150,17 +150,21 @@ export function convertUnit(
  * This should NOT be used for inventory calculations.
  * @param quantity The number of pieces.
  * @param ingredientName The name of the ingredient.
- * @returns A string like " (approx. 1.2 kg)" or an empty string.
+ * @returns A string like "approx. 1.2 kg" or an empty string.
  */
-export function getApproximateWeightDisplay(quantity: number, ingredientName: string): string {
-  const lowerCaseName = ingredientName.toLowerCase();
-  const pieceWeight = Object.keys(averagePieceWeight).find(key => lowerCaseName.includes(key));
+export function getApproximateWeightDisplay(quantity: number, unit: Unit, ingredientName: string): string {
+  if (unit !== 'pcs' && unit !== 'bunches') {
+    return '';
+  }
 
-  if (pieceWeight) {
-    const totalGrams = quantity * averagePieceWeight[pieceWeight];
+  const lowerCaseName = ingredientName.toLowerCase();
+  const pieceWeightKey = Object.keys(averagePieceWeight).find(key => lowerCaseName.includes(key));
+
+  if (pieceWeightKey) {
+    const totalGrams = quantity * averagePieceWeight[pieceWeightKey];
     const totalKg = totalGrams / 1000;
-    if (totalKg > 0.1) { // Only show if it's a meaningful weight
-        return ` (approx. ${totalKg.toFixed(1)} kg)`;
+    if (totalKg > 0.05) { // Only show if it's a meaningful weight (e.g., > 50g)
+        return `approx. ${totalKg.toFixed(2)} kg`;
     }
   }
   return '';

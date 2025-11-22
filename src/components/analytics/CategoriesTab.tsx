@@ -24,7 +24,7 @@ export const CategoriesTab: React.FC<CategoriesTabProps> = ({ data, inventory })
 
   return (
     <div>
-      <h3 className="text-xl font-bold mb-4">Category Analysis</h3>
+      <h3 className="text-xl font-bold">Category Analysis</h3>
       <p className="text-text-secondary mb-4">Value distribution across ingredient categories.</p>
       {dataToShow.length > 0 ? (
         <div className="space-y-3">
