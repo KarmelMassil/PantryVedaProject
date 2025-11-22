@@ -4,7 +4,7 @@ import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Recipe } from '@/types';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { Card } from '@/components/ui/Card';
-import { Plus, Trash2, Save, PlusCircle } from 'lucide-react';
+import { Plus, Trash2, Save, Upload, Clock, Users, Flame, GripVertical, Search, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AddIngredientModal } from '@/components/AddIngredientModal'; // Import the modal
 
@@ -30,6 +30,7 @@ export default function AddRecipePage() {
     >([]);
 
     const [currentIngredient, setCurrentIngredient] = useState<MasterIngredient | null>(null);
+    const [ingredientQuery, setIngredientQuery] = useState('');
     const [currentQty, setCurrentQty] = useState('1');
     const [isAddIngredientModalOpen, setIsAddIngredientModalOpen] = useState(false);
 
@@ -60,12 +61,12 @@ export default function AddRecipePage() {
 
 
         const finalIngredientData = { ...newDbIngredient, name: formattedName };
-        
+
         addMasterIngredient(finalIngredientData);
         addToast(`'${formattedName}' added to database.`, 'success');
         setCurrentIngredient(finalIngredientData);
         setCurrentQty('1');
-        
+
         setIsAddIngredientModalOpen(false);
 
     };
@@ -82,7 +83,7 @@ export default function AddRecipePage() {
             cuisine,
             difficulty: 'intermediate',
             cookingTime,
-            servings,
+             baseServings: servings,
             dietary: ['veg'],
             ingredients,
             instructions: instructions.split('\n').filter(line => line.trim() !== ''), // Split and remove empty lines
@@ -104,8 +105,12 @@ export default function AddRecipePage() {
             />
 
             <div className="space-y-6 max-w-4xl mx-auto">
-                <h1 className="text-3xl font-bold">Add Your Custom Dish</h1>
-                
+                {/* Header */}
+            <div className="flex items-center gap-3">
+                <PlusCircle className="text-primary" size={36} />
+            <h1 className="text-3xl font-bold text-gray-800">Add Your Custom Dish</h1>
+            </div>
+
                 {/* --- UPDATED RECIPE DETAILS CARD --- */}
                 <Card className="p-6 space-y-4">
                     <input type="text" placeholder="Dish Name (e.g., Vegetable Pulao)" value={name} onChange={e => setName(e.target.value)} className="w-full text-2xl font-bold p-2 border-b-2 focus:outline-none focus:border-accent-primary" />
@@ -154,7 +159,16 @@ export default function AddRecipePage() {
                          {ingredients.length === 0 && <p className="text-sm text-gray-500 text-center">No ingredients added yet.</p>}
                     </div>
                     <div className="p-4 border-t space-y-3">
-                        <IngredientAutocomplete masterList={masterIngredientList} onSelect={setCurrentIngredient} />
+                        <IngredientAutocomplete
+                            masterList={masterIngredientList}
+                            value={ingredientQuery}
+                            onChange={setIngredientQuery}
+                            onSelect={(ing) => {
+                                setCurrentIngredient(ing);
+                                setIngredientQuery('');
+                            }}
+                            onAddNew={() => setIsAddIngredientModalOpen(true)}
+                        />
                         {currentIngredient && (
                             <div className="flex items-center gap-2">
                                <input type="number" value={currentQty} onChange={e => setCurrentQty(e.target.value)} className="w-24 p-2 border rounded-md" placeholder='Qty'/>
@@ -162,17 +176,9 @@ export default function AddRecipePage() {
                                <button onClick={handleAddIngredientToList} className="ml-auto bg-accent-secondary text-white p-2 rounded-lg"><Plus /></button>
                             </div>
                         )}
-                        {/* --- BUTTON TO ADD NEW INGREDIENT TO DATABASE --- */}
-                        <button 
-                            onClick={() => setIsAddIngredientModalOpen(true)}
-                            className="w-full text-sm flex items-center justify-center gap-1 text-accent-secondary font-semibold hover:underline mt-2"
-                        >
-                            <PlusCircle size={16} />
-                            Ingredient not found? Add to Database
-                        </button>
                     </div>
                 </Card>
-                
+
                 <Card className="p-6">
                     <h2 className="text-xl font-bold mb-4">Instructions</h2>
                     <textarea placeholder="Enter each step on a new line..." value={instructions} onChange={e => setInstructions(e.target.value)} className="w-full p-2 border rounded-md h-40" />

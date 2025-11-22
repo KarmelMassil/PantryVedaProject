@@ -50,6 +50,12 @@ export interface DayPlan {
 // Define the main meal plan structure
 export type MealPlan = Record<string, DayPlan>; // Key is ISO date string 'YYYY-MM-DD'
 
+export interface WeeklySnapshot {
+  date: string; // ISO date string 'YYYY-MM-DD'
+  totalItems: number;
+  totalValue: number;
+  freshItems: number;
+}
 
 interface PantryState {
   masterIngredientList: MasterIngredient[];
@@ -60,7 +66,9 @@ interface PantryState {
   mealPlan: MealPlan; 
   consumptionLog: ConsumptionEvent[];
   wasteLog: WasteEvent[];
+  weeklySnapshots: WeeklySnapshot[];
   toasts: Toast[];
+  recipeIngredientFilter: string | null;
   addMasterIngredient: (ingredient: MasterIngredient) => void;
   addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
   removeIngredient: (id: string) => void;
@@ -78,8 +86,10 @@ interface PantryState {
   deductFromInventory: (name: string, quantity: number) => void;
   restockCheckedItems: () => void;
   addRecipe: (recipe: Recipe) => void;
+  createWeeklySnapshot: () => void;
   addToast: (message: string, type?: ToastType) => void;
   removeToast: (id: string) => void;
+  setRecipeIngredientFilter: (ingredientName: string | null) => void;
 }
 
 export const usePantryStore = create<PantryState>()(
@@ -99,7 +109,9 @@ export const usePantryStore = create<PantryState>()(
       mealPlan: {},
       consumptionLog: [],
       wasteLog: [],
+      weeklySnapshots: [],
       toasts: [],
+      recipeIngredientFilter: null,
 
       addMasterIngredient: (ingredient) =>
         set((state) => ({
@@ -129,8 +141,7 @@ export const usePantryStore = create<PantryState>()(
         })),
       
       addItemsToShoppingList: (itemsToAdd) => {
-        const { shoppingList } = get();
-        const updatedList = [...shoppingList];
+        let updatedList = [...get().shoppingList];
 
         itemsToAdd.forEach(newItem => {
           const existingItemIndex = updatedList.findIndex(
@@ -138,16 +149,29 @@ export const usePantryStore = create<PantryState>()(
           );
 
           if (existingItemIndex > -1) {
-            // If item exists, just add to its quantity
-            updatedList[existingItemIndex].quantity += newItem.quantity;
-          } else if (existingItemIndex === -1) {
-            // If item doesn't exist, add it with additional fields
+            // If the suggestion is to set quantity to 0, remove the item
+            if (newItem.quantity === 0) {
+                updatedList = updatedList.filter((_, index) => index !== existingItemIndex);
+                return; // continue to next item
+            }
+
+            const existingItem = updatedList[existingItemIndex];
+            // If suggestion is for a meal and item exists, add to quantity
+            if (newItem.reason?.toLowerCase().includes('meal')) {
+              existingItem.quantity += newItem.quantity;
+            } else {
+              // Otherwise, just set the new quantity (for historical/waste suggestions)
+              existingItem.quantity = newItem.quantity;
+            }
+            updatedList[existingItemIndex] = existingItem;
+          } else if (newItem.quantity > 0) { // Only add if the quantity is greater than 0
+            // If item doesn't exist, add it
             const purchaseDate = new Date();
             updatedList.push({
                 ...newItem,
                 id: crypto.randomUUID(),
                 checked: false,
-                price: 0,
+                price: 0, // Default price, can be edited
                 expiryDate: formatISO(addDays(purchaseDate, newItem.defaultExpiryDays || 14)),
             });
           }
@@ -262,6 +286,24 @@ export const usePantryStore = create<PantryState>()(
           recipes: [...state.recipes, recipe],
         })),
 
+        createWeeklySnapshot: () => {
+        const { inventory, weeklySnapshots } = get();
+        const today = new Date();
+        const lastSnapshotDate = weeklySnapshots.length > 0 ? new Date(weeklySnapshots[weeklySnapshots.length - 1].date) : null;
+        if (!lastSnapshotDate || today.getTime() - lastSnapshotDate.getTime() > 7 * 24 * 60 * 60 * 1000) {
+          const totalItems = inventory.length;
+          const totalValue = inventory.reduce((sum, item) => sum + item.value, 0);
+          const freshItems = inventory.filter(item => new Date(item.expiryDate) > new Date()).length;
+          const newSnapshot: WeeklySnapshot = {
+            date: today.toISOString(),
+            totalItems,
+            totalValue,
+            freshItems,
+          };
+          set({ weeklySnapshots: [...weeklySnapshots, newSnapshot] });
+        }
+      },
+
         addToast: (message, type = 'info') => {
         const id = crypto.randomUUID();
         set((state) => ({
@@ -273,6 +315,8 @@ export const usePantryStore = create<PantryState>()(
         set((state) => ({
           toasts: state.toasts.filter((toast) => toast.id !== id),
         })),
+
+      setRecipeIngredientFilter: (ingredientName) => set({ recipeIngredientFilter: ingredientName }),
     }),
     {
       name: 'pantryveda-storage',

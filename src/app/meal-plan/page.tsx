@@ -1,11 +1,11 @@
 "use client";
 import React, { useState, useMemo } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from '@dnd-kit/core';
 import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { DraggableRecipeCard } from '@/components/meal-plan/DraggableRecipeCard';
 import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
 import { format, addDays, startOfWeek, subDays, endOfWeek, set } from 'date-fns';
-import { ArrowLeft, ArrowRight, ShoppingCart, Search } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShoppingCart, Search, CalendarDays, Calendar, Coffee, Soup, Utensils, Beef, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RecipeModal } from '@/components/RecipeModal';
 import { Recipe } from '@/types';
@@ -17,7 +17,7 @@ type CookingContext = { date: string, meal: keyof DayPlan } | null;
 export default function MealPlannerPage() {
   const { recipes, mealPlan, inventory, assignRecipeToMeal, addItemsToShoppingList, logConsumption, deductFromInventory, preferences, addToast } = usePantryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [activeRecipe, setActiveRecipe] = useState<string | null>(null);
+  const [activeRecipe, setActiveRecipe] = useState<Recipe | null>(null);
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
@@ -27,16 +27,20 @@ export default function MealPlannerPage() {
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    if (active.data.current?.recipe) {
+      setActiveRecipe(active.data.current.recipe as Recipe);
+    }
+  };
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { over, active } = event;
-    setActiveRecipe(null); 
-    if (over && over.data.current && active.data.current) {
-      const recipeId = active.data.current.recipeId as string;
-      const recipe = recipes.find(r => r.id === recipeId);
-      if (!recipe) return;
-
+    setActiveRecipe(null);
+    if (over && over.data.current && active.data.current?.recipe) {
+      const recipe = active.data.current.recipe as Recipe;
       const { date, meal } = over.data.current as { date: string; meal: keyof DayPlan };
-      assignRecipeToMeal(date, meal, recipeId, recipe.baseServings);
+      assignRecipeToMeal(date, meal, recipe.id, recipe.baseServings);
     }
   };
 
@@ -90,6 +94,14 @@ export default function MealPlannerPage() {
     );
   }, [recipes, searchQuery]);
 
+  const assignedRecipeIds = useMemo(() => {
+    return new Set(
+      Object.values(mealPlan).flatMap(dayPlan =>
+        Object.values(dayPlan).map(meal => meal?.recipeId)
+      ).filter(Boolean)
+    );
+  }, [mealPlan]);
+
   // --- CALCULATE SUGGESTIONS ---
   const weekDays = Array.from({ length: 7 }).map((_, i) => addDays(startOfWeek(currentDate, { weekStartsOn: 1 }), i));
 
@@ -111,7 +123,7 @@ export default function MealPlannerPage() {
         };
     }
     return dailySuggestions;
-  }, [inventory, mealPlan, recipes, preferences, currentDate]);
+  }, [inventory, mealPlan, recipes, preferences, weekDays]);
   
 
   return (
@@ -127,13 +139,13 @@ export default function MealPlannerPage() {
           onFinishCooking={handleFinishCooking}
         />
       )}
-      <DndContext onDragEnd={handleDragEnd}>
-        <div className="flex h-full gap-6">
+      <DndContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="flex h-full gap-6 overflow-hidden">
           <aside className="w-64 bg-white p-4 rounded-xl shadow-md flex-shrink-0">
             <h2 className="text-xl font-bold mb-4">Recipes</h2>
             {/* --- SEARCH BAR --- */}
             <div className="relative mb-4">
-                <input 
+                <input
                     type="text"
                     placeholder="Search recipes..."
                     value={searchQuery}
@@ -143,36 +155,84 @@ export default function MealPlannerPage() {
                 <Search size={16} className="absolute left-2 top-2.5 text-gray-400" />
             </div>
 
-            <div className="h-[calc(100vh-220px)] overflow-y-auto pr-2">
+            <div className="h-[calc(100vh-220px)] overflow-y-auto overflow-x-hidden pr-2">
               {filteredRecipes.map(recipe => (
-                <DraggableRecipeCard 
-                  key={recipe.id} 
-                  recipe={recipe} 
-                  onView={handleOpenViewModal} 
+                <DraggableRecipeCard
+                  key={recipe.id}
+                  recipe={recipe}
+                  onView={handleOpenViewModal}
+                  isAssigned={assignedRecipeIds.has(recipe.id)}
                 />
               ))}
             </div>
           </aside>
 
-        <main className="flex-1">
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold text-text-primary">Weekly Meal Planner</h1>
-            <div className="flex items-center gap-4">
-              <button onClick={goToPreviousWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowLeft size={20}/></button>
-              <h2 className="text-xl font-semibold">{format(weekStart, 'MMMM yyyy')}</h2>
-              <button onClick={goToNextWeek} className="p-2 rounded-full hover:bg-gray-200"><ArrowRight size={20}/></button>
+        <main className="flex-1 min-w-0 flex flex-col">
+          <div className="space-y-2 py-1 mb-4 flex-shrink-0">
+            <div className="flex items-center justify-between">
+
+              {/* LEFT: ICON + TITLE + SUBHEADER */}
+              <div className="flex items-center gap-3">
+                <CalendarDays className="text-primary" size={36} />
+                <div>
+                  <h1 className="text-4xl font-bold text-text-primary tracking-tight">
+                    Meal Planner
+                  </h1>
+                  <div className="flex items-center gap-1.5">
+                    <Info size={14} className="text-text-secondary" />
+                    <p className="text-text-secondary font-medium">
+                      Drag and drop recipes to plan your week
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT: WEEK CONTROLS */}
+              <div className="flex items-center gap-4">
+                <button onClick={goToPreviousWeek} className="p-2 rounded-full hover:bg-gray-200">
+                  <ArrowLeft size={20}/>
+                </button>
+
+                <h2 className="text-xl font-semibold w-32 text-center">
+                  {format(weekStart, 'MMMM yyyy')}
+                </h2>
+
+                <button onClick={goToNextWeek} className="p-2 rounded-full hover:bg-gray-200">
+                  <ArrowRight size={20}/>
+                </button>
+
+                <button
+                  onClick={() => setCurrentDate(new Date())}
+                  className="text-sm font-semibold bg-primary text-white hover:bg-primary/90 transition-all duration-300 transform hover:scale-105 shadow-md rounded-lg px-4 py-2"
+                >
+                  Today
+                </button>
+              </div>
+
             </div>
+
           </div>
 
-          <div className="grid grid-cols-7 gap-4">
+          <div className="space-y-2">
+            {/* Header Row */}
+            <div className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 p-3 font-bold text-gray-500 uppercase text-sm">
+              <div className="text-center flex items-center justify-center gap-2"><Calendar size={16} />Day</div>
+              <div className="text-center flex items-center justify-center gap-2"><Coffee size={16} />Breakfast</div>
+              <div className="text-center flex items-center justify-center gap-2"><Beef size={16} />Lunch</div>
+              <div className="text-center flex items-center justify-center gap-2"><Soup size={16} />Dinner</div>
+            </div>
+
+            {/* Day Rows */}
             {weekDays.map(day => {
               const dateString = format(day, 'yyyy-MM-dd');
               const dayPlan = mealPlan[dateString];
               const daySuggestions = suggestions[dateString];
               return (
-                <div key={dateString} className="bg-white/60 p-3 rounded-lg space-y-3">
-                  <p className="font-bold text-center">{format(day, 'EEE')}</p>
-                  <p className="text-2xl font-bold text-center text-accent-primary">{format(day, 'd')}</p>
+                <div key={dateString} className="grid grid-cols-[10rem_1fr_1fr_1fr] gap-2 items-center bg-white/60 p-1 rounded-lg">
+                  <div className="text-center">
+                    <p className="font-bold text-md">{format(day, 'EEE')}</p>
+                    <p className="text-3xl font-bold text-orange-500">{format(day, 'd')}</p>
+                  </div>
                   <DroppableMealSlot date={dateString} meal="breakfast" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.breakfast?.recipeId ? daySuggestions?.breakfast : undefined} />
                   <DroppableMealSlot date={dateString} meal="lunch" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.lunch?.recipeId ? daySuggestions?.lunch : undefined} />
                   <DroppableMealSlot date={dateString} meal="dinner" mealPlan={dayPlan} onViewRecipe={handleOpenViewModal} suggestion={!dayPlan?.dinner?.recipeId ? daySuggestions?.dinner : undefined} />
@@ -184,9 +244,7 @@ export default function MealPlannerPage() {
       </div>
       <DragOverlay>
         {activeRecipe ? (
-          <div className="p-2 bg-white border rounded-lg shadow-lg">
-            {recipes.find(r => r.id === activeRecipe)?.name}
-          </div>
+          <DraggableRecipeCard recipe={activeRecipe} onView={() => {}} isOverlay />
         ) : null}
       </DragOverlay>
     </DndContext>

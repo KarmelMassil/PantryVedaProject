@@ -2,13 +2,12 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search } from 'lucide-react';
+import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple, Info } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { format, formatISO } from 'date-fns';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
-import { getApproximateWeightDisplay } from '@/lib/unitConverter';
-import { error } from 'console';
+import { ShoppingListItem as ShoppingListItemComponent } from '@/components/shopping-list/ShoppingListItem';
 
 // Helper function to format ingredient names to Title Case
 const toTitleCase = (str: string): string => {
@@ -17,7 +16,7 @@ const toTitleCase = (str: string): string => {
 };
 
 // Define the type for our suggestions
-type Suggestion = Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> & { reason: string, priority: 'high' | 'medium' | 'low' };
+type Suggestion = Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> & { reason: string, priority: 'high' | 'medium' | 'low', emoji?: string };
 
 export default function ShoppingListPage() {
   const { 
@@ -42,6 +41,9 @@ export default function ShoppingListPage() {
   const [proposedSuggestions, setProposedSuggestions] = useState<Suggestion[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchOrAddQuery, setSearchOrAddQuery] = useState('');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [originalItem, setOriginalItem] = useState<ShoppingListItem | null>(null);
 
   const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
     const formattedName = toTitleCase(ingredient.name.trim());
@@ -70,10 +72,29 @@ export default function ShoppingListPage() {
     setItemQuantity('1');
   };
 
+  const handleEditStart = (item: ShoppingListItem) => {
+    setEditingItemId(item.id);
+    setOriginalItem(item); // Save the original state
+  };
+
+  const handleEditCancel = () => {
+    if (originalItem) {
+      updateShoppingListItem(originalItem.id, originalItem); // Restore original state
+    }
+    setEditingItemId(null);
+    setOriginalItem(null);
+  };
+
+  const handleEditSave = (id: string) => {
+    setEditingItemId(null);
+    setOriginalItem(null);
+    addToast('Item updated successfully!', 'success');
+  };
+
   const handleGetSmartSuggestions = async () => {
     setIsSuggesting(true);
     setProposedSuggestions([]); // Clear old suggestions
-    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList);
+    const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList, shoppingList);
     setProposedSuggestions(finalSuggestions);
     setIsSuggesting(false);
   };
@@ -95,210 +116,252 @@ export default function ShoppingListPage() {
   const findItemInList = (name: string) => shoppingList.find(item => item.name === name);
 
   const handleRestock = () => {
-    if (window.confirm("Are you sure you want to add all checked items to your pantry and remove them from this list?")) {
         restockCheckedItems();
-    }
  };
 
-  const categorizedList = useMemo(() => {
-    const filteredList = shoppingList.filter(item =>
+  const filteredList = useMemo(() =>
+    shoppingList.filter(item =>
       item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    return filteredList.reduce((acc, item) => {
+    ), [shoppingList, searchQuery]);
+
+  const categorizedList = useMemo(() =>
+    filteredList.reduce((acc, item) => {
       const category = item.category || 'Other';
       if (!acc[category]) acc[category] = [];
       acc[category].push(item);
       return acc;
-    }, {} as Record<string, ShoppingListItem[]>);
-  }, [shoppingList, searchQuery]); 
+    }, {} as Record<string, ShoppingListItem[]>),
+  [filteredList]);
+
+
+  const budgetSummary = useMemo(() =>
+    shoppingList.reduce((acc, item) => {
+      const category = item.category || 'Other';
+      if (!acc[category]) {
+        acc[category] = { total: 0, count: 0 };
+      }
+      const itemTotal = (item.quantity || 0) * (item.price || 0);
+      acc[category].total += itemTotal;
+      acc[category].count += 1;
+      return acc;
+    }, {} as Record<string, { total: number; count: number }>),
+  [shoppingList]);
+
+  const checkedItemsCount = shoppingList.filter(item => item.checked).length;
+  const estimatedTotal = Object.values(budgetSummary).reduce((total, category) => total + category.total, 0);
 
   return (
-    <>
-      <AddIngredientModal 
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveNewIngredient}
-      />
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Main Content */}
-      <div className="flex-grow space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-text-primary">Smart Shopping List</h1>
-          <div>
-             <button
-                onClick={handleRestock}
-                className="flex items-center gap-2 bg-accent-secondary text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <PackagePlus size={20} />
-                Restock Checked Items
-              </button>
-          </div>
+    <div className="space-y-2 py-1">
+  <AddIngredientModal 
+    isOpen={isModalOpen}
+    onClose={() => setIsModalOpen(false)}
+    onSave={handleSaveNewIngredient}
+  />
+
+  <div className="flex items-center justify-between">
+    
+    <div className="flex items-center gap-3">
+      <ShoppingCart className="text-primary" size={36} />
+      <div>
+        <h1 className="text-4xl font-bold text-text-primary tracking-tight">
+          Shopping List
+        </h1>
+        <div className="flex items-center gap-1.5">
+          <Info size={14} className="text-text-secondary" />
+          <p className="text-text-secondary font-medium">
+            Smart suggestions and your planned purchases
+          </p>
         </div>
+      </div>
+    </div>
 
-        {/* AutoComplete Form */}
-        <Card>
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="font-bold mb-2">Add Ingredient from Database</h3>
-            <button 
-                  onClick={() => setIsModalOpen(true)}
-                  className="text-sm flex items-center gap-1 text-accent-secondary font-semibold hover:underline"
-                >
-                  <PlusCircle size={16} />
-                  New to Database?
-            </button>
-          </div>
-          <div className="space-y-2">
-            <IngredientAutocomplete 
+  </div>
+
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+
+          {/* Search and Add */}
+          <div className="relative">
+            <IngredientAutocomplete
               masterList={masterIngredientList}
-              onSelect={(ingredient) => setSelectedItem(ingredient)} 
-            />
-            {selectedItem && (
-              <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
-                <span className="font-semibold flex-grow">{selectedItem.name}</span>
-                <input 
-                  type="number" 
-                  value={itemQuantity}
-                  onChange={(e) => setItemQuantity(e.target.value)}
-                  className="w-20 p-2 border border-gray-300 rounded-md"
-                  placeholder="Qty"
-                />
-                <span className="text-sm text-gray-500">{selectedItem.unit}</span>
-                <button onClick={handleAddSelectedItem} className="bg-accent-primary text-white p-2 rounded-lg hover:bg-orange-700">
-                  <Plus size={24} />
-                </button>
-              </div>
-            )}
-          </div>
-        </Card>
-
-        {/* Search Bar */}
-        <div className="relative">
-            <input
-              type="text"
-              placeholder="Search your shopping list..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full p-3 pl-10 border rounded-lg"
+              onSelect={(ingredient) => {
+                const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
+                  name: ingredient.name,
+                  category: ingredient.category,
+                  quantity: 1,
+                  unit: ingredient.unit,
+                  defaultExpiryDays: ingredient.defaultExpiryDays || 14,
+                };
+                addItemsToShoppingList([itemToAdd]);
+                setSearchOrAddQuery('');
+              }}
+              onAddNew={() => setIsModalOpen(true)}
+              value={searchOrAddQuery}
+              onChange={(value) => {
+                setSearchOrAddQuery(value);
+                setSearchQuery(value);
+              }}
+              placeholder="Type to search or add..."
+              className="w-full pl-10"
             />
             <Search size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           </div>
 
-
-        {/* List */}
-        <div className="space-y-4">
-          {Object.entries(categorizedList).map(([category, items]) => (
-            <div key={category}>
-              <h2 className="text-xl font-bold text-text-primary mb-2">{category} ({items.length})</h2>
-              <Card className="p-0">
-                <ul className="divide-y divide-gray-200">
-                  {items.map(item => (
-                    <li key={item.id} className={`flex items-center gap-4 p-3 ${item.checked ? 'bg-gray-100/50' : ''}`}>
-                      <input 
-                        type="checkbox" 
-                        checked={item.checked}
-                        onChange={(e) => updateShoppingListItem(item.id, { checked: e.target.checked })}
-                        className="h-5 w-5 rounded border-gray-300 text-accent-secondary focus:ring-accent-secondary flex-shrink-0"
-                      />
-                      <div className={`flex-grow ${item.checked ? 'text-gray-400' : ''}`}>
-                        <p className={`font-semibold ${item.checked ? 'line-through' : ''}`}>{item.name}</p>
-                        <span className="text-xs text-text-secondary">{item.category}</span>
-                      </div>
-                      
-                      {/* --- INLINE EDITING FIELDS --- */}
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <input
-                          type="number"
-                          value={item.quantity}
-                          onChange={(e) => updateShoppingListItem(item.id, { quantity: parseFloat(e.target.value) || 0 })}
-                          className="w-16 p-1 border rounded-md text-sm text-right"
-                        />
-                        <span className="text-sm text-gray-500 w-24 text-left">{item.unit}{getApproximateWeightDisplay(item.quantity, item.name)}</span>
-                        <input
-                          type="number"
-                          value={item.price}
-                          onChange={(e) => updateShoppingListItem(item.id, { price: parseFloat(e.target.value) || 0 })}
-                          className="w-20 p-1 border rounded-md text-sm text-right"
-                          placeholder="₹ price"
-                        />
-                        <input
-                          type="date"
-                          value={format(new Date(item.expiryDate), 'yyyy-MM-dd')}
-                          onChange={(e) => updateShoppingListItem(item.id, { expiryDate: formatISO(e.target.valueAsDate!) })}
-                          className="w-32 p-1 border rounded-md text-sm"
-                        />
-                        <button onClick={() => removeShoppingListItem(item.id)} className="text-gray-400 hover:text-chili-red">
-                          <Trash2 size={18}/>
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
+          {/* Smart Suggestions */}
+          <div className="bg-gradient-to-br from-gray-50 to-purple-50 p-6 rounded-2xl shadow-sm border border-gray-200">
+            <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-xl flex items-center gap-3 text-gray-800">
+                    <Sparkles size={24} className="text-purple-600" />
+                    <span>Smart Suggestions</span>
+                </h3>
+                <div className="flex items-center gap-2">
+                    {proposedSuggestions.length > 0 && (
+                      <>
+                        <button onClick={handleAcceptAll} className="px-4 py-2 bg-purple-600 text-white text-sm font-semibold rounded-lg hover:bg-purple-700 transition-colors shadow-sm">Accept All</button>
+                        <button onClick={() => setProposedSuggestions([])} className="text-sm font-semibold text-gray-600 hover:text-gray-800 px-3 py-2 rounded-lg hover:bg-gray-200">Hide</button>
+                      </>
+                    )}
+                    <button onClick={handleGetSmartSuggestions} disabled={isSuggesting} className="p-2 text-gray-500 hover:text-black disabled:opacity-50 rounded-full hover:bg-gray-200 transition-colors">
+                        {isSuggesting ? <Loader2 className="animate-spin" size={20}/> : <RefreshCw size={20}/>}
+                    </button>
+                </div>
             </div>
-          ))}
-          {/* Show message if list is empty due to search */}
-          {shoppingList.length > 0 && Object.keys(categorizedList).length === 0 && (
-            <p className="text-center text-gray-500">No items match your search.</p>
-          )}
+            {isSuggesting ? (
+                <div className="text-center py-8 text-gray-600">
+                    <Loader2 className="animate-spin inline-block mr-2" />
+                    Analyzing your habits...
+                </div>
+            ) : proposedSuggestions.length > 0 ? (
+                <div className="flex overflow-x-auto gap-4 pb-4">
+                    {proposedSuggestions.map((suggestion, index) => {
+                        const existingItem = findItemInList(suggestion.name);
+                        return (
+                            <div key={index} className="min-w-[250px] max-w-[250px] bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-purple-100 shadow-md flex flex-col justify-between transition-transform hover:scale-105">
+                                <div>
+                                    <div className="flex items-start justify-between mb-2">
+                                        <div>
+                                            <p className="font-bold text-gray-800 text-lg">{suggestion.name}</p>
+                                        </div>
+                                        <div className="text-right">
 
+                                        </div>
+                                    </div>
+                                    {existingItem ? (
+                                        <p className="text-sm text-blue-600 font-semibold mb-3">
+                                            Update from {existingItem.quantity} to {suggestion.quantity} {suggestion.unit}
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm text-green-600 font-semibold mb-3">
+                                            Add {suggestion.quantity} {suggestion.unit} to list
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-gray-500 italic mb-3">{suggestion.reason}</p>
+                                </div>
+                                <div className="flex gap-2 mt-auto">
+                                    <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 px-3 py-1.5 bg-green-500 text-white text-xs font-bold rounded-md hover:bg-green-600 transition-all">Accept</button>
+                                    <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-bold rounded-md hover:bg-gray-200 transition-all">Dismiss</button>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            ) : (
+                <div className="text-center py-8 text-gray-500">
+                    <p>Click the refresh button to get smart suggestions based on your pantry and habits.</p>
+                </div>
+            )}
+          </div>
+
+          {/* Shopping List Items */}
+          <div className="space-y-6">
+            {shoppingList.length === 0 ? (
+              <div className="text-center py-20 text-gray-500 bg-gray-50 rounded-lg border-2 border-dashed">
+                  <ShoppingCart size={48} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold text-gray-700">Your Shopping List is Empty</h3>
+                  <p className="mt-1">Add items using the search bar or get smart suggestions!</p>
+              </div>
+            ) : Object.keys(categorizedList).length === 0 ? (
+              <div className="text-center py-20 text-gray-500">
+                  <Search size={48} className="mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-xl font-semibold">No items match your search.</h3>
+              </div>
+            ) : (
+              Object.entries(categorizedList).map(([category, items]) => (
+                <div key={category} className="p-5 rounded-xl border shadow-sm bg-white">
+                  <h2 className="text-xl font-bold text-text-primary mb-4">{category} ({items.length})</h2>
+                  <ul className="space-y-3">
+                      {items.map(item => (
+                          <ShoppingListItemComponent
+                              key={item.id}
+                              item={item}
+                              onUpdate={updateShoppingListItem}
+                              onDelete={removeShoppingListItem}
+                              isEditing={editingItemId === item.id}
+                              onEditStart={handleEditStart}
+                              onEditCancel={handleEditCancel}
+                              onEditSave={handleEditSave}
+                          />
+                      ))}
+                  </ul>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="lg:col-span-1 space-y-6">
+          <div className="sticky top-6 space-y-6">
+            {/* Restock Button */}
+            <button
+              onClick={handleRestock}
+              disabled={checkedItemsCount === 0}
+              className={`w-full flex items-center justify-center gap-2 text-white font-semibold px-4 py-3 rounded-lg transition-all text-base shadow-md hover:shadow-lg ${
+                checkedItemsCount > 0 ? 'bg-green-500 hover:bg-green-600 transition-all duration-300 transform hover:scale-105 shadow-md' : 'bg-gray-400 cursor-not-allowed'
+              }`}
+            >
+              <PackagePlus size={20} />
+              Restock Checked Items ({checkedItemsCount})
+            </button>
+
+            {/* Budget Summary */}
+            <Card className="p-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  <Tag size={20} /> Budget Summary
+                </h3>
+              </div>
+              <div className="space-y-4">
+                  <div className="text-center bg-gray-50 p-4 rounded-lg border">
+                      <p className="text-sm text-text-secondary">Estimated Total ({shoppingList.length} items)</p>
+                      <p className="text-3xl font-bold text-primary">₹{estimatedTotal.toFixed(2)}</p>
+                  </div>
+                  <div className="text-sm text-gray-600 space-y-3">
+                      <p className="font-semibold mb-1">Breakdown by Category:</p>
+                      {Object.entries(budgetSummary).length > 0 ? Object.entries(budgetSummary).map(([category, data]) => (
+                          <div key={category}>
+                            <div className="flex justify-between items-center font-medium">
+                                <span className="flex items-center gap-2">
+                                  {category} ({data.count})
+                                </span>
+                                <span>₹{data.total.toFixed(2)}</span>
+                            </div>
+                            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-1.5">
+                              <div
+                                className="bg-primary h-2.5 rounded-full"
+                                style={{ width: `${estimatedTotal > 0 ? ((data.total / estimatedTotal) * 100).toFixed(0) : 0}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                      )) : <p className="text-center text-gray-500 py-3">No items with prices yet.</p>}
+                  </div>
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
-
-      {/* Sidebar */}
-      <div className="lg:w-80 flex-shrink-0 space-y-6">
-        <Card>
-            <h3 className="font-bold text-lg mb-2">Budget Summary</h3>
-            <div className="text-center bg-gray-50 p-4 rounded-lg">
-                <p className="text-text-secondary">Estimated Total</p>
-                <p className="text-3xl font-bold text-accent-primary">₹0.00</p>
-                <p className="text-xs text-text-secondary mt-1">(Price estimation coming soon)</p>
-            </div>
-        </Card>
-         <Card className="bg-yellow-50 border-yellow-200">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-bold text-lg flex items-center gap-2"><Lightbulb size={20} className="text-yellow-500"/> Smart Suggestions</h3>
-                <button onClick={handleGetSmartSuggestions} disabled={isSuggesting} className="p-1 text-gray-500 hover:text-black disabled:opacity-50">
-                  {isSuggesting ? <Loader2 className="animate-spin" size={18}/> : <RefreshCw size={18}/>}
-                </button>
-              </div>
-              
-              {/* This is where the proposals will be rendered */}
-              <div className="space-y-3">
-                {isSuggesting && <p className="text-sm text-center text-gray-600">Analyzing your habits...</p>}
-                
-                {proposedSuggestions.length > 0 && (
-                  <>
-                    <button onClick={handleAcceptAll} className="w-full bg-accent-secondary text-white font-semibold py-1.5 rounded-md text-sm">Accept All</button>
-                    {proposedSuggestions.map((suggestion, index) => {
-                      const existingItem = findItemInList(suggestion.name);
-                      return (
-                        <div key={index} className="bg-white p-3 rounded-lg border border-yellow-300 shadow-sm">
-                          <p className="font-semibold">{suggestion.name}</p>
-                          <p className="text-xs text-gray-500 mb-2 italic">{suggestion.reason}</p>
-                          
-                          {existingItem ? (
-                            <p className="text-sm">Update quantity from {existingItem.quantity} to {suggestion.quantity} {suggestion.unit}</p>
-                          ) : (
-                            <p className="text-sm">Add {suggestion.quantity} {suggestion.unit} to your list</p>
-                          )}
-                          
-                          <div className="flex gap-2 mt-2">
-                            <button onClick={() => handleAcceptSuggestion(suggestion)} className="flex-1 bg-green-600 text-white text-xs font-bold py-1 rounded">Accept</button>
-                            <button onClick={() => handleDismissSuggestion(suggestion.name)} className="flex-1 bg-gray-200 text-gray-700 text-xs font-bold py-1 rounded">Dismiss</button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
-                
-                {!isSuggesting && proposedSuggestions.length === 0 && (
-                  <p className="text-sm text-center text-gray-600">Click the refresh button to get smart suggestions based on your pantry and meal plan.</p>
-                )}
-              </div>
-          </Card>
-      </div>
     </div>
-    </>
   );
 }

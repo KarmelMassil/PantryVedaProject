@@ -4,10 +4,11 @@ import { usePantryStore } from '@/store/pantryStore';
 import { calculateAnalytics } from '@/lib/analyticsEngine';
 import { Card } from '@/components/ui/Card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { Package, IndianRupee, AlertTriangle, CalendarCheck, ShieldCheck } from 'lucide-react';
+import { Package, IndianRupee, AlertTriangle, CalendarCheck, ShieldCheck, BarChartHorizontal, Info} from 'lucide-react';
 import { CategoriesTab } from '@/components/analytics/CategoriesTab';
 import { TrendsTab } from '@/components/analytics/TrendsTab';
 import { InsightsTab } from '@/components/analytics/InsightsTab';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 const COLORS = {
     'Fresh': '#27AE60', // curry-green
@@ -18,13 +19,13 @@ const COLORS = {
 type Tab = 'Overview' | 'Categories' | 'Trends' | 'Insights';
 
 export default function AnalyticsPage() {
-    const { inventory, consumptionLog, wasteLog } = usePantryStore();
+    const { inventory, consumptionLog, wasteLog, masterIngredientList } = usePantryStore();
     const [activeTab, setActiveTab] = React.useState<Tab>('Overview');
 
     // useMemo will prevent recalculating on every render, improving performance
     const analyticsData = useMemo(
-        () => calculateAnalytics(inventory, consumptionLog, wasteLog),
-        [inventory, consumptionLog, wasteLog]
+        () => calculateAnalytics(inventory, consumptionLog, wasteLog, masterIngredientList),
+        [inventory, consumptionLog, wasteLog, masterIngredientList]
     );
 
     const { summary, charts, categories, trends, insights } = analyticsData;
@@ -32,13 +33,16 @@ export default function AnalyticsPage() {
     const renderTabContent = () => {
         switch (activeTab) {
             case 'Categories':
-                return <CategoriesTab data={categories.valueByCategory} />;
+                return <CategoriesTab data={categories.valueByCategory} inventory={inventory} />;
             case 'Trends':
                 return <TrendsTab data={trends.monthlyTrend} />;
             case 'Insights':
                 return <InsightsTab data={insights} />;
             case 'Overview':
             default:
+                if (inventory.length === 0) {
+                    return <EmptyState type="no-analytics" />;
+                }
                 return (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                         {/* Bar Chart */}
@@ -89,11 +93,17 @@ export default function AnalyticsPage() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3xl font-bold text-text-primary">Kitchen Analytics</h1>
-                <p className="text-text-secondary">Insights into your pantry management and food usage</p>
+        <div className="space-y-2 py-1">
+        <div className="flex items-center gap-3">
+            <BarChartHorizontal className="text-primary" size={36} />
+            <div>
+                <h1 className="text-4xl font-bold text-text-primary tracking-tight">Analytics</h1>
+                <div className="flex items-center gap-1.5">
+                    <Info size={14} className="text-text-secondary" />
+                    <p className="text-text-secondary font-medium">Insights on waste, spending, and usage</p>
+                </div>
             </div>
+        </div>
             
             {/* Summary Cards */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">

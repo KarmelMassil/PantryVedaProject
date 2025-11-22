@@ -1,6 +1,6 @@
 "use client";
 import { Recipe } from '@/types';
-import { X, CalendarPlus } from 'lucide-react';
+import { X, CalendarPlus, Minus, Plus, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import { usePantryStore } from '@/store/pantryStore';
@@ -8,12 +8,13 @@ import { usePantryStore } from '@/store/pantryStore';
 interface AddToMealPlanModalProps {
   recipe: Recipe;
   onClose: () => void;
-  onSave: (recipeId: string, date: string, meal: 'breakfast' | 'lunch' | 'dinner') => void;
+  onSave: (recipeId: string, date: string, meal: 'breakfast' | 'lunch' | 'dinner', servings: number) => void;
 }
 
 export const AddToMealPlanModal: React.FC<AddToMealPlanModalProps> = ({ recipe, onClose, onSave }) => {
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner'>('dinner');
+  const [desiredServings, setDesiredServings] = useState(recipe.baseServings);
   const addToast = usePantryStore((state) => state.addToast);
 
   const handleSave = () => {
@@ -21,8 +22,12 @@ export const AddToMealPlanModal: React.FC<AddToMealPlanModalProps> = ({ recipe, 
       addToast("Please select a date.");
       return;
     }
-    onSave(recipe.id, selectedDate, selectedMeal);
+    onSave(recipe.id, selectedDate, selectedMeal, desiredServings);
     onClose();
+  };
+
+  const handleServingsChange = (amount: number) => {
+    setDesiredServings(prev => Math.max(1, prev + amount));
   };
 
   return (
@@ -31,7 +36,7 @@ export const AddToMealPlanModal: React.FC<AddToMealPlanModalProps> = ({ recipe, 
         <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-gray-600">
           <X size={24} />
         </button>
-        <h2 className="text-xl font-bold mb-4">Add "{recipe.name}" to Meal Plan</h2>
+        <h2 className="text-xl font-bold mb-4">Add &quot;{recipe.name}&quot; to Meal Plan</h2>
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Select Date</label>
@@ -53,6 +58,14 @@ export const AddToMealPlanModal: React.FC<AddToMealPlanModalProps> = ({ recipe, 
               <option value="lunch">Lunch</option>
               <option value="dinner">Dinner</option>
             </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Servings</label>
+            <div className="flex items-center gap-2 mt-1">
+              <button onClick={() => handleServingsChange(-1)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"><Minus size={14}/></button>
+              <span className="flex items-center gap-1"><Users size={16} /> {desiredServings}</span>
+              <button onClick={() => handleServingsChange(1)} className="p-1 rounded-full bg-gray-200 hover:bg-gray-300"><Plus size={14}/></button>
+            </div>
           </div>
         </div>
         <div className="mt-6 flex justify-end gap-3">
