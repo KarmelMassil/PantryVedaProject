@@ -4,7 +4,7 @@ import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Recipe } from '@/types';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { Card } from '@/components/ui/Card';
-import { Plus, Trash2, Save, Upload, Clock, Users, Flame, GripVertical, Search, PlusCircle } from 'lucide-react';
+import { Plus, Trash2, Save, PlusCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { AddIngredientModal } from '@/components/AddIngredientModal'; // Import the modal
 

@@ -5,7 +5,7 @@ import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { DraggableRecipeCard } from '@/components/meal-plan/DraggableRecipeCard';
 import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
 import { format, addDays, startOfWeek, subDays, endOfWeek, set } from 'date-fns';
-import { ArrowLeft, ArrowRight, ShoppingCart, Search, CalendarDays, Calendar, Coffee, Soup, Utensils, Beef, Info } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Search, CalendarDays, Calendar, Coffee, Soup, Beef, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RecipeModal } from '@/components/RecipeModal';
 import { Recipe } from '@/types';

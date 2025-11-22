@@ -146,7 +146,7 @@ return (
               disabled={scannedItems.length === 0}
               className={`font-bold px-6 py-3 rounded-lg transition-all duration-300 text-white shadow-md transform hover:scale-105 ${scannedItems.length > 0 ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}`}
             >
-              Save All to Pantry
+              Save All to Inventory
             </button>
           </div>
 

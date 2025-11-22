@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Webcam from 'webcam-easy';
 import { yoloService } from '@/lib/yoloService';
-import { Camera, Upload, Video, Circle, StopCircle, Loader2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { Camera, Upload, Circle, StopCircle, Loader2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import { set } from 'date-fns';
 import { usePantryStore } from '@/store/pantryStore';
 import Image from 'next/image';

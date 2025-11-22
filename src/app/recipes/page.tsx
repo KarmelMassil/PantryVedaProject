@@ -5,8 +5,8 @@ import { getRecipeMatches, MatchedRecipe } from '@/lib/recipeMatcher';
 import { RecipeCard } from '@/components/RecipeCard';
 import { Card } from '@/components/ui/Card';
 import { 
-    Frown, PlusCircle, Sparkles, CookingPot, Filter, ChefHat, BookOpen, Info,
-    ArrowDown, ArrowUp, Star, Clock, Flame, BarChart 
+    Frown, PlusCircle, CookingPot, Filter, ChefHat, BookOpen, Info,
+    ArrowDown, ArrowUp, Star, Clock, Flame
 } from 'lucide-react';
 import Link from 'next/link';
 import { RecipeModal } from '@/components/RecipeModal';
@@ -296,7 +296,7 @@ export default function RecipesPage() {
                   <CookingPot size={48} className="mx-auto text-gray-400" />
                   <h3 className="mt-2 text-lg font-medium text-text-primary">No Recipes Match 100% Yet</h3>
                   <p className="mt-1 text-sm text-text-secondary">Add more ingredients to see recipes you can make right away!</p>
-                  <Link href="/inventory" className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover: transition-all duration-300 transform hover:scale-105 shadow-md">
+                  <Link href="/scanner" className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary hover: transition-all duration-300 transform hover:scale-105 shadow-md">
                     Add Ingredients
                   </Link>
                 </div>

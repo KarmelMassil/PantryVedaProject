@@ -2,10 +2,9 @@
 import React, { useMemo, useState } from 'react';
 import { usePantryStore, ShoppingListItem, MasterIngredient } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
-import { Trash2, Plus, Share2, Download, Lightbulb, PackagePlus, PlusCircle, RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Leaf, Fish, Beef, Wheat, Carrot, Apple, Info } from 'lucide-react';
+import {  PackagePlus,  RefreshCw, Loader2, Search, Sparkles, ShoppingCart, Tag, Info } from 'lucide-react';
 import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocomplete';
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
-import { format, formatISO } from 'date-fns';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
 import { ShoppingListItem as ShoppingListItemComponent } from '@/components/shopping-list/ShoppingListItem';
 
