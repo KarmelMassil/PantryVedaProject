@@ -1,6 +1,7 @@
 import { Ingredient, Recipe } from "@/types";
 import { MealPlan } from "@/store/pantryStore";
 import { getRecipeMatches } from "./recipeMatcher";
+import { scaleRecipeIngredients } from "./recipeUtils";
 
 /**
  * Calculates a "projected" inventory by simulating the consumption
@@ -21,18 +22,23 @@ export function getProjectedInventory(
 
   for (const dateStr of datesToSimulate) {
     const dayPlan = mealPlan[dateStr];
-    const recipeIds = [dayPlan.breakfast, dayPlan.lunch, dayPlan.dinner].filter(Boolean);
+    if (!dayPlan) continue;
     
-    for (const id of recipeIds) {
-      const recipe = recipes.find(r => r.id === id);
-      if (!recipe) continue;
+    const meals = [dayPlan.breakfast, dayPlan.lunch, dayPlan.dinner];
+    for (const meal of meals) {
+        if (!meal || !meal.recipeId) continue;
 
-      for (const req of recipe.ingredients) {
-        if (inventoryMap.has(req.name)) {
-          const item = inventoryMap.get(req.name)!;
-          item.quantity = Math.max(0, item.quantity - req.quantity);
+        const recipe = recipes.find(r => r.id === meal.recipeId);
+        if (!recipe) continue;
+
+        const scaledRecipe = scaleRecipeIngredients(recipe, meal.servings);
+
+        for (const req of scaledRecipe.ingredients) {
+            if (inventoryMap.has(req.name)) {
+                const item = inventoryMap.get(req.name)!;
+                item.quantity = Math.max(0, item.quantity - req.quantity);
+            }
         }
-      }
     }
   }
   return Array.from(inventoryMap.values());

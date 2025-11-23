@@ -5,7 +5,7 @@ import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocompl
 import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Ingredient } from '@/types';
 import { format, formatISO, addDays } from 'date-fns';
-import { PackagePlus, Trash2, PlusCircle } from 'lucide-react';
+import { PackagePlus, Trash2, PlusCircle, ScanLine, Info } from 'lucide-react';
 import { mapLabelToDbName } from '@/lib/labelMapper';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
 
@@ -21,6 +21,7 @@ export default function ScannerPage() {
   const [scannedItems, setScannedItems] = useState<ScannedItem[]>([]);
   const [currentItem, setCurrentItem] = useState<Partial<Omit<Ingredient, 'id'>> | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [autocompleteQuery, setAutocompleteQuery] = useState('');
 
   const handleSaveNewIngredient = (ingredient: MasterIngredient) => {
     const formattedName = toTitleCase(ingredient.name.trim());
@@ -98,55 +99,60 @@ return (
           onClose={() => setIsModalOpen(false)}
           onSave={handleSaveNewIngredient}
         />
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-text-primary">Smart Scanner</h1>
-      <p className="text-text-secondary">Scan items with your camera or search manually, then edit details and add to your list.</p>
+    <div className="space-y-2 py-1">
+        <div className="flex items-center gap-3">
+            <ScanLine className="text-primary" size={36} />
+            <div>
+                <h1 className="text-4xl font-bold text-text-primary tracking-tight">Camera Scanner</h1>
+                <div className="flex items-center gap-1.5">
+                    <Info size={14} className="text-text-secondary" />
+                    <p className="text-text-secondary font-medium">Scan ingredients or add them manually</p>
+                </div>
+            </div>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-start">
         {/* Left Side: Input Methods */}
-        <div className="space-y-6">
+        <div className="lg:col-span-2 space-y-6">
           {/* Camera Scanner */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <h2 className="text-xl font-bold mb-4">Camera Scanner</h2>
+          <div className="bg-white rounded-xl shadow-md p-3">
+            <h2 className="text-xl font-bold mb-2">Camera Scanner</h2>
             <CameraScanner onRecognize={handleRecognition}/>
           </div>
           
           {/* Manual Search */}
-          <div className="bg-white rounded-xl shadow-md p-6">
-            <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-bold">Manual Search</h2>
-                  <button 
-                    onClick={() => setIsModalOpen(true)}
-                    className="text-sm flex items-center gap-1 text-accent-secondary font-semibold hover:underline"
-                  >
-                    <PlusCircle size={16} />
-                    New to Database?
-                  </button>
-              </div>
-            <p className="text-sm text-text-secondary mb-4">Search and select an ingredient to add it to your list.</p>
+          <div className="bg-white rounded-xl shadow-md p-3">
+             <h2 className="text-xl font-bold">Manual Search</h2>
+            <p className="text-sm text-text-secondary mb-2">Search and select an ingredient to add it to your list.</p>
             <IngredientAutocomplete 
               masterList={masterIngredientList}
-              onSelect={handleSelectItem} 
+              value={autocompleteQuery}
+              onChange={setAutocompleteQuery}
+              onSelect={(ingredient) => {
+                handleSelectItem(ingredient);
+                setAutocompleteQuery('');
+              }}
+              onAddNew={() => setIsModalOpen(true)}
             />
           </div>
         </div>
 
         {/* Right Side: Items List with Inline Editing */}
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="lg:col-span-3 bg-white rounded-xl shadow-md p-3">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-bold">Items to Add ({scannedItems.length})</h2>
             <button
               onClick={handleSaveToPantry}
               disabled={scannedItems.length === 0}
-              className="bg-dal-orange text-white font-bold px-6 py-2.5 rounded-lg disabled:bg-gray-400 disabled:cursor-not-allowed hover:bg-orange-600 transition-colors shadow-sm"
+              className={`font-bold px-6 py-3 rounded-lg transition-all duration-300 text-white shadow-md transform hover:scale-105 ${scannedItems.length > 0 ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}`}
             >
-              Save All to Pantry
+              Save All to Inventory
             </button>
           </div>
 
-          <div className="space-y-3 max-h-[600px] overflow-y-auto pr-2">
+          <div className="space-y-3 min-h-[400px]">
             {scannedItems.length > 0 ? scannedItems.map((item, index) => (
-              <div key={index} className="bg-white rounded-lg border border-gray-200 hover:border-gray-300 p-4 transition-all hover:shadow-sm">
+              <div key={index} className="bg-gray-50 rounded-lg border border-gray-100 p-4 transition-all">
                 <div className="grid grid-cols-12 gap-4 items-center">
                   <div className="col-span-3">
                     <p className="font-bold text-base text-text-primary mb-0.5">{item.name}</p>
@@ -171,7 +177,7 @@ return (
                     <label className="text-xs font-medium text-gray-600 block mb-1">Price (₹)</label>
                     <input 
                       type="number" 
-                      value={item.value || ''} 
+                      value={item.value ?? '0'}
                       onChange={e => handleUpdateItem(index, 'value', parseFloat(e.target.value))}
                       className="w-full p-2 border border-gray-300 rounded-md text-center font-semibold focus:ring-2 focus:ring-accent-secondary focus:border-transparent" 
                     />
@@ -189,19 +195,19 @@ return (
                     <label className="text-xs font-medium text-transparent block mb-1">Del</label>
                     <button 
                       onClick={() => setScannedItems(prev => prev.filter((_, i) => i !== index))}
-                      className="w-full text-chili-red hover:bg-red-50 p-2 rounded-lg transition-colors flex items-center justify-center"
+                      className="w-full text-red-500 hover:bg-red-100 p-3 rounded-lg transition-all duration-200 transform hover:scale-110 flex items-center justify-center"
                       title="Remove item"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={28} />
                     </button>
                   </div>
                 </div>
               </div>
             )) : (
-              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300">
-                <PackagePlus size={48} className="mx-auto text-gray-400 mb-3" />
-                <p className="text-gray-600 font-medium">No items yet</p>
-                <p className="text-sm text-gray-500 mt-1">Scan or search for items to get started</p>
+              <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex flex-col justify-center items-center h-full">
+                <PackagePlus size={52} className="mx-auto text-gray-400 mb-4" />
+                <h3 className="text-gray-700 font-bold text-lg">Your list is empty!</h3>
+                <p className="text-sm text-gray-500 mt-1 max-w-xs">Use the scanner or manual search to add items. They&apos;ll appear here, ready to be saved to your pantry.</p>
               </div>
             )}
           </div>

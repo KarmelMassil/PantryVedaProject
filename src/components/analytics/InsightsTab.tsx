@@ -26,9 +26,10 @@ export const InsightsTab: React.FC<InsightsTabProps> = ({ data }) => {
     <div>
         <h3 className="text-xl font-bold mb-4">Smart Insights</h3>
         {data.length === 0 ? (
-          <div className="text-center py-8 text-text-secondary">
-            <p>Great job! No critical insights at the moment.</p>
-            <p className="text-sm mt-2">Keep managing your pantry efficiently!</p>
+          <div className="text-center py-12 text-text-secondary bg-gray-50 rounded-lg">
+            <p className="text-4xl mb-3">🎉</p>
+            <p className="font-semibold text-lg text-text-primary">All Clear!</p>
+            <p className="text-sm mt-2">Great job! No critical insights at the moment. Keep up the efficient pantry management!</p>
           </div>
         ) : (
           <div className="space-y-4">

@@ -1,54 +1,74 @@
 "use client";
 import { MasterIngredient } from '@/store/pantryStore';
-import { Ingredient } from '@/types';
+import { PlusCircle } from 'lucide-react';
 import React, { useState, useMemo } from 'react';
 
 interface AutocompleteProps {
   masterList: MasterIngredient[];
   onSelect: (ingredient: MasterIngredient) => void;
+  onAddNew: (newItemName: string) => void;
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  className?: string;
 }
 
-export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList, onSelect }) => {
-  const [query, setQuery] = useState('');
+export const IngredientAutocomplete: React.FC<AutocompleteProps> = ({ masterList, onSelect, onAddNew, value, onChange, placeholder, className }) => {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   const filteredIngredients = useMemo(() => {
-    if (!query) return [];
+    if (!value) return [];
     return masterList.filter(item => 
-      item.name.toLowerCase().includes(query.toLowerCase())
-    ).slice(0, 5); // Limit to 5 suggestions
-  }, [query]);
+      item.name.toLowerCase().includes(value.toLowerCase())
+    ).slice(0, 10);
+  }, [value, masterList]);
 
   const handleSelect = (ingredient: MasterIngredient) => {
-    setQuery('');
+    onChange('');
     setShowSuggestions(false);
     onSelect(ingredient);
   };
+
+  const handleAddNew = () => {
+    onAddNew(value);
+    onChange('');
+    setShowSuggestions(false);
+  }
 
   return (
     <div className="relative">
       <input
         type="text"
-        value={query}
+        value={value}
         onChange={(e) => {
-          setQuery(e.target.value);
+          onChange(e.target.value);
           setShowSuggestions(true);
         }}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)} // Delay to allow click
-        placeholder="Search Indian ingredients..."
-        className="w-full p-2 border border-gray-300 rounded-md"
+        onFocus={() => setShowSuggestions(true)}
+        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+        placeholder={placeholder || "Search your ingredients..."}
+        className={`w-full p-3 border rounded-lg ${className}`}
       />
-      {showSuggestions && filteredIngredients.length > 0 && (
-        <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
-          {filteredIngredients.map((item, index) => (
+      {showSuggestions && value && (
+        <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+          {filteredIngredients.map((item) => (
             <li 
-              key={index} 
-              onMouseDown={() => handleSelect(item)} // onMouseDown fires before onBlur
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              key={item.name}
+              onMouseDown={() => handleSelect(item)}
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-text-primary"
             >
               {item.name} <span className="text-xs text-gray-500">- {item.category}</span>
             </li>
           ))}
+          {filteredIngredients.length === 0 && (
+            <li
+              onMouseDown={handleAddNew}
+              className="px-4 py-3 flex items-center hover:bg-green-50 text-green-600 font-semibold cursor-pointer"
+            >
+              <PlusCircle size={18} className="mr-2.5" />
+              Add &quot;{value}&quot; to database
+            </li>
+          )}
         </ul>
       )}
     </div>

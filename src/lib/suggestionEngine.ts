@@ -1,6 +1,6 @@
-import { usePantryStore, ShoppingListItem } from "@/store/pantryStore";
+import { ShoppingListItem } from "@/store/pantryStore";
 import { ConsumptionEvent, Ingredient } from "@/types";
-import { differenceInDays, subDays } from "date-fns";
+import { subDays } from "date-fns";
 import { MasterIngredient } from "@/store/pantryStore";
 
 // A simple heuristic model to start

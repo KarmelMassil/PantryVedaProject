@@ -9,19 +9,22 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'turmeric-yellow': '#FFC72C',
-        'chili-red': '#C41E3A',
-        'curry-green': '#508D4E',
-        'paneer-white': '#F5F5F5',
-        'dal-orange': '#FFA500',
-        'background-light': '#FFF8E1',
-        'text-primary': '#424242',
-        'text-secondary': '#757575',
-        'accent-primary': '#E67E22',
-        'accent-secondary': '#27AE60',
+        primary: "#FF8C42",
+        secondary: "#2D3748",
+        accent: "#48BB78",
+        warning: "#F6AD55",
+        background: "#FAFBFC",
+        card: "#FFFFFF",
+      },
+      boxShadow: {
+        'subtle': '0 2px 8px rgba(0,0,0,0.08)',
       },
       fontFamily: {
         sans: ['"Poppins"', 'sans-serif'],
+        serif: ['"Inter"', 'serif'],
+      },
+      backgroundImage: {
+        'gradient-orange-to-pink': 'linear-gradient(to right, #FF8C42, #FF66A1)',
       },
     },
   },

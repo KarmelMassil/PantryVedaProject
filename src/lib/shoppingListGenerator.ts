@@ -1,6 +1,5 @@
 import { Ingredient, Recipe } from "@/types";
 import { ShoppingListItem, MasterIngredient } from "@/store/pantryStore";
-import { formatISO, addDays } from "date-fns";
 
 type ShoppingSuggestion = Omit<
   ShoppingListItem,

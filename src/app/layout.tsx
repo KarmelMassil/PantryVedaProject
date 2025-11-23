@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Poppins } from "next/font/google";
+import { Poppins, Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelInitializer } from "@/components/ModelInitializer";
-import { NotificationSystem } from "@/components/NotificationSystem"; 
+import { NotificationSystem } from "@/components/NotificationSystem";
 
-const poppins = Poppins({ subsets: ["latin"], weight: ["400", "600", "700"] });
+const poppins = Poppins({ subsets: ["latin"], weight: ["300", "400", "600", "700"], variable: '--font-poppins' });
+const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "600", "700"], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: "PantryVeda",
@@ -19,10 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={poppins.className}>
-        <ModelInitializer /> 
+      <body className={`${poppins.variable} ${inter.variable} font-sans`}>
+        <ModelInitializer />
         <NotificationSystem />
-        <div className="flex h-screen bg-background-light">
+        <div className="flex h-screen bg-background">
           <Sidebar />
           <main className="flex-1 p-6 overflow-y-auto">
             {children}
