@@ -38,8 +38,8 @@ export const getRecentlyAddedItems = (inventory: Ingredient[], limit: number = 3
 };
 
 export const getRecommendedRecipes = (): MatchedRecipe[] => {
-  const { inventory, recipes, preferences } = usePantryStore.getState();
-  const allMatches = getRecipeMatches(inventory, recipes, preferences);
+  const { inventory, recipes } = usePantryStore.getState();
+  const allMatches = getRecipeMatches(inventory, recipes);
 
   const recommended = allMatches
     .filter(recipe => recipe.expiringSoon) 

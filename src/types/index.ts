@@ -28,14 +28,6 @@ export interface Recipe {
   image: string;
 }
 
-export interface UserPreferences {
-  familySize: number;
-  favoriteCuisines: Recipe['cuisine'][];
-  spiceLevels: Recipe['spiceLevel'][];
-  dietaryRestrictions: Recipe['dietary'];
-  cookingSkill: Recipe['difficulty'];
-}
-
 export interface ConsumptionEvent {
   ingredientName: string;
   quantityConsumed: number;

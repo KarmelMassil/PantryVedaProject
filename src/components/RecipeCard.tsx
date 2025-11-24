@@ -1,6 +1,6 @@
 import { MatchedRecipe } from '@/lib/recipeMatcher';
 import { Flame, Clock, Users, Utensils, CalendarPlus, Eye } from 'lucide-react';
-import React, { useState, useMemo } from 'react';
+import React from 'react';
 import { usePantryStore } from '@/store/pantryStore';
 import Image from 'next/image';
 
@@ -31,8 +31,6 @@ const toBase64 = (str: string) =>
     : window.btoa(str)
 
 export const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onCook, onAddToPlan }) => {
-  const { inventory, addItemsToShoppingList, masterIngredientList } = usePantryStore();
-
   const getMatchColor = () => {
     if (recipe.matchPercentage === 100) return 'bg-accent text-white';
     if (recipe.matchPercentage >= 80) return 'bg-warning text-white';

@@ -1,12 +1,10 @@
 import * as tf from '@tensorflow/tfjs';
 
-// NOTE: The WebGL backend import and setBackend call have been removed from this file.
 
 export interface Detection {
   label: string;
   confidence: number;
 }
-// ... (rest of the interface and constants are the same)
 const MODEL_URL = '/model/model.json';
 const LABELS_URL = '/model/labels.json';
 const CONFIDENCE_THRESHOLD = 0.5;
@@ -14,7 +12,6 @@ const CONFIDENCE_THRESHOLD = 0.5;
 type ModelStatus = 'unloaded' | 'loading' | 'loaded' | 'failed';
 
 class YoloService {
-  // ... (properties are the same)
   private model: tf.GraphModel | null = null;
   private labels: string[] = [];
   public status: ModelStatus = 'unloaded';
@@ -30,7 +27,6 @@ class YoloService {
         this.model = await tf.loadGraphModel(MODEL_URL);
         const response = await fetch(LABELS_URL);
         this.labels = await response.json();
-        // The warmup shape MUST be transposed to match the model's expectation
         const warmupResult = this.model.execute(tf.zeros([1, 3, 320, 320])) as tf.Tensor;
         tf.dispose(warmupResult);
         this.status = 'loaded';
@@ -71,33 +67,15 @@ class YoloService {
       const normalized = resized.div(255.0);
       let batched = normalized.expandDims(0);
 
-      // FIX #1: Add the transpose back in. The error proves the model needs it.
       batched = batched.transpose([0, 3, 1, 2]);
 
       const output = this.model!.execute(batched) as tf.Tensor | tf.Tensor[];
       return (Array.isArray(output) ? output[0] : output).clone();
     });
-
-    // ... (The entire post-processing loop is the same as before)
     const predictions = await outputTensor!.data();
     const outputShape = outputTensor!.shape;
     const detectedObjects: Detection[] = [];
 
-    // --- PASTE THE DEBUGGING CODE HERE ---
-    let maxConfidence = 0;
-    if (outputShape.length === 3) {
-      const numPredictions = outputShape[1];
-      const numElements = outputShape[2];
-      for (let i = 0; i < numPredictions; i++) {
-        const score = predictions[i * numElements + 4];
-        if (score > maxConfidence) {
-          maxConfidence = score;
-        }
-      }
-    }
-    console.log(`%cMax confidence score found: ${maxConfidence.toFixed(4)}`, 'color: orange; font-weight: bold;');
-    // --- END OF DEBUGGING CODE --
-    
     if (outputShape.length === 3 && outputShape[1] > 0 && outputShape[2] > 0) {
         const numPredictions = outputShape[1];
         const numElements = outputShape[2];

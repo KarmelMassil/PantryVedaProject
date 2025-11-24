@@ -30,7 +30,7 @@ const sortOptions: SortOption[] = [
 
 export default function RecipesPage() {
   const { 
-      inventory, recipes, preferences, 
+      inventory, recipes, 
       logConsumption, deductFromInventory, assignRecipeToMeal, addToast,
       recipeIngredientFilter, setRecipeIngredientFilter
   } = usePantryStore();
@@ -44,7 +44,7 @@ export default function RecipesPage() {
   const [filterSpice, setFilterSpice] = useState('all');
 
   const processedRecipes = useMemo(() => {
-    let items: MatchedRecipe[] = getRecipeMatches(inventory, recipes, preferences);
+    let items: MatchedRecipe[] = getRecipeMatches(inventory, recipes);
     if (searchQuery) {
       items = items.filter(r => 
         r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -84,7 +84,7 @@ export default function RecipesPage() {
     });
 
     return items;
-  }, [inventory, recipes, preferences, searchQuery, sortBy, filterTime, filterDifficulty, filterSpice]);
+  }, [inventory, recipes, searchQuery, sortBy, filterTime, filterDifficulty, filterSpice]);
 
   const areFiltersActive = useMemo(() => {
     return searchQuery || filterTime !== 'all' || filterDifficulty !== 'all' || filterSpice !== 'all';

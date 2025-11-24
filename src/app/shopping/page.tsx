@@ -8,7 +8,6 @@ import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
 import { ShoppingListItem as ShoppingListItemComponent } from '@/components/shopping-list/ShoppingListItem';
 import { trackEvent } from '@/lib/analytics';
-import { track } from 'framer-motion/client';
 
 // Helper function to format ingredient names to Title Case
 const toTitleCase = (str: string): string => {

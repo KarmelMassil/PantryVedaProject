@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo, useRef, useEffect } from 'react'
+import React, { useState, useMemo } from 'react'
 import Link from 'next/link';
 import { usePantryStore } from '@/store/pantryStore';
 import { Card } from '@/components/ui/Card';
@@ -9,7 +9,6 @@ import {
     Utensils, Package, AlertTriangle, BadgeCheck, IndianRupee, Trash2, PlusCircle,
     ArrowDown, ArrowUp, Folder, Clock, Sparkles, Inbox, Info
 } from 'lucide-react';
-import { WasteEvent } from '@/types';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterAndSort, SortOption } from '@/components/ui/FilterAndSort';
 

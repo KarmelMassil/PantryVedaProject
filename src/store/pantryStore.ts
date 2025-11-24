@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { indianRecipesDatabase } from '@/data/recipes';
-import { Recipe, Ingredient, UserPreferences, ConsumptionEvent, WasteEvent } from '@/types';
+import { Recipe, Ingredient, ConsumptionEvent, WasteEvent } from '@/types';
 import { indianIngredientsDatabase as initialMasterList } from '@/data/ingredients';
 import { formatISO, addDays } from 'date-fns';
 import { typicalShelfLife } from '@/lib/dateUtils';
@@ -68,7 +68,6 @@ interface FailedScan {
 interface PantryState {
   masterIngredientList: MasterIngredient[];
   inventory: Ingredient[];
-  preferences: UserPreferences;
   recipes: Recipe[];
   shoppingList: ShoppingListItem[];
   mealPlan: MealPlan; 
@@ -82,7 +81,6 @@ interface PantryState {
   addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
   removeIngredient: (id: string) => void;
   updateIngredient: (id: string, updates: Partial<Ingredient>) => void;
-  updatePreferences: (updates: Partial<UserPreferences>) => void;
   addItemsToShoppingList: (items: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'>[]) => void;
   updateShoppingListItem: (id: string, updates: Partial<ShoppingListItem>) => void;
   removeShoppingListItem: (id: string) => void;
@@ -164,11 +162,6 @@ export const usePantryStore = create<PantryState>()(
           inventory: state.inventory.map((item) =>
             item.id === id ? { ...item, ...updates } : item
           ),
-        })),
-        
-      updatePreferences: (updates) =>
-        set((state) => ({
-          preferences: { ...state.preferences, ...updates },
         })),
       
       addItemsToShoppingList: (itemsToAdd) => {

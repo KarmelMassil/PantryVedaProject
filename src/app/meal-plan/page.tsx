@@ -15,7 +15,7 @@ import { CookingModeModal } from '@/components/CookingModeModal';
 type CookingContext = { date: string, meal: keyof DayPlan } | null;
 
 export default function MealPlannerPage() {
-  const { recipes, mealPlan, inventory, assignRecipeToMeal, addItemsToShoppingList, logConsumption, deductFromInventory, preferences, addToast } = usePantryStore();
+  const { recipes, mealPlan, inventory, assignRecipeToMeal, logConsumption, deductFromInventory, addToast } = usePantryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeRecipe, setActiveRecipe] = useState<Recipe | null>(null);
   const router = useRouter();
@@ -23,9 +23,6 @@ export default function MealPlannerPage() {
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [cookingContext, setCookingContext] = useState<CookingContext>(null);
   const [cookingRecipe, setCookingRecipe] = useState<Recipe | null>(null);
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-  );
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -46,7 +43,6 @@ export default function MealPlannerPage() {
 
   const weekStartsOn = 1;
   const weekStart = startOfWeek(currentDate, { weekStartsOn });
-  const weekEnd = endOfWeek(currentDate, { weekStartsOn });
   const goToPreviousWeek = () => setCurrentDate(subDays(currentDate, 7));
   const goToNextWeek = () => setCurrentDate(addDays(currentDate, 7));
   const handleOpenViewModal = (recipe: Recipe, context?: CookingContext) => {
@@ -108,13 +104,12 @@ export default function MealPlannerPage() {
   // Pre-calculate all suggestions for the week
   const suggestions = useMemo(() => {
     const dailySuggestions: Record<string, { breakfast: Recipe, lunch: Recipe, dinner: Recipe }> = {};
-    let lastProjectedInventory = inventory;
     
     for (const day of weekDays) {
         // Get projected inventory *up to* the start of this day
         const projectedInventory = getProjectedInventory(inventory, mealPlan, recipes, day);
         // Get a single best suggestion based on that projection
-        const bestSuggestion = getBestSuggestion(projectedInventory, recipes, preferences);
+        const bestSuggestion = getBestSuggestion(projectedInventory, recipes);
         
         dailySuggestions[format(day, 'yyyy-MM-dd')] = {
             breakfast: bestSuggestion, // Simple: use same suggestion for all
@@ -123,7 +118,7 @@ export default function MealPlannerPage() {
         };
     }
     return dailySuggestions;
-  }, [inventory, mealPlan, recipes, preferences, weekDays]);
+  }, [inventory, mealPlan, recipes, weekDays]);
   
 
   return (

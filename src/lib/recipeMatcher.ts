@@ -1,18 +1,16 @@
-import { Recipe, Ingredient, UserPreferences } from '@/types';
+import { Recipe, Ingredient} from '@/types';
 import { differenceInDays } from 'date-fns';
 
 export interface MatchedRecipe extends Recipe {
   matchPercentage: number;
   missingIngredients: string[];
   expiringSoon: boolean;
-  preferenceScore: number;
   finalScore: number;
 }
 
 export const getRecipeMatches = (
   inventory: Ingredient[],
-  recipes: Recipe[],
-  preferences: UserPreferences
+  recipes: Recipe[]
 ): MatchedRecipe[] => {
   const inventoryMap = new Map<string, number>(
     inventory.map((item) => [item.name.toLowerCase(), item.quantity])
@@ -41,15 +39,10 @@ export const getRecipeMatches = (
     });
 
     const matchPercentage = Math.round((availableCount / recipe.ingredients.length) * 100);
-
-    let preferenceScore = 0;
-    if (preferences.favoriteCuisines.includes(recipe.cuisine)) preferenceScore += 20;
-    if (preferences.spiceLevels.includes(recipe.spiceLevel)) preferenceScore += 10;
-    if (recipe.difficulty === preferences.cookingSkill) preferenceScore += 15;
     
-    let finalScore = matchPercentage + preferenceScore;
+    let finalScore = 0;
     if (usesExpiringIngredient) {
-      finalScore += 50;
+      finalScore = matchPercentage + 50;
     }
 
     return {
@@ -57,7 +50,6 @@ export const getRecipeMatches = (
       matchPercentage,
       missingIngredients,
       expiringSoon: usesExpiringIngredient,
-      preferenceScore,
       finalScore
     };
   });

@@ -14,7 +14,7 @@ import WelcomeMessage from '@/components/dashboard/WelcomeMessage';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
 
 export default function DashboardPage() {
-  const { inventory, weeklySnapshots, createWeeklySnapshot } = usePantryStore();
+  const { inventory, createWeeklySnapshot } = usePantryStore();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

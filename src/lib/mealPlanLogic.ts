@@ -47,8 +47,8 @@ export function getProjectedInventory(
 /**
  * Gets the single best recipe suggestion for a given inventory.
  */
-export function getBestSuggestion(projectedInventory: Ingredient[], recipes: Recipe[], preferences: any) {
-    const matches = getRecipeMatches(projectedInventory, recipes, preferences);
+export function getBestSuggestion(projectedInventory: Ingredient[], recipes: Recipe[]) {
+    const matches = getRecipeMatches(projectedInventory, recipes);
     // Prioritize high-match, expiring-soon items
     const bestMatch = matches.find(m => m.matchPercentage >= 90 && m.expiringSoon) || matches[0];
     return bestMatch;

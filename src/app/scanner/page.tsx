@@ -9,8 +9,6 @@ import { PackagePlus, Trash2, PlusCircle, ScanLine, Info } from 'lucide-react';
 import { mapLabelToDbName } from '@/lib/labelMapper';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
 import { trackEvent } from '@/lib/analytics';
-import { uploadToCloudinary } from '@/lib/cloudinary';
-import { map } from 'framer-motion/client';
 
 type ScannedItem = Omit<Ingredient, 'id'> & { source: 'camera' | 'manual' };
 
