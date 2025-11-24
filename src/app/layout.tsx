@@ -4,9 +4,11 @@ import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { ModelInitializer } from "@/components/ModelInitializer";
 import { NotificationSystem } from "@/components/NotificationSystem";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 const poppins = Poppins({ subsets: ["latin"], weight: ["300", "400", "600", "700"], variable: '--font-poppins' });
 const inter = Inter({ subsets: ["latin"], weight: ["300", "400", "600", "700"], variable: '--font-inter' });
+const gId = process.env.GOOGLE_ANALYTICS_ID;
 
 export const metadata: Metadata = {
   title: "PantryVeda",
@@ -30,6 +32,7 @@ export default function RootLayout({
           </main>
         </div>
       </body>
+      <GoogleAnalytics gaId="gId" />
     </html>
   );
 }

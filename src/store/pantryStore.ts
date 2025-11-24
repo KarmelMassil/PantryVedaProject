@@ -5,6 +5,7 @@ import { Recipe, Ingredient, UserPreferences, ConsumptionEvent, WasteEvent } fro
 import { indianIngredientsDatabase as initialMasterList } from '@/data/ingredients';
 import { formatISO, addDays } from 'date-fns';
 import { typicalShelfLife } from '@/lib/dateUtils';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 export type ToastType = 'success' | 'error' | 'info';
 
@@ -57,6 +58,13 @@ export interface WeeklySnapshot {
   freshItems: number;
 }
 
+interface FailedScan {
+    id: string; 
+    reason: string;
+    timestamp: string;
+    imageUrl: string; // URL returned from Cloudinary
+}
+
 interface PantryState {
   masterIngredientList: MasterIngredient[];
   inventory: Ingredient[];
@@ -68,6 +76,7 @@ interface PantryState {
   wasteLog: WasteEvent[];
   weeklySnapshots: WeeklySnapshot[];
   toasts: Toast[];
+  failedScans: FailedScan[];
   recipeIngredientFilter: string | null;
   addMasterIngredient: (ingredient: MasterIngredient) => void;
   addIngredient: (ingredient: Omit<Ingredient, 'id'>) => void;
@@ -90,6 +99,7 @@ interface PantryState {
   addToast: (message: string, type?: ToastType) => void;
   removeToast: (id: string) => void;
   setRecipeIngredientFilter: (ingredientName: string | null) => void;
+  logFailedScan: (imageDataUri: string, reason: string) => Promise<void>;
 }
 
 export const usePantryStore = create<PantryState>()(
@@ -112,6 +122,27 @@ export const usePantryStore = create<PantryState>()(
       weeklySnapshots: [],
       toasts: [],
       recipeIngredientFilter: null,
+      failedScans: [],
+
+      logFailedScan: async (imageData: string, reason: string) => {
+        console.log(`Attempting to upload failed scan for reason: ${reason}`);
+        // This uploads the image data URI (Base64 string) via the client
+        const imageUrl = await uploadToCloudinary(imageData);
+        if (imageUrl) {
+            const newFailedScan: FailedScan = {
+                id: Date.now().toString(),
+                reason: reason,
+                timestamp: new Date().toISOString(),
+                imageUrl: imageUrl,
+            };
+            set(state => ({
+                failedScans: [...state.failedScans, newFailedScan]
+            }));
+            console.log('Failed scan successfully logged:', newFailedScan);
+        } else {
+            console.error('Failed to log scan: Cloudinary upload failed.');
+        }
+    },
 
       addMasterIngredient: (ingredient) =>
         set((state) => ({
@@ -317,7 +348,10 @@ export const usePantryStore = create<PantryState>()(
         })),
 
       setRecipeIngredientFilter: (ingredientName) => set({ recipeIngredientFilter: ingredientName }),
+
+      
     }),
+    
     {
       name: 'pantryveda-storage',
       partialize: (state) =>

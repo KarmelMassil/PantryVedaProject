@@ -7,6 +7,8 @@ import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocompl
 import { getSmartSuggestions } from '@/lib/suggestionOrchestrator';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
 import { ShoppingListItem as ShoppingListItemComponent } from '@/components/shopping-list/ShoppingListItem';
+import { trackEvent } from '@/lib/analytics';
+import { track } from 'framer-motion/client';
 
 // Helper function to format ingredient names to Title Case
 const toTitleCase = (str: string): string => {
@@ -52,8 +54,12 @@ export default function ShoppingListPage() {
     if (isDuplicate) return addToast(`'${formattedName}' already exists in your database!`, "info");
 
     addMasterIngredient({ ...ingredient, name: formattedName });
+    trackEvent('added_ingeredient_db', {
+        name: formattedName,
+        category: ingredient.category,
+        unit: ingredient.unit
+    });
     addToast(`'${formattedName}' has been added to your master database and to shopping list.`, "success");
-    // Optionally, select it in the form
     setSelectedItem({ ...ingredient, name: formattedName });
   };
 
@@ -93,22 +99,51 @@ export default function ShoppingListPage() {
   const handleGetSmartSuggestions = async () => {
     setIsSuggesting(true);
     setProposedSuggestions([]); // Clear old suggestions
+
+     // Track that user asked for AI help
+    trackEvent('smart_suggestions_requested', { 
+      current_list_size: shoppingList.length 
+    });
+
     const finalSuggestions = await getSmartSuggestions(inventory, consumptionLog, wasteLog, mealPlan, recipes, masterIngredientList, shoppingList);
     setProposedSuggestions(finalSuggestions);
+
+    trackEvent('smart_suggestions_generated', { 
+      suggestion_count: finalSuggestions.length 
+    });
     setIsSuggesting(false);
   };
 
   const handleAcceptSuggestion = (suggestion: Suggestion) => {
     addItemsToShoppingList([suggestion]);
     setProposedSuggestions(prev => prev.filter(s => s.name !== suggestion.name));
+
+    // TRUST METRIC: Accepted Single Item
+    trackEvent('smart_suggestion_action', { 
+        action: 'accept_single', 
+        item: suggestion.name,
+        reason: suggestion.reason 
+    });
   };
 
   const handleDismissSuggestion = (suggestionName: string) => {
     setProposedSuggestions(prev => prev.filter(s => s.name !== suggestionName));
+    // TRUST METRIC: User rejected suggestion
+    trackEvent('smart_suggestion_action', { 
+        action: 'dismiss', 
+        item: suggestionName
+    });
   };
+
   
   const handleAcceptAll = () => {
     addItemsToShoppingList(proposedSuggestions);
+
+    // TRUST METRIC: High trust, accepted everything
+    trackEvent('smart_suggestion_action', { 
+        action: 'accept_all', 
+        count: proposedSuggestions.length 
+    });
     setProposedSuggestions([]);
   };
 
@@ -193,6 +228,10 @@ export default function ShoppingListPage() {
                   unit: ingredient.unit,
                   defaultExpiryDays: ingredient.defaultExpiryDays || 14,
                 };
+                trackEvent('manual_entry', {
+                  page: 'shopping_list',
+                  item: ingredient.name
+                });
                 addItemsToShoppingList([itemToAdd]);
                 setSearchOrAddQuery('');
               }}

@@ -3,12 +3,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import Webcam from 'webcam-easy';
 import { yoloService } from '@/lib/yoloService';
 import { Camera, Upload, Circle, StopCircle, Loader2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
-import { set } from 'date-fns';
 import { usePantryStore } from '@/store/pantryStore';
 import Image from 'next/image';
 
 interface CameraScannerProps {
-  onRecognize: (labels: string[]) => void;
+  onRecognize: (labels: string[], imageData?: string) => void;
 }
 
 export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => {
@@ -54,15 +53,27 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
     setErrorMsg('');
     try {
       const detections = await yoloService.detectIngredients(source);
+      const labels = detections.map(d => d.label);
+      
+      // Get image data (Data URI) to pass up
+      let finalImageData: string | undefined = undefined;
+      if (source instanceof HTMLImageElement) {
+        finalImageData = source.src;
+      } else if (source instanceof HTMLVideoElement && webcamRef.current) {
+        finalImageData = webcamRef.current.snap();
+      }
+
       if (detections.length > 0) {
-        const labels = detections.map(d => d.label);
-        onRecognize(labels);
+        // Pass labels and image data for successful detection
+        onRecognize(labels, finalImageData);
       } else {
-        addToast("No ingredients recognized. Please try a clearer picture.", 'error');
+        // Pass empty labels + image data for failed scan handling
+        onRecognize([], finalImageData);
       }
     } catch (error: any) {
       console.error("Detection failed:", error);
       setErrorMsg(error.message || "Detection failed. Please try again.");
+      addToast("Detection failed. Please try again.", 'error');
     } finally {
       setIsDetecting(false);
     }
@@ -76,17 +87,17 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
   };
   
   const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
-  if (event.target.files && event.target.files[0]) {
-    const file = event.target.files[0];
-    const imageURL = URL.createObjectURL(file);
-    setUploadedPreview(imageURL); 
-    const img = new (window as any).Image();
-    img.src = imageURL;
-    img.onload = async () => {
-      await runDetection(img);
-    };
-  }
-};
+    if (event.target.files && event.target.files[0]) {
+      const file = event.target.files[0];
+      const imageURL = URL.createObjectURL(file);
+      setUploadedPreview(imageURL); 
+      const img = new (window as any).Image();
+      img.src = imageURL;
+      img.onload = async () => {
+        await runDetection(img);
+      };
+    }
+  };
 
   const handleStartCamera = () => {
     setUploadedPreview(null);
@@ -179,11 +190,9 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
   </p>
 
   <div className="grid grid-cols-2 gap-4 w-full">
-
-    {/* GOOD BLOCK */}
     <div className="flex flex-col items-center justify-center text-center">
       <Image
-        src="/images/good-scan-example.jpg"
+        src="/images/good-scan-example.png"
         alt="Good lighting, clear view"
         className="rounded-md border-2 border-green-400 aspect-square object-cover"
         width={150}
@@ -196,7 +205,6 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
       </div>
     </div>
 
-    {/* BAD BLOCK */}
     <div className="flex flex-col items-center justify-center text-center">
       <Image
         src="/images/bad-scan-example.png"
@@ -211,10 +219,8 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
         <p className="text-xs font-medium text-gray-600">Blurry & Dark</p>
       </div>
     </div>
-
   </div>
 </div>
-
             )}
           </>
         )}
