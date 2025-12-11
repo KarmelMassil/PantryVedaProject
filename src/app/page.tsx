@@ -1,7 +1,7 @@
 "use client";
 import React, { useMemo, useState, useEffect } from 'react';
 import Image from 'next/image';
-import { usePantryStore } from '@/store/pantryStore';
+import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { getDashboardStats, getExpiringSoonItems, getRecentlyAddedItems, getRecommendedRecipes } from '@/lib/dashboardGenerator';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { ActionCard } from '@/components/dashboard/ActionCard';
@@ -12,10 +12,18 @@ import { Package, AlertTriangle, IndianRupee, BadgeCheck, ScanLine, Inbox, ChefH
 import { RecipeCard } from '@/components/RecipeCard';
 import WelcomeMessage from '@/components/dashboard/WelcomeMessage';
 import { DashboardSkeleton } from '@/components/dashboard/DashboardSkeleton';
+import {Recipe} from '@/types';
+import { RecipeModal } from '@/components/RecipeModal';
+import { AddToMealPlanModal } from '@/components/AddToMealPlanModal';
+import { CookingModeModal } from '@/components/CookingModeModal';
 
 export default function DashboardPage() {
-  const { inventory, createWeeklySnapshot } = usePantryStore();
+  const { inventory, recipes, logConsumption, deductFromInventory, assignRecipeToMeal, addToast, createWeeklySnapshot } = usePantryStore();
   const [isLoading, setIsLoading] = useState(true);
+  const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
+    const [cookingRecipe, setCookingRecipe] = useState<Recipe | null>(null);
+    const [addToPlanRecipe, setAddToPlanRecipe] = useState<Recipe | null>(null);
+    
 
   useEffect(() => {
     createWeeklySnapshot();
@@ -36,6 +44,47 @@ export default function DashboardPage() {
     if (days === 1) return { text: '1 day', color: 'bg-orange-500' };
     return { text: `${days} days`, color: 'bg-yellow-500' };
   };
+
+  const handleOpenViewModal = (recipe: Recipe) => {
+      setViewingRecipe(recipe);
+    };
+    
+    const handleOpenCookModal = (recipe: Recipe) => {
+      setCookingRecipe(recipe);
+    };
+    
+    const handleOpenAddToPlanModal = (recipe: Recipe) => {
+      setAddToPlanRecipe(recipe);
+    };
+  
+    const handleCloseModal = () => {
+      setViewingRecipe(null);
+      setAddToPlanRecipe(null);
+      setCookingRecipe(null);
+    };
+  
+    const handleFinishCooking = (recipe: Recipe) => {
+      const consumptionEvents = recipe.ingredients.map(ing => ({
+        ingredientName: ing.name,
+        quantityConsumed: ing.quantity,
+        unit: ing.unit as any,
+        timestamp: new Date().toISOString(),
+        context: 'recipe' as 'recipe',
+        recipeId: recipe.id,
+      }));
+      logConsumption(consumptionEvents);
+      recipe.ingredients.forEach(ing => {
+        deductFromInventory(ing.name, ing.quantity);
+      });
+  
+      addToast(`Enjoy your ${recipe.name}! Ingredients logged.`, 'success');
+      handleCloseModal();
+    };
+  
+    const handleSaveToMealPlan = (recipeId: string, date: string, meal: keyof DayPlan, servings: number) => {
+      assignRecipeToMeal(date, meal, recipeId, servings);
+      addToast(`Recipe added to ${meal} on ${date}.`, 'success');
+    };
 
   if (isLoading) {
     return <DashboardSkeleton />;
@@ -82,13 +131,33 @@ export default function DashboardPage() {
   }
 
   return (
+    <>
+          {/* Render Modals */}
+          {viewingRecipe && (
+            <RecipeModal recipe={viewingRecipe} onClose={handleCloseModal} />
+          )}
+          {addToPlanRecipe && (
+            <AddToMealPlanModal
+              recipe={addToPlanRecipe}
+              onClose={handleCloseModal}
+              onSave={handleSaveToMealPlan}
+            />
+          )}
+          {cookingRecipe && (
+            <CookingModeModal
+              recipe={cookingRecipe}
+              onClose={handleCloseModal}
+              onFinishCooking={handleFinishCooking}
+            />
+          )}
+
     <div className="space-y-6">
       <WelcomeMessage />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard label="Total Items" value={stats.totalItems} icon={<Package size={24} className="text-blue-500"/>} colorClass="bg-blue-100" />
         <StatCard label="Expiring Soon" value={stats.expiringSoonCount} icon={<AlertTriangle size={24} className="text-orange-500"/>} colorClass="bg-orange-100"/>
-        <StatCard label="Total Value" value={`₹${stats.totalValue.toFixed(2)}`} icon={<IndianRupee size={24} className="text-purple-500"/>} colorClass="bg-purple-100" />
         <StatCard label="Fresh Items" value={stats.freshItemsCount} icon={<BadgeCheck size={24} className="text-green-500"/>} colorClass="bg-green-100" />
+        <StatCard label="Total Value" value={`₹${stats.totalValue.toFixed(2)}`} icon={<IndianRupee size={24} className="text-purple-500"/>} colorClass="bg-purple-100" />
       </div>
 
       <div>
@@ -106,7 +175,7 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-text-primary mb-3 flex items-center"><Flame size={20} className="text-red-500 mr-2"/>Use It Before You Lose It!</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
              {recommendedRecipes.map(recipe => (
-               <RecipeCard key={recipe.id} recipe={recipe} onView={() => {}} onCook={() => {}} onAddToPlan={() => {}} />
+               <RecipeCard key={recipe.id} recipe={recipe} onView={handleOpenViewModal} onCook={handleOpenCookModal} onAddToPlan={handleOpenAddToPlanModal} />
              ))}
           </div>
         </div>
@@ -147,5 +216,6 @@ export default function DashboardPage() {
         </Card>
       </div>
     </div>
+    </>
   );
 }

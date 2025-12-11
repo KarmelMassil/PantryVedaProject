@@ -381,11 +381,6 @@ export default function AddRecipePage() {
               >
                 <Trash2 size={18} />
               </button>
-              {name && (
-                <div className="mt-2 text-sm text-gray-500">
-                  Will be saved as: <code className="bg-gray-100 px-2 py-1 rounded">{generateImagePath(name)}</code>
-                </div>
-              )}
             </div>
           ) : (
             <div

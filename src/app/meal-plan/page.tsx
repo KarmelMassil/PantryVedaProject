@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useMemo } from 'react';
-import { DndContext, DragEndEvent, DragOverlay, useSensor, useSensors, PointerSensor, DragStartEvent } from '@dnd-kit/core';
+import { DndContext, DragEndEvent, DragOverlay, DragStartEvent } from '@dnd-kit/core';
 import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { DraggableRecipeCard } from '@/components/meal-plan/DraggableRecipeCard';
 import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
-import { format, addDays, startOfWeek, subDays, endOfWeek, set } from 'date-fns';
+import { format, addDays, startOfWeek, subDays } from 'date-fns';
 import { ArrowLeft, ArrowRight, Search, CalendarDays, Calendar, Coffee, Soup, Beef, Info } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { RecipeModal } from '@/components/RecipeModal';
