@@ -76,7 +76,7 @@ export default function AddRecipePage() {
     }
   };
 
-  // Ingredient handling - Quick Add (adds directly with default qty of 1)
+  // Ingredient handling
   const handleQuickAddIngredient = (ing: MasterIngredient) => {
     // Check if ingredient already exists in list
     const exists = ingredients.some(i => i.name.toLowerCase() === ing.name.toLowerCase());
@@ -175,14 +175,12 @@ export default function AddRecipePage() {
       formData.append('filename', imagePath.replace('/images/', ''));
       
       try {
-        // You'll need to create this API route to handle image uploads
         await fetch('/api/upload-image', {
           method: 'POST',
           body: formData,
         });
       } catch (error) {
         console.error('Failed to upload image:', error);
-        // Continue without image if upload fails
       }
     }
 
@@ -198,7 +196,6 @@ export default function AddRecipePage() {
       ingredients,
       instructions: filteredSteps,
       spiceLevel,
-      // Use uploaded image path, or a local default image
       image: imageFile ? imagePath : '/images/default-dish.jpg',
     };
 

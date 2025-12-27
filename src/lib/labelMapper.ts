@@ -1,8 +1,6 @@
-/**
+/*
  * This is the mapping from the YOLO model's raw output labels (all lowercase)
  * to the official name in your Master Ingredient Database.
- * * Add a new line for every ingredient your model can recognize.
- * * Example: if your model outputs 'tomato_fresh', you map it to 'Tomato'.
  */
 const labelMap: Record<string, string> = {
     "Apple" : "Apple",

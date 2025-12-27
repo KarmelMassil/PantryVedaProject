@@ -138,7 +138,7 @@ export async function getSmartSuggestions(
         }
     });
 
-    // Also check for items on the shopping list that are NOT in the ideal plan (suggest removal/reduction)
+    // Also check for items on the shopping list that are NOT in the ideal plan
     shoppingList.forEach(shoppingListItem => {
         if (!idealQuantities.has(shoppingListItem.name)) {
             // If the ideal quantity is 0, but it's on the list, suggest reducing to 0

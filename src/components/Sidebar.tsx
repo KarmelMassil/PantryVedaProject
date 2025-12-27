@@ -2,17 +2,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import {
-  LayoutDashboard,
-  ScanLine,
-  Inbox,
-  BookOpen,
-  ShoppingCart,
-  Calendar,
-  BarChartHorizontal,
-  ChevronsLeft,
-  ChevronsRight,
-} from "lucide-react";
+import { LayoutDashboard, ScanLine, Inbox, BookOpen, ShoppingCart, Calendar, BarChartHorizontal, ChevronsLeft, ChevronsRight } from "lucide-react";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },

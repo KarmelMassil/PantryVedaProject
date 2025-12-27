@@ -11,9 +11,9 @@ import { InsightsTab } from '@/components/analytics/InsightsTab';
 import { EmptyState } from '@/components/ui/EmptyState';
 
 const COLORS = {
-    'Fresh': '#27AE60', // curry-green
-    'Expiring Soon': '#FFA500', // dal-orange
-    'Expired': '#C41E3A', // chili-red
+    'Fresh': '#27AE60',
+    'Expiring Soon': '#FFA500',
+    'Expired': '#C41E3A',
 };
 
 type Tab = 'Overview' | 'Categories' | 'Trends' | 'Insights';

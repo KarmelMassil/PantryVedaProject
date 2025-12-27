@@ -1,7 +1,6 @@
 import { MatchedRecipe } from '@/lib/recipeMatcher';
 import { Flame, Clock, Users, Utensils, CalendarPlus, Eye } from 'lucide-react';
 import React from 'react';
-import { usePantryStore } from '@/store/pantryStore';
 import Image from 'next/image';
 
 interface RecipeCardProps {

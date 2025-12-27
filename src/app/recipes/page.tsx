@@ -4,10 +4,7 @@ import { usePantryStore, DayPlan } from '@/store/pantryStore';
 import { getRecipeMatches, MatchedRecipe } from '@/lib/recipeMatcher';
 import { RecipeCard } from '@/components/RecipeCard';
 import { Card } from '@/components/ui/Card';
-import { 
-    Frown, PlusCircle, CookingPot, Filter, ChefHat, BookOpen, Info,
-    ArrowDown, ArrowUp, Star, Clock, Flame
-} from 'lucide-react';
+import { Frown, PlusCircle, CookingPot, Filter, ChefHat, BookOpen, Info, ArrowDown, ArrowUp, Star, Clock, Flame } from 'lucide-react';
 import Link from 'next/link';
 import { RecipeModal } from '@/components/RecipeModal';
 import { AddToMealPlanModal } from '@/components/AddToMealPlanModal';

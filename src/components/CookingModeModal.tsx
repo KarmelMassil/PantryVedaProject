@@ -2,7 +2,10 @@
 import { Recipe } from '@/types';
 import { usePantryStore } from '@/store/pantryStore';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { X, Mic, MicOff, Volume2, VolumeX, ChevronLeft, ChevronRight, Play, Pause, RefreshCw, ChefHat, Save, Flame, Users, Plus, Minus, Clock, Check } from 'lucide-react';
+import { 
+        X, Mic, MicOff, Volume2, VolumeX, ChevronLeft, ChevronRight, 
+        Play, Pause, RefreshCw, ChefHat, Save, Flame, Users, Plus, Minus, Clock, Check
+       } from 'lucide-react';
 import { scaleRecipeIngredients } from '@/lib/recipeUtils';
 
 // Helper function to parse time from a step
@@ -19,19 +22,6 @@ const formatTime = (time: number) => {
   const minutes = Math.floor(time / 60);
   const seconds = time % 60;
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-};
-
-// Format time for speech
-const formatTimeForSpeech = (time: number) => {
-  const minutes = Math.floor(time / 60);
-  const seconds = time % 60;
-  if (minutes > 0 && seconds > 0) {
-    return `${minutes} minute${minutes !== 1 ? 's' : ''} and ${seconds} second${seconds !== 1 ? 's' : ''}`;
-  } else if (minutes > 0) {
-    return `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-  } else {
-    return `${seconds} second${seconds !== 1 ? 's' : ''}`;
-  }
 };
 
 // Format ingredient for speech
@@ -219,20 +209,20 @@ export const CookingModeModal: React.FC<CookingModeModalProps> = ({
   }, [stepIndex, mode, scaledRecipe.ingredients.length]);
 
   const goToNextStepRef = useRef(goToNextStep);
-const goToPrevStepRef = useRef(goToPrevStep);
-const speakRef = useRef(speak);
-const currentStepRef = useRef(currentStep);
-const startTimerRef = useRef(startTimer);
-const pauseTimerRef = useRef(pauseTimer);
-const resetTimerRef = useRef(resetTimer);
+  const goToPrevStepRef = useRef(goToPrevStep);
+  const speakRef = useRef(speak);
+  const currentStepRef = useRef(currentStep);
+  const startTimerRef = useRef(startTimer);
+  const pauseTimerRef = useRef(pauseTimer);
+  const resetTimerRef = useRef(resetTimer);
 
-useEffect(() => { goToNextStepRef.current = goToNextStep; }, [goToNextStep]);
-useEffect(() => { goToPrevStepRef.current = goToPrevStep; }, [goToPrevStep]);
-useEffect(() => { speakRef.current = speak; }, [speak]);
-useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
-useEffect(() => { startTimerRef.current = startTimer; }, [startTimer]);
-useEffect(() => { pauseTimerRef.current = pauseTimer; }, [pauseTimer]);
-useEffect(() => { resetTimerRef.current = resetTimer; }, [resetTimer]);
+  useEffect(() => { goToNextStepRef.current = goToNextStep; }, [goToNextStep]);
+  useEffect(() => { goToPrevStepRef.current = goToPrevStep; }, [goToPrevStep]);
+  useEffect(() => { speakRef.current = speak; }, [speak]);
+  useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
+  useEffect(() => { startTimerRef.current = startTimer; }, [startTimer]);
+  useEffect(() => { pauseTimerRef.current = pauseTimer; }, [pauseTimer]);
+  useEffect(() => { resetTimerRef.current = resetTimer; }, [resetTimer]);
 
   // Keyboard navigation
   useEffect(() => {

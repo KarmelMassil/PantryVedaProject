@@ -27,9 +27,7 @@ export function calculateAnalytics(
         // Fallback for items no longer in inventory
         const masterItem = masterIngredientList.find(i => i.name === event.ingredientName);
         if (masterItem) {
-            // This is an estimation. We assume a default value since we can't know the purchase price.
-            // A better long-term solution would be to store price history.
-            const estimatedValuePerUnit = 50; // Arbitrary value, better than 0
+            const estimatedValuePerUnit = 50;
             const quantity = 'quantityWasted' in event ? event.quantityWasted : event.quantityConsumed;
             return quantity * estimatedValuePerUnit;
         }
@@ -103,7 +101,7 @@ export function calculateAnalytics(
         .sort((a, b) => b.totalValue - a.totalValue);
 
     // --- 4. Trends Tab: Items Added vs Used Over Time ---
-    const trendStartDate = startOfDay(subDays(new Date(), 29)); // Start from 29 days ago to include today
+    const trendStartDate = startOfDay(subDays(new Date(), 29));
     const trendDataMap = new Map<string, { added: number, used: number }>();
     
     // Populate dates for the last 30 days, including today

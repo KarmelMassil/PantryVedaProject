@@ -23,7 +23,7 @@ export const AddIngredientModal: React.FC<AddIngredientModalProps> = ({ isOpen, 
       return;
     }
     onSave({ name, category, defaultExpiryDays: expiry, unit });
-    onClose(); // Close the modal after saving
+    onClose(); 
   };
 
   if (!isOpen) return null;

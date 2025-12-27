@@ -57,7 +57,6 @@ export const DraggableRecipeCard: React.FC<DraggableRecipeCardProps> = ({ recipe
   // Styles for the original item in the list
   const style = {
     transition: 'opacity 0.2s ease',
-    // DO NOT apply transform here, it causes the container to scroll
     transform: undefined,
     opacity: isDragging ? 0.5 : 1,
   };

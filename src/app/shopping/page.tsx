@@ -36,7 +36,6 @@ export default function ShoppingListPage() {
   } = usePantryStore();
 
   const [selectedItem, setSelectedItem] = useState<MasterIngredient | null>(null);
-  const [itemQuantity, setItemQuantity] = useState('1');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [proposedSuggestions, setProposedSuggestions] = useState<Suggestion[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
@@ -62,28 +61,14 @@ export default function ShoppingListPage() {
     setSelectedItem({ ...ingredient, name: formattedName });
   };
 
-  const handleAddSelectedItem = () => {
-    if (!selectedItem) return;
-    const itemToAdd: Omit<ShoppingListItem, 'id' | 'checked' | 'price' | 'expiryDate'> = {
-      name: selectedItem.name,
-      category: selectedItem.category,
-      quantity: parseFloat(itemQuantity) || 1,
-      unit: selectedItem.unit,
-      defaultExpiryDays: selectedItem.defaultExpiryDays || 14,
-    };
-    addItemsToShoppingList([itemToAdd]);
-    setSelectedItem(null);
-    setItemQuantity('1');
-  };
-
   const handleEditStart = (item: ShoppingListItem) => {
     setEditingItemId(item.id);
-    setOriginalItem(item); // Save the original state
+    setOriginalItem(item);
   };
 
   const handleEditCancel = () => {
     if (originalItem) {
-      updateShoppingListItem(originalItem.id, originalItem); // Restore original state
+      updateShoppingListItem(originalItem.id, originalItem);
     }
     setEditingItemId(null);
     setOriginalItem(null);
@@ -97,9 +82,7 @@ export default function ShoppingListPage() {
 
   const handleGetSmartSuggestions = async () => {
     setIsSuggesting(true);
-    setProposedSuggestions([]); // Clear old suggestions
-
-     // Track that user asked for AI help
+    setProposedSuggestions([]);
     trackEvent('smart_suggestions_requested', { 
       current_list_size: shoppingList.length 
     });
@@ -117,7 +100,6 @@ export default function ShoppingListPage() {
     addItemsToShoppingList([suggestion]);
     setProposedSuggestions(prev => prev.filter(s => s.name !== suggestion.name));
 
-    // TRUST METRIC: Accepted Single Item
     trackEvent('smart_suggestion_action', { 
         action: 'accept_single', 
         item: suggestion.name,
@@ -127,7 +109,6 @@ export default function ShoppingListPage() {
 
   const handleDismissSuggestion = (suggestionName: string) => {
     setProposedSuggestions(prev => prev.filter(s => s.name !== suggestionName));
-    // TRUST METRIC: User rejected suggestion
     trackEvent('smart_suggestion_action', { 
         action: 'dismiss', 
         item: suggestionName
@@ -138,7 +119,6 @@ export default function ShoppingListPage() {
   const handleAcceptAll = () => {
     addItemsToShoppingList(proposedSuggestions);
 
-    // TRUST METRIC: High trust, accepted everything
     trackEvent('smart_suggestion_action', { 
         action: 'accept_all', 
         count: proposedSuggestions.length 

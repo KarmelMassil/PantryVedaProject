@@ -91,7 +91,7 @@ export const indianIngredientsDatabase: Omit<Ingredient, 'id' | 'quantity' | 'pu
   {name: 'Curry Leaves', category: 'Herbs', unit: 'bunches' },
   { name: 'Salt', category: 'Other', unit: 'g' },
   { name: 'Sugar', category: 'Other', unit: 'g' },
-  { name: 'Oil', category: 'Other', unit: 'l' },
+  { name: 'Oil', category: 'Other', unit: 'ml' },
   { name: 'Vinegar', category: 'Other', unit: 'ml' },
   { name: 'Pickles', category: 'Other', unit: 'g' },
   { name: 'Tamarind', category: 'Other', unit: 'g' },

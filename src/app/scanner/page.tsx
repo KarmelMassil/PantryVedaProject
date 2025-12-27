@@ -5,7 +5,7 @@ import { IngredientAutocomplete } from '@/components/scanner/IngredientAutocompl
 import { usePantryStore, MasterIngredient } from '@/store/pantryStore';
 import { Ingredient } from '@/types';
 import { format, formatISO, addDays } from 'date-fns';
-import { PackagePlus, Trash2, PlusCircle, ScanLine, Info } from 'lucide-react';
+import { PackagePlus, Trash2, ScanLine, Info } from 'lucide-react';
 import { mapLabelToDbName } from '@/lib/labelMapper';
 import { AddIngredientModal } from '@/components/AddIngredientModal';
 import { trackEvent } from '@/lib/analytics';
@@ -63,7 +63,6 @@ export default function ScannerPage() {
       source
     };
 
-    // GAP ANALYSIS: Track manual additions (Scanner missed it or user preferred manual)
     if (source === 'manual') {
       trackEvent('manual_entry', { 
         page: 'scanner', 
@@ -76,7 +75,6 @@ export default function ScannerPage() {
     setScannedItems(prev => [...prev, newItem as ScannedItem]);
   };
 
-  // --- ANALYTICS: Track Rejected Scans (Precision) ---
   const handleRemoveScannedItem = (index: number) => {
     const itemToRemove = scannedItems[index];
     if (itemToRemove.source === 'camera') {
@@ -94,11 +92,8 @@ export default function ScannerPage() {
     ));
   };
   
-  // --- ANALYTICS: Track Successful Saves (True Positives) ---
   const handleSaveToPantry = () => {
     if (scannedItems.length === 0) return;
-    
-    // PRECISION TRACKING (True Positives)
     const cameraItems = scannedItems.filter(i => i.source === 'camera');
     if (cameraItems.length > 0) {
       trackEvent('scan_success', { 
@@ -112,17 +107,13 @@ export default function ScannerPage() {
     addToast(`${scannedItems.length} item(s) saved to your pantry!`, 'success');
   };
 
-  // --- ANALYTICS & ACTIVE LEARNING: Handle Failed Scans ---
   const handleRecognition = async (detectedLabels: string[], imageData?: string) => {
-      // Filter valid labels
       const validLabels = detectedLabels
         .map(label => mapLabelToDbName(label));
 
       if (validLabels.length === 0) {
         console.log("No known ingredients were detected.");
-        // Capture failed scan for active learning
         if (imageData) {
-            // FIX: Pass imageData directly to logFailedScan. The store handles the upload.
             logFailedScan(imageData, 'no_labels_detected'); 
             trackEvent('scan_failed', { timestamp: new Date().toISOString(), reason: 'no_labels' });
         }
@@ -141,10 +132,8 @@ export default function ScannerPage() {
         }
       }
       
-      // Log failed mapping
       console.warn("Detected labels could not be mapped:", validLabels);
       if (imageData) {
-          // FIX: Pass imageData directly to logFailedScan. The store handles the upload.
           logFailedScan(imageData, `mapping_failed: ${validLabels.join(',')}`);
           trackEvent('scan_failed', { reason: 'mapping_failed', labels: validLabels.join(',') });
       }

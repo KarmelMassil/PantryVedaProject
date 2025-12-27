@@ -9,9 +9,7 @@ interface CategoriesTabProps {
 }
 
 export const CategoriesTab: React.FC<CategoriesTabProps> = ({ data, inventory }) => {
-  // We derive the categories directly from the inventory to ensure that every
-  // category with at least one item is displayed, regardless of its total value.
-  const categoriesInInventory = [...new Set(inventory.map(item => item.category))].filter(Boolean); // Filter out null/undefined categories
+  const categoriesInInventory = [...new Set(inventory.map(item => item.category))].filter(Boolean); 
   const valueMap = new Map(data.map(d => [d.name, d.totalValue]));
 
   const dataToShow = categoriesInInventory

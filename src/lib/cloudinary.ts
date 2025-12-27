@@ -12,7 +12,7 @@ export async function uploadToCloudinary(imageData: string): Promise<string | nu
     const blob = await dataURItoBlob(imageData);
     
     const formData = new FormData();
-    formData.append('file', blob, 'failed-scan.jpg'); // Added filename
+    formData.append('file', blob, 'failed-scan.jpg');
     formData.append('upload_preset', UPLOAD_PRESET);
 
     const response = await fetch(

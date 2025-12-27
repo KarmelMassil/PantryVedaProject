@@ -64,10 +64,8 @@ export const CameraScanner: React.FC<CameraScannerProps> = ({ onRecognize }) => 
       }
 
       if (detections.length > 0) {
-        // Pass labels and image data for successful detection
         onRecognize(labels, finalImageData);
       } else {
-        // Pass empty labels + image data for failed scan handling
         onRecognize([], finalImageData);
       }
     } catch (error: any) {

@@ -6,7 +6,6 @@ import { DraggableRecipeCard } from '@/components/meal-plan/DraggableRecipeCard'
 import { DroppableMealSlot } from '@/components/meal-plan/DroppableMealSlot';
 import { format, addDays, startOfWeek, subDays } from 'date-fns';
 import { ArrowLeft, ArrowRight, Search, CalendarDays, Calendar, Coffee, Soup, Beef, Info } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { RecipeModal } from '@/components/RecipeModal';
 import { Recipe } from '@/types';
 import { getProjectedInventory, getBestSuggestion } from '@/lib/mealPlanLogic';
@@ -18,7 +17,6 @@ export default function MealPlannerPage() {
   const { recipes, mealPlan, inventory, assignRecipeToMeal, logConsumption, deductFromInventory, addToast } = usePantryStore();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeRecipe, setActiveRecipe] = useState<Recipe | null>(null);
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [viewingRecipe, setViewingRecipe] = useState<Recipe | null>(null);
   const [cookingContext, setCookingContext] = useState<CookingContext>(null);
