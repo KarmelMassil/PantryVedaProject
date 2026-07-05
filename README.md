@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">PantryVeda</h1>
-<p align="center"><b>Your pantry, understood.</b><br/>Scan your groceries, stop wasting food, and let your kitchen plan itself.</p>
+<p align="center">Scan your groceries, stop wasting food, and let your kitchen plan itself.</p>
 
 <p align="center">
   <img alt="Next.js" src="https://img.shields.io/badge/Next.js-14-black?logo=next.js">
@@ -118,4 +118,4 @@ public/
 
 ## License
 
-Not yet licensed — add a `LICENSE` file (MIT is a reasonable default for a project like this) before making the repo public.
+This project is licensed under the [MIT License](LICENSE).
