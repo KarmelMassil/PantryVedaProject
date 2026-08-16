@@ -12,6 +12,12 @@
   <img alt="Zustand" src="https://img.shields.io/badge/State-Zustand-black">
 </p>
 
+<p align="center">
+  <a href="https://drive.google.com/file/d/10CRI6RKe1NV2qWw1RVGkhw1UBCOx4lDa/view?usp=sharing">
+    <img alt="Demo Video" src="https://img.shields.io/badge/Demo-Watch%20Video-red?logo=googledrive&logoColor=white">
+  </a>
+</p>
+
 ---
 
 ## What it does
