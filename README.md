@@ -12,14 +12,7 @@
   <img alt="Zustand" src="https://img.shields.io/badge/State-Zustand-black">
 </p>
 
-<p align="center">
-  <a href="https://drive.google.com/file/d/10CRI6RKe1NV2qWw1RVGkhw1UBCOx4lDa/view?usp=sharing">
-    <img alt="Demo Video" src="https://img.shields.io/badge/Demo-Watch%20Video-red?logo=googledrive&logoColor=white">
-  </a>
-</p>
-
 ---
-
 ## What it does
 
 PantryVeda is a smart kitchen assistant that runs entirely in the browser. Point your camera at your groceries, and it tells you what you just bought, tracks it until it's about to go bad, and uses that history to get better at telling you what to buy next time.
@@ -30,6 +23,12 @@ PantryVeda is a smart kitchen assistant that runs entirely in the browser. Point
 - 🛒 **Smart shopping list** — a personalized model learns from *your* consumption and waste history to suggest what to buy and how much
 - 🗓️ **Meal planning** — drag and drop recipes onto a weekly planner; planned meals feed forward into what the shopping list thinks you'll need
 - 📊 **Analytics dashboard** — trends, category breakdowns, and the running cost of what you've used versus what you've thrown away
+
+
+## 🎬 Demo
+
+**[▶ Watch the demo video](https://drive.google.com/file/d/10CRI6RKe1NV2qWw1RVGkhw1UBCOx4lDa/view?usp=sharing)** — see the scanner, expiry tracking, and shopping list in action.
+
 
 ## How the scanner works
 
